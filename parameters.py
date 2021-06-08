@@ -8,6 +8,8 @@ from os.path import join
 import psychopy
 from psychopy import visual, core, logging
 from psychopy.monitors import Monitor
+from unittest.mock import Mock
+import parallel
 
 participantID = int(input('Type in participant ID: '))
 
@@ -31,21 +33,30 @@ n_trials_dual_easy = 48 # no intentional blink
 # each number of test trial will be divided by n_training_trial_divisor
 n_training_trial_divisor = 16
 
+
+##################
+# Computer setup #
+##################
+
+port = parallel.Parallel() ## comment this for testing if your pc doesnt have a parallel port
+# port = Mock() ## uncomment this for testing if your pc doesnt have a parallel port
+
+## Artur's setup
+mon = Monitor('rosas')
+
+## Jasper's setup
+# mon = Monitor(
+#     name='samsungLS24R650',
+#     width='53',
+#     distance=45,
+# )
+# mon.setSizePix((1920, 1080))
+# mon.saveMon()
+
 ####################################################
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-## Artur's setup
-# mon = Monitor('rosas')
-
-## Jasper's setup
-mon = Monitor(
-    name='samsungLS24R650',
-    width='53',
-    distance=45,
-)
-mon.setSizePix((1920, 1080))
-mon.saveMon()
 
 SCREEN = visual.Window(monitor=mon, color=(-1,-1,-1), fullscr=True)
 #m = event.Mouse(win=SCREEN)

@@ -25,11 +25,9 @@ import psychopy
 from parameters import *
 from functions import *
 from psychopy import data
-import random, parallel
-from unittest.mock import Mock
+import random
 from os.path import join
-# port = parallel.Parallel()
-port = Mock()
+
 
 # we only have two different blocks, (dual and single)
 exp_conditions = ['single', 'dual']
