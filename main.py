@@ -25,7 +25,11 @@ import psychopy
 from parameters import *
 from functions import *
 from psychopy import data
-import random
+import random, parallel
+from unittest.mock import Mock
+from os.path import join
+# port = parallel.Parallel()
+port = Mock()
 
 # we only have two different blocks, (dual and single)
 exp_conditions = ['single', 'dual']
@@ -82,7 +86,13 @@ for block in training_blocks:
         duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
         target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA)
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
+            currentTrial['task'],
+            T1_start,
+            target2_presence,
+            duration_SOA,
+            port
+        )
         # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
@@ -122,7 +132,13 @@ for block in test_blocks:
         duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
         target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA)
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
+            currentTrial['task'],
+            T1_start,
+            target2_presence,
+            duration_SOA,
+            port
+        )
         # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
@@ -135,7 +151,8 @@ for block in test_blocks:
         exp.nextEntry()
 
 # save the whole data as txt (additionally to the csv file), this also returns a dataFrame
-df = exp.saveAsWideText(f"behavioral_data\%s_%i.txt" % (experiment_name, participantID))
+fpath = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
+df = exp.saveAsWideText(fpath)
 
 showMessage(thank_you, wait=False)
 print('Saved experiment file!')

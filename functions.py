@@ -6,9 +6,7 @@ experiment by running the main.py file located in the same folder.
 from parameters import *
 from psychopy import visual, event, core
 import random
-import parallel
 
-p = parallel.Parallel()
 
 def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy_trials):
     '''
@@ -51,20 +49,20 @@ def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy
     return stimuli_single, stimuli_dual
 
 
-def displayT1():
+def displayT1(port):
     '''
     Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
     '''
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
     SCREEN.flip()
-    p.setData(trigger_T1)
+    port.setData(trigger_T1)
     core.wait(0.01)
-    p.setData(0)
+    port.setData(0)
     return target1.text
 
 
-def displayT2(T2_present):
+def displayT2(T2_present, port):
     '''
     Displays the second target (T2) constisting of 4 white squares and (if present
     condition is active) of a number word in capital letters.
@@ -85,9 +83,9 @@ def displayT2(T2_present):
         target2.text = ''
 
     SCREEN.flip()
-    p.setData(trigger_T2)
+    port.setData(trigger_T2)
     core.wait(0.01)
-    p.setData(0)
+    port.setData(0)
     return target2.text
 
 def displayMask():
@@ -107,7 +105,7 @@ def displayFixCross():
     SCREEN.flip()
 
 
-def displayTask2():
+def displayTask2(port):
     '''
     Diplay of rating scale that indicates visibilty of target 2. Above the rating
     scale a short instruction is shown.
@@ -125,9 +123,9 @@ def displayTask2():
 
     rating_scaleT2.draw()
     SCREEN.flip()
-    p.setData(trigger_task2)
+    port.setData(trigger_task2)
     core.wait(0.01)
-    p.setData(0)
+    port.setData(0)
 
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
@@ -140,7 +138,7 @@ def displayTask2():
     return [rating_scaleT2.getRating(), rating_scaleT2.getRT()]
 
 
-def displayTask1():
+def displayTask1(port):
     '''
     Diplay of choice making task that indicates if the participant correctly
     recognized T1 as either 'OXXO' or 'XOOX'.
@@ -154,9 +152,9 @@ def displayTask1():
 
     rating_scaleT1.draw()
     SCREEN.flip()
-    p.setData(trigger_task1)
+    port.setData(trigger_task1)
     core.wait(0.01)
-    p.setData(0)
+    port.setData(0)
     while rating_scaleT1.noResponse:
         rating_scaleT1.draw()
         SCREEN.flip()
@@ -166,7 +164,7 @@ def displayTask1():
     return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
 
 
-def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA):
+def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA, port):
     '''
     Starts the real experiment trial.
     Parameters:
@@ -177,14 +175,14 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     '''
 
     print('++++++ start trial +++++++')
-    p.setData(trigger_start_trial)
+    port.setData(trigger_start_trial)
     core.wait(0.01)
-    p.setData(0)
+    port.setData(0)
     # it starts with the fixation cross
     displayFixCross()
     core.wait(timing_T1_start)
 
-    textT1 = displayT1()
+    textT1 = displayT1(port)
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
@@ -199,7 +197,7 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     displayFixCross()
     core.wait(duration_SOA - stimulus_duration*3)
 
-    textT2 = displayT2(target2_presence)
+    textT2 = displayT2(target2_presence, port)
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
@@ -218,11 +216,11 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     core.wait(visibility_scale_timing)
 
     # start the visibilty rating (happens in single AND dual task conditions)
-    ratingT2 = displayTask2()
+    ratingT2 = displayTask2(port)
 
     # only in the dual task condition the question on target 1 is displayed
     if task_condition == 'dual':
-        ratingT1 = displayTask1()
+        ratingT1 = displayTask1(port)
         # accuracy of answer
         correct = True if ratingT1[0] in textT1 else False
         ratingT1.append(correct)
