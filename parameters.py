@@ -4,8 +4,10 @@ experiment by running the main.py file located in the same folder.
 '''
 
 import os
+from os.path import join
 import psychopy
 from psychopy import visual, core, logging
+from psychopy.monitors import Monitor
 
 participantID = int(input('Type in participant ID: '))
 
@@ -33,7 +35,19 @@ n_training_trial_divisor = 16
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-SCREEN = visual.Window(monitor='rosas', color=(-1,-1,-1), fullscr=True)
+## Artur's setup
+# mon = Monitor('rosas')
+
+## Jasper's setup
+mon = Monitor(
+    name='samsungLS24R650',
+    width='53',
+    distance=45,
+)
+mon.setSizePix((1920, 1080))
+mon.saveMon()
+
+SCREEN = visual.Window(monitor=mon, color=(-1,-1,-1), fullscr=True)
 #m = event.Mouse(win=SCREEN)
 #m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
 
@@ -75,11 +89,11 @@ trigger_start_trial = 15
 if not os.path.isdir('logging'):
     os.makedirs('logging')
 EXEPATH = os.path.dirname(os.path.abspath('main.py'))
-LOGPATH = EXEPATH + '\logging'
+LOGPATH = join(EXEPATH, 'logging')
 if not os.path.exists(LOGPATH):
     os.makedirs(LOGPATH)
 
-filename = 'logging' + os.path.sep + 'subject%s' % participantID #os.path.sep creates '\'
+filename = join('logging', f'subject{participantID}')
 logFile = logging.LogFile(filename + '.log', level=logging.EXP)
 # this outputs to the screen, not a file (setting to critical means silencing
 # console output by ingoring WARNING)
@@ -87,13 +101,13 @@ logging.console.setLevel(logging.CRITICAL)
 
 if not os.path.isdir('behavioral_data'):
     os.makedirs('behavioral_data')
-DATAPATH = EXEPATH + os.path.sep + 'behavioral_data'
+DATAPATH = join(EXEPATH, 'behavioral_data')
 # add a data subfolder
 if not os.path.exists(DATAPATH):
     os.makedirs(DATAPATH)
 # Name of csv file
-csvfile = 'subject%s.csv' % participantID
-path = DATAPATH +'/' + csvfile
+csvfile = f'subject{participantID}.csv'
+path = join(DATAPATH, csvfile)
 
 
 ################################################

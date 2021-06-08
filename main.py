@@ -36,14 +36,17 @@ exp_conditions = ['single', 'dual']
 # we have 368 trials in total, half of this is short SOA and the other half is long SOA
 
 # define an experiment handler
-exp = data.ExperimentHandler(name=experiment_name,
-                version='0.1',
-                extraInfo={'participant':participantID, 'age':23, 'short_SOA':short_SOA, 'long_SOA':long_SOA, 'stimulus_duration':stimulus_duration},
-                runtimeInfo=None,
-                originPath=None,
-                savePickle=True,
-                saveWideText=True,
-                dataFileName=f'%s\%s_%i' % (DATAPATH, experiment_name, participantID))
+dataFileName = join(DATAPATH, f'{experiment_name}_{participantID}')
+exp = data.ExperimentHandler(
+    name=experiment_name,
+    version='0.1',
+    extraInfo={'participant':participantID, 'age':23, 'short_SOA':short_SOA, 'long_SOA':long_SOA, 'stimulus_duration':stimulus_duration},
+    runtimeInfo=None,
+    originPath=None,
+    savePickle=True,
+    saveWideText=True,
+    dataFileName=dataFileName
+)
 
 # Welcome the participant
 showMessage(welcome_message, 0.1)
