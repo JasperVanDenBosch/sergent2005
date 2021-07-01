@@ -5,7 +5,7 @@ experiment by running the main.py file located in the same folder.
 
 import os
 import psychopy
-from psychopy import visual, core, logging
+from psychopy import visual, core, logging, monitors
 
 participantID = int(input('Type in participant ID: '))
 
@@ -33,7 +33,13 @@ n_training_trial_divisor = 16
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-SCREEN = visual.Window(monitor='rosas', color=(-1,-1,-1), fullscr=True)
+# set monitor details
+my_monitor = monitors.Monitor(name='my_monitor')
+my_monitor.setSizePix((1280, 800))
+my_monitor.setWidth(20)
+my_monitor.setDistance(100)
+my_monitor.saveMon()
+SCREEN = visual.Window(monitor='my_monitor', color=(-1,-1,-1), fullscr=True)
 #m = event.Mouse(win=SCREEN)
 #m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
 
