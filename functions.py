@@ -6,9 +6,9 @@ experiment by running the main.py file located in the same folder.
 from parameters import *
 from psychopy import visual, event, core
 import random
-import parallel
+#import parallel
 
-p = parallel.Parallel()
+#p = parallel.Parallel()
 
 def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy_trials):
     '''
@@ -58,9 +58,9 @@ def displayT1():
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
     SCREEN.flip()
-    p.setData(trigger_T1)
+    #p.setData(trigger_T1)
     core.wait(0.01)
-    p.setData(0)
+    #p.setData(0)
     return target1.text
 
 
@@ -85,9 +85,9 @@ def displayT2(T2_present):
         target2.text = ''
 
     SCREEN.flip()
-    p.setData(trigger_T2)
+    #p.setData(trigger_T2)
     core.wait(0.01)
-    p.setData(0)
+    #p.setData(0)
     return target2.text
 
 def displayMask():
@@ -125,9 +125,9 @@ def displayTask2():
 
     rating_scaleT2.draw()
     SCREEN.flip()
-    p.setData(trigger_task2)
+    #p.setData(trigger_task2)
     core.wait(0.01)
-    p.setData(0)
+    #p.setData(0)
 
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
@@ -154,9 +154,9 @@ def displayTask1():
 
     rating_scaleT1.draw()
     SCREEN.flip()
-    p.setData(trigger_task1)
+    #p.setData(trigger_task1)
     core.wait(0.01)
-    p.setData(0)
+    #p.setData(0)
     while rating_scaleT1.noResponse:
         rating_scaleT1.draw()
         SCREEN.flip()
@@ -177,9 +177,9 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     '''
 
     print('++++++ start trial +++++++')
-    p.setData(trigger_start_trial)
+    #p.setData(trigger_start_trial)
     core.wait(0.01)
-    p.setData(0)
+    #p.setData(0)
     # it starts with the fixation cross
     displayFixCross()
     core.wait(timing_T1_start)
