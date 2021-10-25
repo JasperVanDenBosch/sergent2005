@@ -52,14 +52,10 @@ showMessage(training_instructions, wait=False)
 showMessage('TRAINING STARTS', wait=False)
 
 # calculate how many trials we need for the training
-'''
 n_train_trials_single = int(n_trials_single/n_training_trial_divisor)
 n_train_trials_dual_critical = int(n_trials_dual_critical/n_training_trial_divisor)
 n_train_trials_dual_easy = int(n_trials_dual_easy/n_training_trial_divisor)
-'''
-n_train_trials_single = 1
-n_train_trials_dual_critical = 1
-n_train_trials_dual_easy = 1
+
 
 # copmute the list of all different trial conditions and store it in two lists,
 # one for the single task and one for the dual task condition
@@ -112,9 +108,6 @@ showMessage('EXPERIMENT STARTS', wait=False)
                                         n_trials_dual_critical, n_trials_dual_easy)
 test_trials_dual = data.TrialHandlerExt(test_stim_dual, name='test_dual', method='fullRandom', nReps=1)
 test_trials_single = data.TrialHandlerExt(test_stim_single, name='test_single', method='fullRandom', nReps=1)
-
-test_trials_dual = 1
-test_trials_single = 1
 
 test_blocks = [test_trials_dual, test_trials_single]
 random.shuffle(test_blocks)
