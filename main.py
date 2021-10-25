@@ -42,19 +42,24 @@ exp = data.ExperimentHandler(name=experiment_name,
                 dataFileName=f'%s\%s_%i' % (DATAPATH, experiment_name, participantID))
 
 # Welcome the participant
-showMessage(welcome_message, 0.1)
-showMessage(instructions, 0.07)
+showMessage(welcome_message, wait=False)
+showMessage(instructions, wait=False)
 
 ###############################
 #          TRAINING           #
 ###############################
-showMessage(training_instructions)
+showMessage(training_instructions, wait=False)
 showMessage('TRAINING STARTS', wait=False)
 
 # calculate how many trials we need for the training
+'''
 n_train_trials_single = int(n_trials_single/n_training_trial_divisor)
 n_train_trials_dual_critical = int(n_trials_dual_critical/n_training_trial_divisor)
 n_train_trials_dual_easy = int(n_trials_dual_easy/n_training_trial_divisor)
+'''
+n_train_trials_single = 1
+n_train_trials_dual_critical = 1
+n_train_trials_dual_easy = 1
 
 # copmute the list of all different trial conditions and store it in two lists,
 # one for the single task and one for the dual task condition
@@ -72,9 +77,9 @@ training_blocks = [train_trials_dual, train_trials_single]
 random.shuffle(training_blocks)
 for block in training_blocks:
     if block.name=='train_dual':
-        showMessage(dual_block_start)
+        showMessage(dual_block_start, wait=False)
     else:
-        showMessage(single_block_start)
+        showMessage(single_block_start, wait=False)
 
     for currentTrial in block:
         # 50% chance that T1 is presented quick or slow after trial start
@@ -95,7 +100,7 @@ for block in training_blocks:
         exp.nextEntry()
 
 print('Training done!')
-showMessage(finished_training)
+showMessage(finished_training, wait=False)
 
 ##################################################
 #          TESTING (experiment starts)           #
@@ -107,14 +112,18 @@ showMessage('EXPERIMENT STARTS', wait=False)
                                         n_trials_dual_critical, n_trials_dual_easy)
 test_trials_dual = data.TrialHandlerExt(test_stim_dual, name='test_dual', method='fullRandom', nReps=1)
 test_trials_single = data.TrialHandlerExt(test_stim_single, name='test_single', method='fullRandom', nReps=1)
+
+test_trials_dual = 1
+test_trials_single = 1
+
 test_blocks = [test_trials_dual, test_trials_single]
 random.shuffle(test_blocks)
 # we loop over the real test blocks
 for block in test_blocks:
     if block.name=='test_dual':
-        showMessage(dual_block_start)
+        showMessage(dual_block_start, wait=False)
     else:
-        showMessage(single_block_start)
+        showMessage(single_block_start, wait=False)
 
     for currentTrial in block:
         # 50% chance that T1 is presented quick or slow after trial start

@@ -6,9 +6,9 @@ experiment by running the main.py file located in the same folder.
 from parameters import *
 from psychopy import visual, event, core
 import random
-#import parallel
+import parallel
 
-#p = parallel.Parallel()
+p = parallel.Parallel()
 
 def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy_trials):
     '''
@@ -107,6 +107,12 @@ def displayFixCross():
     SCREEN.flip()
 
 
+def displayFixCrossAndSquare():
+    fix_cross.draw()
+    square.draw()
+    SCREEN.flip()
+
+
 def displayTask2():
     '''
     Diplay of rating scale that indicates visibilty of target 2. Above the rating
@@ -128,7 +134,7 @@ def displayTask2():
     #p.setData(trigger_task2)
     core.wait(0.01)
     #p.setData(0)
-
+    '''
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
         rating_scaleT2.draw()
@@ -138,6 +144,9 @@ def displayTask2():
 
     # get and return the rating
     return [rating_scaleT2.getRating(), rating_scaleT2.getRT()]
+    '''
+    core.wait(0.5)
+    return [None, None, None]
 
 
 def displayTask1():
@@ -157,6 +166,7 @@ def displayTask1():
     #p.setData(trigger_task1)
     core.wait(0.01)
     #p.setData(0)
+    '''
     while rating_scaleT1.noResponse:
         rating_scaleT1.draw()
         SCREEN.flip()
@@ -164,6 +174,9 @@ def displayTask1():
     print('The answer is: ', rating_scaleT1.getRating())
     # get and return the rating
     return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
+    '''
+    core.wait(0.5)
+    return [None, None, None]
 
 
 def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA):
@@ -180,8 +193,11 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     #p.setData(trigger_start_trial)
     core.wait(0.01)
     #p.setData(0)
+
+
     # it starts with the fixation cross
-    displayFixCross()
+    displayFixCrossAndSquare()
+    p.setData(99) # trigger for latency check
     core.wait(timing_T1_start)
 
     textT1 = displayT1()
@@ -222,10 +238,13 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
 
     # only in the dual task condition the question on target 1 is displayed
     if task_condition == 'dual':
+        '''
         ratingT1 = displayTask1()
         # accuracy of answer
         correct = True if ratingT1[0] in textT1 else False
         ratingT1.append(correct)
+        '''
+        ratingT1 = displayTask1()
     else:
         ratingT1 = [None, None, None]
 

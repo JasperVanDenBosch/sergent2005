@@ -7,7 +7,8 @@ import os
 import psychopy
 from psychopy import visual, core, logging, monitors
 
-participantID = int(input('Type in participant ID: '))
+#participantID = int(input('Type in participant ID: '))
+participantID = 10
 
 ###########################
 # Experimental parameters #
@@ -61,6 +62,9 @@ fix_cross_arm_len = 50
 fix_cross = visual.ShapeStim(SCREEN, pos=(0.0, 0.0), vertices=((0,-fix_cross_arm_len),
                 (0,fix_cross_arm_len),(0,0),(-fix_cross_arm_len,0),(fix_cross_arm_len,0)), units = 'pix',
                 lineWidth = 10,closeShape = False, lineColor = (1, 1, 1))
+
+# white square for latency check
+square = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(-5,0), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 
 #################
 # Trigger codes #
