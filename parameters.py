@@ -64,7 +64,7 @@ fix_cross = visual.ShapeStim(SCREEN, pos=(0.0, 0.0), vertices=((0,-fix_cross_arm
                 lineWidth = 10,closeShape = False, lineColor = (1, 1, 1))
 
 # white square for latency check
-square = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(6,-6), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+square = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(8,-4), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 
 #################
 # Trigger codes #
