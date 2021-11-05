@@ -16,7 +16,8 @@ participantID = 10
 
 experiment_name = 'eegmanylabs_sergent2005'
 start_T1_quick = 0.516
-start_T1_slow = 0.860
+#start_T1_slow = 0.860
+start_T1_slow = 0.516
 
 short_SOA = 0.258
 long_SOA = 0.688
