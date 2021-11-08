@@ -200,14 +200,13 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     p.setData(99) # trigger for latency check
     core.wait(timing_T1_start)
 
-    p.setData(9) # placeholder trigger
-
     textT1 = displayT1()
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
     SCREEN.flip()
     core.wait(stimulus_duration)
+    p.setData(9) # placeholder trigger
 
     displayMask()
     core.wait(stimulus_duration)
