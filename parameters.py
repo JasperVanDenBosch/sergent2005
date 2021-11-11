@@ -7,6 +7,7 @@ import os
 import psychopy
 from psychopy import visual, core, logging, monitors
 
+
 #participantID = int(input('Type in participant ID: '))
 participantID = 10
 
@@ -35,28 +36,62 @@ n_training_trial_divisor = 16
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
+'''
+# pull dpi from system
+import tkinter
+root = tkinter.Tk()
+dpi = root.winfo_fpixels('1i') # get number of pixels in 1 inch of screen ("1i")
+'''
+
+import wx
+import platform
+# pull resolution from system
+app = wx.App(False)
+width, height = wx.GetDisplaySize()
+
+width_cm = input("Please enter the width of your monitor in cm (e.g. 53.1): ")
+
+'''
+if platform.system() == "Linux":
+    print("Linux")
+elif platform.system() == "Windows":
+    print("Windows")
+elif platform.system() == "Mac":
+    print("Don't know what to do for Mac!")
+'''
+
 # set monitor details
-my_monitor = monitors.Monitor(name='my_monitor')
-my_monitor.setSizePix((1280, 800))
-my_monitor.setWidth(20)
-my_monitor.setDistance(100)
+my_monitor = monitors.Monitor(name='my_monitor', distance=100)
+my_monitor.setSizePix((width, height))
+my_monitor.setWidth(width_cm)
 my_monitor.saveMon()
-SCREEN = visual.Window(monitor='my_monitor', color=(-1,-1,-1), fullscr=True)
+SCREEN = visual.Window(monitor='my_monitor',
+                       color=(-1,-1,-1),
+                       fullscr=True,
+                       units='deg')
 #m = event.Mouse(win=SCREEN)
 #m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
 
+# marker of the rating scale
+rating_marker = visual.rect.Rect(SCREEN, width=1.2, height=2, units='deg', fillColor='LightGrey')
+
+# size of stimuli in degrees of visual angle
+square_size = 0.5
+string_width = 4 #width of all four letters -- problem: psychopy defines width based on height & font!
+string_height = 1
+
 target2_strings = ['TWO', 'FIVE', 'SEVEN', 'EIGHT']
 target1_strings = ['OXXO', 'XOOX']
-target1 = visual.TextStim(SCREEN)
-target2 = visual.TextStim(SCREEN)
-target2_square1 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square2 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square3 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square4 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target1 = visual.TextStim(SCREEN, height=string_height)
+target2 = visual.TextStim(SCREEN, height=string_height)
+target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square2 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square3 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square4 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 
 # the mask is set of 4 capital letters (randomly generated in function file)
 possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']
-mask = visual.TextStim(SCREEN, text='INIT')
+mask = visual.TextStim(SCREEN, text='INIT', height=string_height)
 
 # the fixation cross
 fix_cross_arm_len = 50

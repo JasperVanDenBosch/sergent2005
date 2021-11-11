@@ -126,7 +126,7 @@ def displayTask2():
     task2_text = 'Please indicate the visibilty of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
     rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibilty'], acceptKeys='space',
-                                        scale=task2_text, noMouse=True, lineColor='DarkGrey', markerColor='LightGrey', pos=(0.0, 0.0),
+                                        scale=task2_text, noMouse=True, lineColor='DarkGrey', marker=rating_marker, pos=(0.0, 0.0),
                                         showAccept=False, markerStart=random.choice(range(scale_length)))
 
     rating_scaleT2.draw()
@@ -159,7 +159,7 @@ def displayTask1():
                  '\'OO\' or \'XX\'\n'\
                  'Press \'space\' to confirm.\n\n'
     rating_scaleT1 = visual.RatingScale(SCREEN, noMouse=True, choices=['OO', 'XX'], markerStart=0.5, labels = ['OO', 'XX'], scale=task1_text,
-                                        acceptKeys='space', lineColor='DarkGrey', markerColor='DarkGrey', pos=(0.0, 0.0), showAccept=False)
+                                        acceptKeys='space', lineColor='DarkGrey', marker=rating_marker, pos=(0.0, 0.0), showAccept=False)
 
     rating_scaleT1.draw()
     SCREEN.flip()
