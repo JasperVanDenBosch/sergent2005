@@ -25,12 +25,12 @@ long_SOA = 0.688
 stimulus_duration = 0.043 #in seconds
 visibility_scale_timing = 0.500 # after third mask offset
 
-n_trials_single = 32 # only visibility rating task
-n_trials_dual_critical = 96 # attentional blink condition!
-n_trials_dual_easy = 48 # no intentional blink
+n_trials_single = 160 # only visibility rating task
+n_trials_dual_critical = 160 # attentional blink condition!
+n_trials_dual_easy = 160 # no intentional blink
 # to calculate the number of trials of each condition in the training session,
 # each number of test trial will be divided by n_training_trial_divisor
-n_training_trial_divisor = 16
+n_training_trial_divisor = 1
 
 ####################################################
 # Visual features (targets, masks, fixation cross) #
