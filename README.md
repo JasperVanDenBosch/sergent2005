@@ -5,7 +5,7 @@ To run the experiment use the latest psychopy version due to crucial bug fixes o
 ## Install Instructions
 
 To run the experiment:
-1. Open a Powershell window
+1. Open a Powershell window from the Start Menu
 2. Run `git clone https://github.com/zora-no/eegmanylabs-sergent2005.git`
 3. Run `cd eegmanylabs-sergent2005` 
 4. Run `py -m pip install dependencies`
