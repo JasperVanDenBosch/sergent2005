@@ -8,8 +8,7 @@ import psychopy
 from psychopy import visual, core, logging, monitors
 
 
-#participantID = int(input('Type in participant ID: '))
-participantID = 10
+participantID = int(input('Type in participant ID: '))
 
 ###########################
 # Experimental parameters #
@@ -17,8 +16,7 @@ participantID = 10
 
 experiment_name = 'eegmanylabs_sergent2005'
 start_T1_quick = 0.516
-#start_T1_slow = 0.860
-start_T1_slow = 0.516
+start_T1_slow = 0.860
 
 short_SOA = 0.258
 long_SOA = 0.688
@@ -36,29 +34,13 @@ n_training_trial_divisor = 1
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-'''
-# pull dpi from system
-import tkinter
-root = tkinter.Tk()
-dpi = root.winfo_fpixels('1i') # get number of pixels in 1 inch of screen ("1i")
-'''
-
 import wx
-import platform
 # pull resolution from system
 app = wx.App(False)
 width, height = wx.GetDisplaySize()
 
 width_cm = input("Please enter the width of your monitor in cm (e.g. 53.1): ")
 
-'''
-if platform.system() == "Linux":
-    print("Linux")
-elif platform.system() == "Windows":
-    print("Windows")
-elif platform.system() == "Mac":
-    print("Don't know what to do for Mac!")
-'''
 
 # set monitor details
 my_monitor = monitors.Monitor(name='my_monitor', distance=100)
@@ -72,12 +54,8 @@ SCREEN = visual.Window(monitor='my_monitor',
 #m = event.Mouse(win=SCREEN)
 #m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
 
-# marker of the rating scale
-rating_marker = visual.rect.Rect(SCREEN, width=1.2, height=2, units='deg', fillColor='LightGrey')
-
 # size of stimuli in degrees of visual angle
 square_size = 0.5
-string_width = 4 #width of all four letters -- problem: psychopy defines width based on height & font!
 string_height = 1
 
 target2_strings = ['TWO', 'FIVE', 'SEVEN', 'EIGHT']
@@ -99,8 +77,6 @@ fix_cross = visual.ShapeStim(SCREEN, pos=(0.0, 0.0), vertices=((0,-fix_cross_arm
                 (0,fix_cross_arm_len),(0,0),(-fix_cross_arm_len,0),(fix_cross_arm_len,0)), units = 'pix',
                 lineWidth = 10,closeShape = False, lineColor = (1, 1, 1))
 
-# white square for latency check
-square = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(8,-4), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 
 #################
 # Trigger codes #
@@ -146,7 +122,7 @@ path = DATAPATH +'/' + csvfile
 #               Instructions/Text              #
 ################################################
 
-welcome_message = 'Welcome to the experiment. \n Please press \'space\' if you are ready to start with reading the instructions.'
+welcome_message = 'Welcome to the experiment. \n\n Please press \'space\' if you are ready to start with reading the instructions.'
 instructions = 'In the experiment you will see two different target stimuli that will quickly be hidden by a mask.\n\n'\
                'Target 1: \'OXXO\' or \'XOOX\'\n Target 2: a number word (e.g.,\'FIVE\')\n' \
                'Mask: 4 consonants (e.g., \'BKGF\')\n \nThere are two tasks you have to perform after you saw the targets.\n \n' \

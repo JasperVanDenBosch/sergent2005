@@ -42,14 +42,14 @@ exp = data.ExperimentHandler(name=experiment_name,
                 dataFileName=f'%s\%s_%i' % (DATAPATH, experiment_name, participantID))
 
 # Welcome the participant
-showMessage(welcome_message, wait=False)
-showMessage(instructions, wait=False)
+showMessage(welcome_message, 0.4)
+showMessage(instructions)
 
 ###############################
 #          TRAINING           #
 ###############################
-showMessage(training_instructions, wait=False)
-showMessage('TRAINING STARTS', wait=False)
+showMessage(training_instructions)
+showMessage('TRAINING STARTS', 0.5, wait=False)
 
 # calculate how many trials we need for the training
 n_train_trials_single = int(n_trials_single/n_training_trial_divisor)
@@ -73,9 +73,9 @@ training_blocks = [train_trials_dual, train_trials_single]
 random.shuffle(training_blocks)
 for block in training_blocks:
     if block.name=='train_dual':
-        showMessage(dual_block_start, wait=False)
+        showMessage(dual_block_start)
     else:
-        showMessage(single_block_start, wait=False)
+        showMessage(single_block_start)
 
     for currentTrial in block:
         # 50% chance that T1 is presented quick or slow after trial start
@@ -96,13 +96,13 @@ for block in training_blocks:
         exp.nextEntry()
 
 print('Training done!')
-showMessage(finished_training, wait=False)
+showMessage(finished_training)
 
 ##################################################
 #          TESTING (experiment starts)           #
 ##################################################
 
-showMessage('EXPERIMENT STARTS', wait=False)
+showMessage('EXPERIMENT STARTS', 0.5, wait=False)
 
 [test_stim_single, test_stim_dual] = computeStimulusList(False, n_trials_single,
                                         n_trials_dual_critical, n_trials_dual_easy)
@@ -114,9 +114,9 @@ random.shuffle(test_blocks)
 # we loop over the real test blocks
 for block in test_blocks:
     if block.name=='test_dual':
-        showMessage(dual_block_start, wait=False)
+        showMessage(dual_block_start)
     else:
-        showMessage(single_block_start, wait=False)
+        showMessage(single_block_start)
 
     for currentTrial in block:
         # 50% chance that T1 is presented quick or slow after trial start

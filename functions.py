@@ -58,9 +58,9 @@ def displayT1():
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
     SCREEN.flip()
-    #p.setData(trigger_T1)
+    p.setData(trigger_T1)
     core.wait(0.01)
-    #p.setData(0)
+    p.setData(0)
     return target1.text
 
 
@@ -85,9 +85,9 @@ def displayT2(T2_present):
         target2.text = ''
 
     SCREEN.flip()
-    #p.setData(trigger_T2)
+    p.setData(trigger_T2)
     core.wait(0.01)
-    #p.setData(0)
+    p.setData(0)
     return target2.text
 
 def displayMask():
@@ -107,12 +107,6 @@ def displayFixCross():
     SCREEN.flip()
 
 
-def displayFixCrossAndSquare():
-    fix_cross.draw()
-    square.draw()
-    SCREEN.flip()
-
-
 def displayTask2():
     '''
     Diplay of rating scale that indicates visibilty of target 2. Above the rating
@@ -125,16 +119,16 @@ def displayTask2():
     scale_length = 21 # the maximum visibiliy rating
     task2_text = 'Please indicate the visibilty of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
-    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibilty'], acceptKeys='space',
-                                        scale=task2_text, noMouse=True, lineColor='DarkGrey', marker=rating_marker, pos=(0.0, 0.0),
-                                        showAccept=False, markerStart=random.choice(range(scale_length)))
+    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibilty'],
+                                        acceptKeys='space', scale=task2_text, noMouse=True, lineColor='DarkGrey',
+                                        markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random.choice(range(scale_length)))
 
     rating_scaleT2.draw()
     SCREEN.flip()
-    #p.setData(trigger_task2)
+    p.setData(trigger_task2)
     core.wait(0.01)
-    #p.setData(0)
-    '''
+    p.setData(0)
+
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
         rating_scaleT2.draw()
@@ -144,9 +138,7 @@ def displayTask2():
 
     # get and return the rating
     return [rating_scaleT2.getRating(), rating_scaleT2.getRT()]
-    '''
-    core.wait(0.5)
-    return [None, None, None]
+
 
 
 def displayTask1():
@@ -158,15 +150,15 @@ def displayTask1():
     task1_text = 'Please indictate whether the two letters \n in the center of target 1 were ' \
                  '\'OO\' or \'XX\'\n'\
                  'Press \'space\' to confirm.\n\n'
-    rating_scaleT1 = visual.RatingScale(SCREEN, noMouse=True, choices=['OO', 'XX'], markerStart=0.5, labels = ['OO', 'XX'], scale=task1_text,
-                                        acceptKeys='space', lineColor='DarkGrey', marker=rating_marker, pos=(0.0, 0.0), showAccept=False)
-
+    rating_scaleT1 = visual.RatingScale(SCREEN, noMouse=True, choices=['OO', 'XX'], markerStart=0.5, labels=['OO', 'XX'],
+                                        scale=task1_text, acceptKeys='space', lineColor='DarkGrey', markerColor='DarkGrey',
+                                        pos=(0.0, 0.0), showAccept=False)
     rating_scaleT1.draw()
     SCREEN.flip()
-    #p.setData(trigger_task1)
+    p.setData(trigger_task1)
     core.wait(0.01)
-    #p.setData(0)
-    '''
+    p.setData(0)
+
     while rating_scaleT1.noResponse:
         rating_scaleT1.draw()
         SCREEN.flip()
@@ -174,9 +166,7 @@ def displayTask1():
     print('The answer is: ', rating_scaleT1.getRating())
     # get and return the rating
     return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
-    '''
-    core.wait(0.5)
-    return [None, None, None]
+
 
 
 def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA):
@@ -190,14 +180,11 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     '''
 
     print('++++++ start trial +++++++')
-    #p.setData(trigger_start_trial)
+    p.setData(trigger_start_trial)
     core.wait(0.01)
-    #p.setData(0)
-
-
+    p.setData(0)
     # it starts with the fixation cross
-    displayFixCrossAndSquare()
-    p.setData(99) # trigger for latency check
+    displayFixCross()
     core.wait(timing_T1_start)
 
     textT1 = displayT1()
@@ -206,7 +193,6 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     # display black screen between stimuli and masks
     SCREEN.flip()
     core.wait(stimulus_duration)
-    p.setData(9) # placeholder trigger
 
     displayMask()
     core.wait(stimulus_duration)
@@ -239,19 +225,16 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
 
     # only in the dual task condition the question on target 1 is displayed
     if task_condition == 'dual':
-        '''
         ratingT1 = displayTask1()
         # accuracy of answer
         correct = True if ratingT1[0] in textT1 else False
         ratingT1.append(correct)
-        '''
-        ratingT1 = displayTask1()
     else:
         ratingT1 = [None, None, None]
 
     return ratingT2, ratingT1, textT2, textT1
 
-def showMessage(message, text_height=0.08, wait=True):
+def showMessage(message, text_height=0.3, wait=True):
     text_to_display = visual.TextStim(SCREEN, text=message, height=text_height)
     text_to_display.draw()
     SCREEN.flip()
