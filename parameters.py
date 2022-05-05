@@ -7,6 +7,7 @@ import os
 import psychopy
 from psychopy import visual, core, logging, monitors
 
+
 participantID = int(input('Type in participant ID: '))
 
 ###########################
@@ -22,45 +23,60 @@ long_SOA = 0.688
 stimulus_duration = 0.043 #in seconds
 visibility_scale_timing = 0.500 # after third mask offset
 
-n_trials_single = 32 # only visibility rating task
-n_trials_dual_critical = 96 # attentional blink condition!
-n_trials_dual_easy = 48 # no intentional blink
+n_trials_single = 160 # only visibility rating task
+n_trials_dual_critical = 160 # attentional blink condition!
+n_trials_dual_easy = 160 # no intentional blink
 # to calculate the number of trials of each condition in the training session,
 # each number of test trial will be divided by n_training_trial_divisor
-n_training_trial_divisor = 16
+n_training_trial_divisor = 1
 
 ####################################################
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
+import wx
+# pull resolution from system
+app = wx.App(False)
+width, height = wx.GetDisplaySize()
+
+width_cm = input("Please enter the width of your monitor in cm (e.g. 53.1): ")
+
+
 # set monitor details
-my_monitor = monitors.Monitor(name='my_monitor')
-my_monitor.setSizePix((1280, 800))
-my_monitor.setWidth(20)
-my_monitor.setDistance(100)
+my_monitor = monitors.Monitor(name='my_monitor', distance=100)
+my_monitor.setSizePix((width, height))
+my_monitor.setWidth(width_cm)
 my_monitor.saveMon()
-SCREEN = visual.Window(monitor='my_monitor', color=(-1,-1,-1), fullscr=True)
+SCREEN = visual.Window(monitor='my_monitor',
+                       color=(-1,-1,-1),
+                       fullscr=True,
+                       units='deg')
 #m = event.Mouse(win=SCREEN)
 #m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
 
+# size of stimuli in degrees of visual angle
+square_size = 0.5
+string_height = 1
+
 target2_strings = ['TWO', 'FIVE', 'SEVEN', 'EIGHT']
 target1_strings = ['OXXO', 'XOOX']
-target1 = visual.TextStim(SCREEN)
-target2 = visual.TextStim(SCREEN)
-target2_square1 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square2 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square3 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square4 = visual.Rect(SCREEN, size=(1, 1), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target1 = visual.TextStim(SCREEN, height=string_height)
+target2 = visual.TextStim(SCREEN, height=string_height)
+target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square2 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square3 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square4 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 
 # the mask is set of 4 capital letters (randomly generated in function file)
 possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']
-mask = visual.TextStim(SCREEN, text='INIT')
+mask = visual.TextStim(SCREEN, text='INIT', height=string_height)
 
 # the fixation cross
 fix_cross_arm_len = 50
 fix_cross = visual.ShapeStim(SCREEN, pos=(0.0, 0.0), vertices=((0,-fix_cross_arm_len),
                 (0,fix_cross_arm_len),(0,0),(-fix_cross_arm_len,0),(fix_cross_arm_len,0)), units = 'pix',
                 lineWidth = 10,closeShape = False, lineColor = (1, 1, 1))
+
 
 #################
 # Trigger codes #
@@ -106,7 +122,7 @@ path = DATAPATH +'/' + csvfile
 #               Instructions/Text              #
 ################################################
 
-welcome_message = 'Welcome to the experiment. \n Please press \'space\' if you are ready to start with reading the instructions.'
+welcome_message = 'Welcome to the experiment. \n\n Please press \'space\' if you are ready to start with reading the instructions.'
 instructions = 'In the experiment you will see two different target stimuli that will quickly be hidden by a mask.\n\n'\
                'Target 1: \'OXXO\' or \'XOOX\'\n Target 2: a number word (e.g.,\'FIVE\')\n' \
                'Mask: 4 consonants (e.g., \'BKGF\')\n \nThere are two tasks you have to perform after you saw the targets.\n \n' \

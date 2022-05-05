@@ -42,19 +42,20 @@ exp = data.ExperimentHandler(name=experiment_name,
                 dataFileName=f'%s\%s_%i' % (DATAPATH, experiment_name, participantID))
 
 # Welcome the participant
-showMessage(welcome_message, 0.1)
-showMessage(instructions, 0.07)
+showMessage(welcome_message, 0.4)
+showMessage(instructions)
 
 ###############################
 #          TRAINING           #
 ###############################
 showMessage(training_instructions)
-showMessage('TRAINING STARTS', wait=False)
+showMessage('TRAINING STARTS', 0.5, wait=False)
 
 # calculate how many trials we need for the training
 n_train_trials_single = int(n_trials_single/n_training_trial_divisor)
 n_train_trials_dual_critical = int(n_trials_dual_critical/n_training_trial_divisor)
 n_train_trials_dual_easy = int(n_trials_dual_easy/n_training_trial_divisor)
+
 
 # copmute the list of all different trial conditions and store it in two lists,
 # one for the single task and one for the dual task condition
@@ -101,12 +102,13 @@ showMessage(finished_training)
 #          TESTING (experiment starts)           #
 ##################################################
 
-showMessage('EXPERIMENT STARTS', wait=False)
+showMessage('EXPERIMENT STARTS', 0.5, wait=False)
 
 [test_stim_single, test_stim_dual] = computeStimulusList(False, n_trials_single,
                                         n_trials_dual_critical, n_trials_dual_easy)
 test_trials_dual = data.TrialHandlerExt(test_stim_dual, name='test_dual', method='fullRandom', nReps=1)
 test_trials_single = data.TrialHandlerExt(test_stim_single, name='test_single', method='fullRandom', nReps=1)
+
 test_blocks = [test_trials_dual, test_trials_single]
 random.shuffle(test_blocks)
 # we loop over the real test blocks
