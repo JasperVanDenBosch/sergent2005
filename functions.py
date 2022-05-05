@@ -109,7 +109,7 @@ def displayFixCross():
 
 def displayTask2():
     '''
-    Diplay of rating scale that indicates visibilty of target 2. Above the rating
+    Diplay of rating scale that indicates visibility of target 2. Above the rating
     scale a short instruction is shown.
     '''
     # the rating scale has to be re-initialized in every function call, because
@@ -117,9 +117,9 @@ def displayTask2():
     # scale object again and again.
     # The marker start needs to be defined randomly beforehand
     scale_length = 21 # the maximum visibiliy rating
-    task2_text = 'Please indicate the visibilty of the number word \n by choosing a rating on the scale below.\n' \
+    task2_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
-    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibilty'],
+    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibility'],
                                         acceptKeys='space', scale=task2_text, noMouse=True, lineColor='DarkGrey',
                                         markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random.choice(range(scale_length)))
 
@@ -220,7 +220,7 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     SCREEN.flip()
     core.wait(visibility_scale_timing)
 
-    # start the visibilty rating (happens in single AND dual task conditions)
+    # start the visibility rating (happens in single AND dual task conditions)
     ratingT2 = displayTask2()
 
     # only in the dual task condition the question on target 1 is displayed
