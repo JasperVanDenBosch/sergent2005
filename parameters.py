@@ -15,11 +15,11 @@ participantID = int(input('Type in participant ID: '))
 ###########################
 
 experiment_name = 'eegmanylabs_sergent2005'
-start_T1_quick = 0.516
-start_T1_slow = 0.860
+start_T1_quick = 0.514
+start_T1_slow = 0.857
 
-short_SOA = 0.258
-long_SOA = 0.688
+short_SOA = 0.257
+long_SOA = 0.686
 stimulus_duration = 0.043 #in seconds
 visibility_scale_timing = 0.500 # after third mask offset
 
@@ -58,7 +58,7 @@ SCREEN = visual.Window(monitor='my_monitor',
 square_size = 0.5
 string_height = 1
 
-target2_strings = ['TWO', 'FIVE', 'SEVEN', 'EIGHT']
+target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 target1_strings = ['OXXO', 'XOOX']
 target1 = visual.TextStim(SCREEN, height=string_height)
 target2 = visual.TextStim(SCREEN, height=string_height)
