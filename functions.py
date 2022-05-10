@@ -8,7 +8,14 @@ from psychopy import visual, event, core
 import random
 import parallel
 
-p = parallel.Parallel()
+# address = '/dev/ttyUSB0'
+# baudrate= 115200
+# port = serial.Serial(address, baudrate=baudrate)
+# port.write(bytes([t]))
+
+#p = parallel.Parallel()
+import mock
+p = mock.Mock()
 
 def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy_trials):
     '''
