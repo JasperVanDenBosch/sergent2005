@@ -43,7 +43,7 @@ width_cm = input("Please enter the width of your monitor in cm (e.g. 53.1): ")
 
 
 # set monitor details
-my_monitor = monitors.Monitor(name='my_monitor', distance=100)
+my_monitor = monitors.Monitor(name='my_monitor', distance=50)
 my_monitor.setSizePix((width, height))
 my_monitor.setWidth(width_cm)
 my_monitor.saveMon()
