@@ -6,16 +6,22 @@ experiment by running the main.py file located in the same folder.
 from parameters import *
 from psychopy import visual, event, core
 import random
-import parallel
+import parallel, serial
 
-# address = '/dev/ttyUSB0'
-# baudrate= 115200
-# port = serial.Serial(address, baudrate=baudrate)
-# port.write(bytes([t]))
+## temporary code for pilot
+class SerialPort(object):
 
-#p = parallel.Parallel()
-import mock
-p = mock.Mock()
+    def __init__(self, sport):
+        self.sport = sport
+
+    def setData(self, val: int):
+        self.sport.write(bytes([val]))
+
+address = '/dev/pts/1'
+baudrate= 115200
+sport = serial.Serial(address, baudrate=baudrate)
+p = SerialPort(sport)
+
 
 def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy_trials):
     '''
