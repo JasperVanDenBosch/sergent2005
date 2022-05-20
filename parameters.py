@@ -4,22 +4,24 @@ experiment by running the main.py file located in the same folder.
 '''
 
 import os
+from os.path import join
 import psychopy
 from psychopy import visual, core, logging, monitors
+from labs import lab_settings
+import wx
 
 
-participantID = int(input('Type in participant ID: '))
 
 ###########################
 # Experimental parameters #
 ###########################
 
 experiment_name = 'eegmanylabs_sergent2005'
-start_T1_quick = 0.516
-start_T1_slow = 0.860
+start_T1_quick = 0.514
+start_T1_slow = 0.857
 
-short_SOA = 0.258
-long_SOA = 0.688
+short_SOA = 0.257
+long_SOA = 0.686
 stimulus_duration = 0.043 #in seconds
 visibility_scale_timing = 0.500 # after third mask offset
 
@@ -28,22 +30,30 @@ n_trials_dual_critical = 160 # attentional blink condition!
 n_trials_dual_easy = 160 # no intentional blink
 # to calculate the number of trials of each condition in the training session,
 # each number of test trial will be divided by n_training_trial_divisor
-n_training_trial_divisor = 1
+n_training_trial_divisor = 8
 
 ####################################################
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-import wx
+
 # pull resolution from system
 app = wx.App(False)
 width, height = wx.GetDisplaySize()
+print(f'Detected display resolution: {width}x{height}')
 
-width_cm = input("Please enter the width of your monitor in cm (e.g. 53.1): ")
+## User input
+labs_str = ''.join([f'[{l}] ' for l in lab_settings.keys()])
+lab_name = input(f'Please select your lab {labs_str}:')
+assert lab_name in lab_settings.keys(), 'Unknown lab'
+participantID = int(input('Type in participant ID number: '))
 
+chosen_settings = lab_settings[lab_name]
+width_cm = chosen_settings['mon_width']
+dist_cm = chosen_settings['mon_dist']
 
 # set monitor details
-my_monitor = monitors.Monitor(name='my_monitor', distance=100)
+my_monitor = monitors.Monitor(name='my_monitor', distance=dist_cm)
 my_monitor.setSizePix((width, height))
 my_monitor.setWidth(width_cm)
 my_monitor.saveMon()
@@ -58,10 +68,10 @@ SCREEN = visual.Window(monitor='my_monitor',
 square_size = 0.5
 string_height = 1
 
-target2_strings = ['TWO', 'FIVE', 'SEVEN', 'EIGHT']
+target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 target1_strings = ['OXXO', 'XOOX']
-target1 = visual.TextStim(SCREEN, height=string_height)
-target2 = visual.TextStim(SCREEN, height=string_height)
+target1 = visual.TextStim(SCREEN, height=string_height, units='deg')
+target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
 target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 target2_square2 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 target2_square3 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
@@ -69,13 +79,25 @@ target2_square4 = visual.Rect(SCREEN, size=(square_size, square_size), units='de
 
 # the mask is set of 4 capital letters (randomly generated in function file)
 possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']
-mask = visual.TextStim(SCREEN, text='INIT', height=string_height)
+mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
 
 # the fixation cross
-fix_cross_arm_len = 50
-fix_cross = visual.ShapeStim(SCREEN, pos=(0.0, 0.0), vertices=((0,-fix_cross_arm_len),
-                (0,fix_cross_arm_len),(0,0),(-fix_cross_arm_len,0),(fix_cross_arm_len,0)), units = 'pix',
-                lineWidth = 10,closeShape = False, lineColor = (1, 1, 1))
+fix_cross_arm_len = 0.4
+fix_cross = visual.ShapeStim(
+    SCREEN,
+    pos=(0.0, 0.0),
+    vertices=(
+        (0,-fix_cross_arm_len),
+        (0,fix_cross_arm_len),
+        (0,0),
+        (-fix_cross_arm_len,0),
+        (fix_cross_arm_len,0)
+    ),
+    units = 'deg',
+    lineWidth = fix_cross_arm_len,
+    closeShape = False,
+    lineColor = (1, 1, 1)
+)
 
 
 #################
@@ -96,32 +118,24 @@ trigger_start_trial = 15
 # create folder for data and error logging
 if not os.path.isdir('logging'):
     os.makedirs('logging')
-EXEPATH = os.path.dirname(os.path.abspath('main.py'))
-LOGPATH = EXEPATH + '\logging'
-if not os.path.exists(LOGPATH):
-    os.makedirs(LOGPATH)
-
-filename = 'logging' + os.path.sep + 'subject%s' % participantID #os.path.sep creates '\'
-logFile = logging.LogFile(filename + '.log', level=logging.EXP)
-# this outputs to the screen, not a file (setting to critical means silencing
-# console output by ingoring WARNING)
-logging.console.setLevel(logging.CRITICAL)
-
 if not os.path.isdir('behavioral_data'):
     os.makedirs('behavioral_data')
-DATAPATH = EXEPATH + os.path.sep + 'behavioral_data'
-# add a data subfolder
-if not os.path.exists(DATAPATH):
-    os.makedirs(DATAPATH)
-# Name of csv file
-csvfile = 'subject%s.csv' % participantID
-path = DATAPATH +'/' + csvfile
+
+FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
+FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}.csv')
+
+log_fpath = join('logging', f'subject{participantID}.log')
+logFile = logging.LogFile(log_fpath, level=logging.EXP)
+# this outputs to the screen, not a file (setting to critical means silencing
+# console output by ignoring WARNING)
+logging.console.setLevel(logging.CRITICAL)
 
 
 ################################################
 #               Instructions/Text              #
 ################################################
 
+LARGE_FONT = 1
 welcome_message = 'Welcome to the experiment. \n\n Please press \'space\' if you are ready to start with reading the instructions.'
 instructions = 'In the experiment you will see two different target stimuli that will quickly be hidden by a mask.\n\n'\
                'Target 1: \'OXXO\' or \'XOOX\'\n Target 2: a number word (e.g.,\'FIVE\')\n' \

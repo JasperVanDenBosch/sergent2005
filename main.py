@@ -20,8 +20,6 @@ presented before the second target.
 
 '''
 import psychopy
-# use the latest psychopy version due to crucial bug fixes on TrialHandlerExt
-#psychopy.useVersion('2021.1.4')
 from parameters import *
 from functions import *
 from psychopy import data
@@ -31,25 +29,28 @@ import random
 exp_conditions = ['single', 'dual']
 # we have 368 trials in total, half of this is short SOA and the other half is long SOA
 
+p = openTriggerPort(chosen_settings)
+
 # define an experiment handler
 exp = data.ExperimentHandler(name=experiment_name,
-                version='0.1',
-                extraInfo={'participant':participantID, 'age':23, 'short_SOA':short_SOA, 'long_SOA':long_SOA, 'stimulus_duration':stimulus_duration},
-                runtimeInfo=None,
-                originPath=None,
-                savePickle=True,
-                saveWideText=True,
-                dataFileName=f'%s\%s_%i' % (DATAPATH, experiment_name, participantID))
+    version='0.1',
+    extraInfo={'participant':participantID, 'short_SOA':short_SOA, 'long_SOA':long_SOA, 'stimulus_duration':stimulus_duration},
+    runtimeInfo=None,
+    originPath=None,
+    savePickle=True,
+    saveWideText=True,
+    dataFileName=FPATH_DATA_CSV
+)
 
 # Welcome the participant
-showMessage(welcome_message, 0.4)
+showMessage(welcome_message, LARGE_FONT)
 showMessage(instructions)
 
 ###############################
 #          TRAINING           #
 ###############################
 showMessage(training_instructions)
-showMessage('TRAINING STARTS', 0.5, wait=False)
+showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
 
 # calculate how many trials we need for the training
 n_train_trials_single = int(n_trials_single/n_training_trial_divisor)
@@ -57,7 +58,7 @@ n_train_trials_dual_critical = int(n_trials_dual_critical/n_training_trial_divis
 n_train_trials_dual_easy = int(n_trials_dual_easy/n_training_trial_divisor)
 
 
-# copmute the list of all different trial conditions and store it in two lists,
+# compute the list of all different trial conditions and store it in two lists,
 # one for the single task and one for the dual task condition
 [train_stim_single, train_stim_dual] = computeStimulusList(True, n_train_trials_single,
                                         n_train_trials_dual_critical, n_train_trials_dual_easy)
@@ -83,7 +84,7 @@ for block in training_blocks:
         duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
         target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA)
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
         # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
@@ -102,7 +103,7 @@ showMessage(finished_training)
 #          TESTING (experiment starts)           #
 ##################################################
 
-showMessage('EXPERIMENT STARTS', 0.5, wait=False)
+showMessage('MAIN EXPERIMENT STARTS', LARGE_FONT, wait=False)
 
 [test_stim_single, test_stim_dual] = computeStimulusList(False, n_trials_single,
                                         n_trials_dual_critical, n_trials_dual_easy)
@@ -124,7 +125,7 @@ for block in test_blocks:
         duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
         target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA)
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
         # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
@@ -137,7 +138,7 @@ for block in test_blocks:
         exp.nextEntry()
 
 # save the whole data as txt (additionally to the csv file), this also returns a dataFrame
-df = exp.saveAsWideText(f"behavioral_data\%s_%i.txt" % (experiment_name, participantID))
+df = exp.saveAsWideText(FPATH_DATA_TXT)
 
 showMessage(thank_you, wait=False)
 print('Saved experiment file!')

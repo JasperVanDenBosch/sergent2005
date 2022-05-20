@@ -2,15 +2,34 @@
 This script contains all functions needed to execute the attentional blink
 experiment by running the main.py file located in the same folder.
 '''
-
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Tuple, Dict, Union
 from parameters import *
 from psychopy import visual, event, core
 import random
-import parallel
+from parallel import Parallel
+from serialport import SerialPort
+if TYPE_CHECKING:
+    TriggerPort = Union[SerialPort, Parallel]
 
-p = parallel.Parallel()
 
-def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy_trials):
+def openTriggerPort(settings: Dict) -> TriggerPort:
+    if settings.get('port_type') == 'parallel':
+        return Parallel()
+    elif settings.get('port_type') == 'serial':
+        return SerialPort(
+            settings['port_address'],
+            baud=settings['port_baudrate']
+        )
+    else:
+        raise ValueError('Unknown port type in lab settings.')
+
+def computeStimulusList(
+        training: bool,
+        single_trials: int,
+        dual_critical_trials: int,
+        dual_easy_trials: int
+    ) -> Tuple[List[Dict], List[Dict]]:
     '''
     In this function a list of dictionaries containing all possible combination of
     trial types is created. It returns two lists, one for the dual task condition
@@ -51,7 +70,7 @@ def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy
     return stimuli_single, stimuli_dual
 
 
-def displayT1():
+def displayT1(p: TriggerPort):
     '''
     Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
     '''
@@ -64,7 +83,7 @@ def displayT1():
     return target1.text
 
 
-def displayT2(T2_present):
+def displayT2(T2_present, p: TriggerPort):
     '''
     Displays the second target (T2) constisting of 4 white squares and (if present
     condition is active) of a number word in capital letters.
@@ -107,9 +126,9 @@ def displayFixCross():
     SCREEN.flip()
 
 
-def displayTask2():
+def displayTask2(p: TriggerPort):
     '''
-    Diplay of rating scale that indicates visibilty of target 2. Above the rating
+    Diplay of rating scale that indicates visibility of target 2. Above the rating
     scale a short instruction is shown.
     '''
     # the rating scale has to be re-initialized in every function call, because
@@ -117,9 +136,9 @@ def displayTask2():
     # scale object again and again.
     # The marker start needs to be defined randomly beforehand
     scale_length = 21 # the maximum visibiliy rating
-    task2_text = 'Please indicate the visibilty of the number word \n by choosing a rating on the scale below.\n' \
+    task2_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
-    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibilty'],
+    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibility'],
                                         acceptKeys='space', scale=task2_text, noMouse=True, lineColor='DarkGrey',
                                         markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random.choice(range(scale_length)))
 
@@ -141,13 +160,13 @@ def displayTask2():
 
 
 
-def displayTask1():
+def displayTask1(p: TriggerPort):
     '''
     Diplay of choice making task that indicates if the participant correctly
     recognized T1 as either 'OXXO' or 'XOOX'.
     '''
 
-    task1_text = 'Please indictate whether the two letters \n in the center of target 1 were ' \
+    task1_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
                  '\'OO\' or \'XX\'\n'\
                  'Press \'space\' to confirm.\n\n'
     rating_scaleT1 = visual.RatingScale(SCREEN, noMouse=True, choices=['OO', 'XX'], markerStart=0.5, labels=['OO', 'XX'],
@@ -169,7 +188,7 @@ def displayTask1():
 
 
 
-def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA):
+def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA, p: TriggerPort):
     '''
     Starts the real experiment trial.
     Parameters:
@@ -187,7 +206,7 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     displayFixCross()
     core.wait(timing_T1_start)
 
-    textT1 = displayT1()
+    textT1 = displayT1(p)
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
@@ -202,7 +221,7 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     displayFixCross()
     core.wait(duration_SOA - stimulus_duration*3)
 
-    textT2 = displayT2(target2_presence)
+    textT2 = displayT2(target2_presence, p)
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
@@ -220,12 +239,12 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
     SCREEN.flip()
     core.wait(visibility_scale_timing)
 
-    # start the visibilty rating (happens in single AND dual task conditions)
-    ratingT2 = displayTask2()
+    # start the visibility rating (happens in single AND dual task conditions)
+    ratingT2 = displayTask2(p)
 
     # only in the dual task condition the question on target 1 is displayed
     if task_condition == 'dual':
-        ratingT1 = displayTask1()
+        ratingT1 = displayTask1(p)
         # accuracy of answer
         correct = True if ratingT1[0] in textT1 else False
         ratingT1.append(correct)
@@ -234,7 +253,7 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA)
 
     return ratingT2, ratingT1, textT2, textT1
 
-def showMessage(message, text_height=0.3, wait=True):
+def showMessage(message, text_height=0.6, wait=True):
     text_to_display = visual.TextStim(SCREEN, text=message, height=text_height)
     text_to_display.draw()
     SCREEN.flip()
