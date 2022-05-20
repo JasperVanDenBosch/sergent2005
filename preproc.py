@@ -35,7 +35,7 @@ events = mne.find_events(raw)
 raw, events = raw.resample(512, events=events)
 
 ## reference to average of mastoids
-mastoid_channels = ['EXG1', 'EXG2']
+mastoid_channels = ['EXG1', 'EXG2'] # best for biosemi, but methods plans to use average
 raw.set_eeg_reference(ref_channels=mastoid_channels)
 raw.drop_channels(mastoid_channels)
 
@@ -53,7 +53,7 @@ raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
 
 ## epoching
-reject_criteria = dict(eeg=150e-6, eog=250e-6) # 150 µV, 250 µV
+reject_criteria = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 epochs = mne.Epochs(
     raw,
     events,
