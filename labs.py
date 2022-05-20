@@ -12,7 +12,8 @@ lab_settings = dict(
     jasper=dict(
         mon_width=62.23,
         mon_dist=60,
-        port_address='/dev/ttyUSB0',
-        port_baudrate=115200,
+        port_type='serial',
+        port_address='/dev/pts/2', # '/dev/ttyUSB0',
+        port_baudrate=9600, # 115200,
     )
 )

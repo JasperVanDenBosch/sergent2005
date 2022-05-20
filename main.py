@@ -31,6 +31,8 @@ import random
 exp_conditions = ['single', 'dual']
 # we have 368 trials in total, half of this is short SOA and the other half is long SOA
 
+p = openTriggerPort(chosen_settings)
+
 # define an experiment handler
 exp = data.ExperimentHandler(name=experiment_name,
                 version='0.1',
@@ -83,7 +85,7 @@ for block in training_blocks:
         duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
         target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA)
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
         # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
@@ -124,7 +126,7 @@ for block in test_blocks:
         duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
         target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA)
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
         # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
