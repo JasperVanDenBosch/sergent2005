@@ -3,7 +3,7 @@ This script contains all functions needed to execute the attentional blink
 experiment by running the main.py file located in the same folder.
 '''
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Union
+from typing import TYPE_CHECKING, List, Tuple, Dict, Union
 from parameters import *
 from psychopy import visual, event, core
 import random
@@ -24,7 +24,12 @@ def openTriggerPort(settings: Dict) -> TriggerPort:
     else:
         raise ValueError('Unknown port type in lab settings.')
 
-def computeStimulusList(training, single_trials, dual_critical_trials, dual_easy_trials):
+def computeStimulusList(
+        training: bool,
+        single_trials: int,
+        dual_critical_trials: int,
+        dual_easy_trials: int
+    ) -> Tuple[List[Dict], List[Dict]]:
     '''
     In this function a list of dictionaries containing all possible combination of
     trial types is created. It returns two lists, one for the dual task condition
