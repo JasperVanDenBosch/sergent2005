@@ -123,6 +123,7 @@ logging.console.setLevel(logging.CRITICAL)
 #               Instructions/Text              #
 ################################################
 
+LARGE_FONT = 1
 welcome_message = 'Welcome to the experiment. \n\n Please press \'space\' if you are ready to start with reading the instructions.'
 instructions = 'In the experiment you will see two different target stimuli that will quickly be hidden by a mask.\n\n'\
                'Target 1: \'OXXO\' or \'XOOX\'\n Target 2: a number word (e.g.,\'FIVE\')\n' \

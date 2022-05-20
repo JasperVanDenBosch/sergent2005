@@ -20,9 +20,6 @@ presented before the second target.
 
 '''
 import psychopy
-# use the latest psychopy version due to crucial bug fixes on TrialHandlerExt
-#psychopy.useVersion('2021.1.4')
-from os.path import join
 from parameters import *
 from functions import *
 from psychopy import data
@@ -46,14 +43,14 @@ exp = data.ExperimentHandler(name=experiment_name,
 )
 
 # Welcome the participant
-showMessage(welcome_message, 0.4)
+showMessage(welcome_message, LARGE_FONT)
 showMessage(instructions)
 
 ###############################
 #          TRAINING           #
 ###############################
 showMessage(training_instructions)
-showMessage('TRAINING STARTS', 0.5, wait=False)
+showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
 
 # calculate how many trials we need for the training
 n_train_trials_single = int(n_trials_single/n_training_trial_divisor)
@@ -61,7 +58,7 @@ n_train_trials_dual_critical = int(n_trials_dual_critical/n_training_trial_divis
 n_train_trials_dual_easy = int(n_trials_dual_easy/n_training_trial_divisor)
 
 
-# copmute the list of all different trial conditions and store it in two lists,
+# compute the list of all different trial conditions and store it in two lists,
 # one for the single task and one for the dual task condition
 [train_stim_single, train_stim_dual] = computeStimulusList(True, n_train_trials_single,
                                         n_train_trials_dual_critical, n_train_trials_dual_easy)
@@ -106,7 +103,7 @@ showMessage(finished_training)
 #          TESTING (experiment starts)           #
 ##################################################
 
-showMessage('EXPERIMENT STARTS', 0.5, wait=False)
+showMessage('MAIN EXPERIMENT STARTS', LARGE_FONT, wait=False)
 
 [test_stim_single, test_stim_dual] = computeStimulusList(False, n_trials_single,
                                         n_trials_dual_critical, n_trials_dual_easy)
