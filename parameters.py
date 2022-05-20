@@ -6,9 +6,10 @@ experiment by running the main.py file located in the same folder.
 import os
 import psychopy
 from psychopy import visual, core, logging, monitors
+from labs import lab_settings
+import wx
 
 
-participantID = int(input('Type in participant ID: '))
 
 ###########################
 # Experimental parameters #
@@ -34,16 +35,24 @@ n_training_trial_divisor = 1
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-import wx
+
 # pull resolution from system
 app = wx.App(False)
 width, height = wx.GetDisplaySize()
+print(f'Detected display resolution: {width}x{height}')
 
-width_cm = input("Please enter the width of your monitor in cm (e.g. 53.1): ")
+## User input
+labs_str = ''.join([f'[{l}] ' for l in lab_settings.keys()])
+lab_name = input(f'Please select your lab {labs_str}:')
+assert lab_name in lab_settings.keys(), 'Unknown lab'
+participantID = int(input('Type in participant ID number: '))
 
+chosen_settings = lab_settings[lab_name]
+width_cm = chosen_settings['mon_width']
+dist_cm = chosen_settings['mon_dist']
 
 # set monitor details
-my_monitor = monitors.Monitor(name='my_monitor', distance=50)
+my_monitor = monitors.Monitor(name='my_monitor', distance=dist_cm)
 my_monitor.setSizePix((width, height))
 my_monitor.setWidth(width_cm)
 my_monitor.saveMon()
