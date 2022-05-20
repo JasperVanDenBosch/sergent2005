@@ -79,7 +79,7 @@ target2_square4 = visual.Rect(SCREEN, size=(square_size, square_size), units='de
 
 # the mask is set of 4 capital letters (randomly generated in function file)
 possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']
-mask = visual.TextStim(SCREEN, text='INIT', height=string_height)
+mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
 
 # the fixation cross
 fix_cross_arm_len = 0.4
