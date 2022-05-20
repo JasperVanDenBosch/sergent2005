@@ -22,6 +22,7 @@ presented before the second target.
 import psychopy
 # use the latest psychopy version due to crucial bug fixes on TrialHandlerExt
 #psychopy.useVersion('2021.1.4')
+from os.path import join
 from parameters import *
 from functions import *
 from psychopy import data
@@ -35,13 +36,14 @@ p = openTriggerPort(chosen_settings)
 
 # define an experiment handler
 exp = data.ExperimentHandler(name=experiment_name,
-                version='0.1',
-                extraInfo={'participant':participantID, 'age':23, 'short_SOA':short_SOA, 'long_SOA':long_SOA, 'stimulus_duration':stimulus_duration},
-                runtimeInfo=None,
-                originPath=None,
-                savePickle=True,
-                saveWideText=True,
-                dataFileName=f'%s\%s_%i' % (DATAPATH, experiment_name, participantID))
+    version='0.1',
+    extraInfo={'participant':participantID, 'short_SOA':short_SOA, 'long_SOA':long_SOA, 'stimulus_duration':stimulus_duration},
+    runtimeInfo=None,
+    originPath=None,
+    savePickle=True,
+    saveWideText=True,
+    dataFileName=FPATH_DATA_CSV
+)
 
 # Welcome the participant
 showMessage(welcome_message, 0.4)
@@ -139,7 +141,7 @@ for block in test_blocks:
         exp.nextEntry()
 
 # save the whole data as txt (additionally to the csv file), this also returns a dataFrame
-df = exp.saveAsWideText(f"behavioral_data\%s_%i.txt" % (experiment_name, participantID))
+df = exp.saveAsWideText(FPATH_DATA_TXT)
 
 showMessage(thank_you, wait=False)
 print('Saved experiment file!')

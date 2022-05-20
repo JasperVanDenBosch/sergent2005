@@ -4,6 +4,7 @@ experiment by running the main.py file located in the same folder.
 '''
 
 import os
+from os.path import join
 import psychopy
 from psychopy import visual, core, logging, monitors
 from labs import lab_settings
@@ -105,26 +106,17 @@ trigger_start_trial = 15
 # create folder for data and error logging
 if not os.path.isdir('logging'):
     os.makedirs('logging')
-EXEPATH = os.path.dirname(os.path.abspath('main.py'))
-LOGPATH = EXEPATH + '\logging'
-if not os.path.exists(LOGPATH):
-    os.makedirs(LOGPATH)
-
-filename = 'logging' + os.path.sep + 'subject%s' % participantID #os.path.sep creates '\'
-logFile = logging.LogFile(filename + '.log', level=logging.EXP)
-# this outputs to the screen, not a file (setting to critical means silencing
-# console output by ingoring WARNING)
-logging.console.setLevel(logging.CRITICAL)
-
 if not os.path.isdir('behavioral_data'):
     os.makedirs('behavioral_data')
-DATAPATH = EXEPATH + os.path.sep + 'behavioral_data'
-# add a data subfolder
-if not os.path.exists(DATAPATH):
-    os.makedirs(DATAPATH)
-# Name of csv file
-csvfile = 'subject%s.csv' % participantID
-path = DATAPATH +'/' + csvfile
+
+FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
+FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}.csv')
+
+log_fpath = join('logging', f'subject{participantID}.log')
+logFile = logging.LogFile(log_fpath, level=logging.EXP)
+# this outputs to the screen, not a file (setting to critical means silencing
+# console output by ignoring WARNING)
+logging.console.setLevel(logging.CRITICAL)
 
 
 ################################################
