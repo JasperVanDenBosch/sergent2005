@@ -30,7 +30,7 @@ n_trials_dual_critical = 160 # attentional blink condition!
 n_trials_dual_easy = 160 # no intentional blink
 # to calculate the number of trials of each condition in the training session,
 # each number of test trial will be divided by n_training_trial_divisor
-n_training_trial_divisor = 1
+n_training_trial_divisor = 8
 
 ####################################################
 # Visual features (targets, masks, fixation cross) #
@@ -70,8 +70,8 @@ string_height = 1
 
 target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 target1_strings = ['OXXO', 'XOOX']
-target1 = visual.TextStim(SCREEN, height=string_height)
-target2 = visual.TextStim(SCREEN, height=string_height)
+target1 = visual.TextStim(SCREEN, height=string_height, units='deg')
+target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
 target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 target2_square2 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 target2_square3 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
