@@ -17,6 +17,13 @@ lab_settings = dict(
         port_address='/dev/pts/2', # '/dev/ttyUSB0',
         port_baudrate=9600, # 115200,
     ),
+    maria=dict(
+        mon_width=54.37,
+        mon_dist=50,
+        port_type='parallel',
+        port_address='EFF0',
+        port_baudrate=0,
+    ),
     example=dict(
         mon_width=55, ## width in cm of the experiment screen
         mon_dist=60, ## distance in cm between participant eyes and screen
