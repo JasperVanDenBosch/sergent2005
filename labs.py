@@ -24,6 +24,13 @@ lab_settings = dict(
         port_address='EFF0',
         port_baudrate=0,
     ),
+    karine=dict(
+        mon_width=53,
+        mon_dist=60,
+        port_type='parallel',
+        port_address='C010',
+        port_baudrate=0,
+    ),
     example=dict(
         mon_width=55, ## width in cm of the experiment screen
         mon_dist=60, ## distance in cm between participant eyes and screen
