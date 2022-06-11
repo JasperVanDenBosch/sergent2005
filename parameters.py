@@ -2,15 +2,11 @@
 This script contains all parameters needed to execute the attentional blink
 experiment by running the main.py file located in the same folder.
 '''
-
 import os
 from os.path import join
-import psychopy
-from psychopy import visual, core, logging, monitors
+from psychopy import visual, logging
 from labs import lab_settings
 from window import configureWindow
-#import wx
-
 
 
 ###########################

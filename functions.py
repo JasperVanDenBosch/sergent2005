@@ -58,18 +58,18 @@ def computeStimulusList(
     return stimuli_single, stimuli_dual
 
 
-def displayT1(p: TriggerPort):
+def displayT1(port: TriggerPort, triggerNr: int):
     '''
     Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
     '''
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
     SCREEN.flip()
-    p.trigger(Triggers.T1)
+    port.trigger(triggerNr)
     return target1.text
 
 
-def displayT2(T2_present, p: TriggerPort):
+def displayT2(T2_present, port: TriggerPort, triggerNr: int):
     '''
     Displays the second target (T2) constisting of 4 white squares and (if present
     condition is active) of a number word in capital letters.
@@ -82,15 +82,13 @@ def displayT2(T2_present, p: TriggerPort):
     target2_square4.draw()
 
     if T2_present:
-        trigger_T2 = Triggers.T2_present
         target2.text = random.choice(target2_strings)
         target2.draw()
     else:
-        trigger_T2 = Triggers.T2_absent
         target2.text = ''
 
     SCREEN.flip()
-    p.trigger(trigger_T2)
+    port.trigger(triggerNr)
     return target2.text
 
 def displayMask():
@@ -128,7 +126,7 @@ def displayTask2(p: TriggerPort):
 
     rating_scaleT2.draw()
     SCREEN.flip()
-    p.trigger(Triggers.task2)
+    p.trigger(Triggers.taskT2visibility)
 
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
@@ -156,7 +154,7 @@ def displayTask1(p: TriggerPort):
                                         pos=(0.0, 0.0), showAccept=False)
     rating_scaleT1.draw()
     SCREEN.flip()
-    p.trigger(Triggers.task1)
+    p.trigger(Triggers.taskT1variant)
 
     while rating_scaleT1.noResponse:
         rating_scaleT1.draw()
@@ -168,7 +166,7 @@ def displayTask1(p: TriggerPort):
 
 
 
-def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA, p: TriggerPort):
+def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA: bool, port: TriggerPort):
     '''
     Starts the real experiment trial.
     Parameters:
@@ -177,15 +175,15 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
         target2_presence bool : False for 'absent' or True for 'present'
         duration_SOA float : 'short' or 'long' (values taken from parameter file)
     '''
-
+    duration_SOA = long_SOA if longSOA else short_SOA
     print('++++++ start trial +++++++')
-    p.trigger(Triggers.start_trial)
 
     # it starts with the fixation cross
     displayFixCross()
     core.wait(timing_T1_start)
 
-    textT1 = displayT1(p)
+    t1TriggerNr = Triggers.get_number(forT2=False, t2Present=t2Present, dualTask=dualTask, longSOA=longSOA)
+    textT1 = displayT1(port, t1TriggerNr)
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
@@ -200,7 +198,8 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
     displayFixCross()
     core.wait(duration_SOA - stimulus_duration*3)
 
-    textT2 = displayT2(target2_presence, p)
+    t2TriggerNr = Triggers.get_number(forT2=True, t2Present=t2Present, dualTask=dualTask, longSOA=longSOA)
+    textT2 = displayT2(t2Present, port, t2TriggerNr)
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
@@ -219,11 +218,11 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
     core.wait(visibility_scale_timing)
 
     # start the visibility rating (happens in single AND dual task conditions)
-    ratingT2 = displayTask2(p)
+    ratingT2 = displayTask2(port)
 
     # only in the dual task condition the question on target 1 is displayed
-    if task_condition == 'dual':
-        ratingT1 = displayTask1(p)
+    if dualTask:
+        ratingT1 = displayTask1(port)
         # accuracy of answer
         correct = True if ratingT1[0] in textT1 else False
         ratingT1.append(correct)

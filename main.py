@@ -19,7 +19,6 @@ The attentional blink is induced by a task on the first target stimulus which is
 presented before the second target.
 
 '''
-import psychopy
 from parameters import *
 from functions import *
 from psychopy import data
@@ -30,7 +29,7 @@ from ports import openTriggerPort
 exp_conditions = ['single', 'dual']
 # we have 368 trials in total, half of this is short SOA and the other half is long SOA
 
-p = openTriggerPort(
+port = openTriggerPort(
     typ=chosen_settings['port_type'],
     address=chosen_settings['port_address'],
     rate=chosen_settings['port_baudrate'],
@@ -86,10 +85,14 @@ for block in training_blocks:
     for currentTrial in block:
         # 50% chance that T1 is presented quick or slow after trial start
         T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
-        duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
-        target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
+            dualTask=currentTrial['task']=='dual_task',
+            timing_T1_start=T1_start,
+            t2Present=currentTrial['T2_presence']=='present',
+            longSOA=currentTrial['SOA']=='long',
+            port=port
+        )
         # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
@@ -127,11 +130,14 @@ for block in test_blocks:
     for currentTrial in block:
         # 50% chance that T1 is presented quick or slow after trial start
         T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
-        duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
-        target2_presence = True if currentTrial['T2_presence']=='present' else False
         print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
-        # save information in the csv-file
+        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
+            dualTask=currentTrial['task']=='dual_task',
+            timing_T1_start=T1_start,
+            t2Present=currentTrial['T2_presence']=='present',
+            longSOA=currentTrial['SOA']=='long',
+            port=port
+        )        # save information in the csv-file
         block.addData('ratingT2', ratingT2[0])
         block.addData('RTtaskT2', ratingT2[1])
         block.addData('ratingT1', ratingT1[0])
