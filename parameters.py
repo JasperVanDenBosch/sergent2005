@@ -59,7 +59,7 @@ my_monitor.setWidth(width_cm)
 my_monitor.saveMon()
 SCREEN = visual.Window(monitor='my_monitor',
                        color=(-1,-1,-1),
-                       fullscr=True,
+                       fullscr=False,
                        units='deg')
 #m = event.Mouse(win=SCREEN)
 #m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
@@ -99,17 +99,6 @@ fix_cross = visual.ShapeStim(
     lineColor = (1, 1, 1)
 )
 
-
-#################
-# Trigger codes #
-#################
-
-trigger_T1 = 10
-trigger_T2_present = 11
-trigger_T2_absent = 12
-trigger_task1 = 13
-trigger_task2 = 14
-trigger_start_trial = 15
 
 ####################################################
 # Data/error logging  and experimental data saving #

@@ -5,6 +5,7 @@ experiment by running the main.py file located in the same folder.
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Tuple, Dict, Union
 from parameters import *
+from triggers import Triggers
 from psychopy import visual, event, core
 import random
 if TYPE_CHECKING:
@@ -64,7 +65,7 @@ def displayT1(p: TriggerPort):
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
     SCREEN.flip()
-    p.trigger(trigger_T1)
+    p.trigger(Triggers.T1)
     return target1.text
 
 
@@ -81,11 +82,11 @@ def displayT2(T2_present, p: TriggerPort):
     target2_square4.draw()
 
     if T2_present:
-        trigger_T2 = trigger_T2_present
+        trigger_T2 = Triggers.T2_present
         target2.text = random.choice(target2_strings)
         target2.draw()
     else:
-        trigger_T2 = trigger_T2_absent
+        trigger_T2 = Triggers.T2_absent
         target2.text = ''
 
     SCREEN.flip()
@@ -127,7 +128,7 @@ def displayTask2(p: TriggerPort):
 
     rating_scaleT2.draw()
     SCREEN.flip()
-    p.trigger(trigger_task2)
+    p.trigger(Triggers.task2)
 
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
@@ -155,7 +156,7 @@ def displayTask1(p: TriggerPort):
                                         pos=(0.0, 0.0), showAccept=False)
     rating_scaleT1.draw()
     SCREEN.flip()
-    p.trigger(trigger_task1)
+    p.trigger(Triggers.task1)
 
     while rating_scaleT1.noResponse:
         rating_scaleT1.draw()
@@ -178,7 +179,7 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
     '''
 
     print('++++++ start trial +++++++')
-    p.trigger(trigger_start_trial)
+    p.trigger(Triggers.start_trial)
 
     # it starts with the fixation cross
     displayFixCross()
