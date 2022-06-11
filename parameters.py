@@ -8,6 +8,7 @@ from os.path import join
 import psychopy
 from psychopy import visual, core, logging, monitors
 from labs import lab_settings
+from window import configureWindow
 #import wx
 
 
@@ -36,33 +37,14 @@ n_training_trial_divisor = 8
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-
-# pull resolution from system
-#app = wx.App(False)
-width, height = 3456, 2234 #wx.GetDisplaySize()
-print(f'Detected display resolution: {width}x{height}')
-
 ## User input
 labs_str = ''.join([f'[{l}] ' for l in lab_settings.keys()])
 lab_name = input(f'Please select your lab {labs_str}:')
 assert lab_name in lab_settings.keys(), 'Unknown lab'
 participantID = int(input('Type in participant ID number: '))
-
 chosen_settings = lab_settings[lab_name]
-width_cm = chosen_settings['mon_width']
-dist_cm = chosen_settings['mon_dist']
 
-# set monitor details
-my_monitor = monitors.Monitor(name='my_monitor', distance=dist_cm)
-my_monitor.setSizePix((width, height))
-my_monitor.setWidth(width_cm)
-my_monitor.saveMon()
-SCREEN = visual.Window(monitor='my_monitor',
-                       color=(-1,-1,-1),
-                       fullscr=False,
-                       units='deg')
-#m = event.Mouse(win=SCREEN)
-#m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
+SCREEN = configureWindow(chosen_settings, fullscr=False)
 
 # size of stimuli in degrees of visual angle
 square_size = 0.5

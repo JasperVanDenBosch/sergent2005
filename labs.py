@@ -38,7 +38,7 @@ lab_settings = dict(
         mon_width=55, ## width in cm of the experiment screen
         mon_dist=60, ## distance in cm between participant eyes and screen
         mon_resolution=(3456, 2234), ## horizontal, vertical resolution of the monitor
-        port_type='dummy', ## serial, parallel or dummy
+        port_type='dummy', ## serial, parallel, viewpixx or dummy
         ## most systems have only one parallel port, so we can use the default
         port_address='', ## use default address
         port_baudrate=0, ## parallel ports dont require a baudrate
