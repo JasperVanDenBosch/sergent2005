@@ -8,7 +8,7 @@ from os.path import join
 import psychopy
 from psychopy import visual, core, logging, monitors
 from labs import lab_settings
-import wx
+#import wx
 
 
 
@@ -38,8 +38,8 @@ n_training_trial_divisor = 8
 
 
 # pull resolution from system
-app = wx.App(False)
-width, height = wx.GetDisplaySize()
+#app = wx.App(False)
+width, height = 3456, 2234 #wx.GetDisplaySize()
 print(f'Detected display resolution: {width}x{height}')
 
 ## User input

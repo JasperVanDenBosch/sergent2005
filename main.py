@@ -24,12 +24,17 @@ from parameters import *
 from functions import *
 from psychopy import data
 import random
+from ports import openTriggerPort
 
 # we only have two different blocks, (dual and single)
 exp_conditions = ['single', 'dual']
 # we have 368 trials in total, half of this is short SOA and the other half is long SOA
 
-p = openTriggerPort(chosen_settings)
+p = openTriggerPort(
+    typ=chosen_settings['port_type'],
+    address=chosen_settings['port_address'],
+    rate=chosen_settings['port_baudrate'],
+)
 
 # define an experiment handler
 exp = data.ExperimentHandler(name=experiment_name,

@@ -7,22 +7,9 @@ from typing import TYPE_CHECKING, List, Tuple, Dict, Union
 from parameters import *
 from psychopy import visual, event, core
 import random
-from parallel import Parallel
-from serialport import SerialPort
 if TYPE_CHECKING:
-    TriggerPort = Union[SerialPort, Parallel]
+    from ports import TriggerPort
 
-
-def openTriggerPort(settings: Dict) -> TriggerPort:
-    if settings.get('port_type') == 'parallel':
-        return Parallel()
-    elif settings.get('port_type') == 'serial':
-        return SerialPort(
-            settings['port_address'],
-            baud=settings['port_baudrate']
-        )
-    else:
-        raise ValueError('Unknown port type in lab settings.')
 
 def computeStimulusList(
         training: bool,
@@ -77,9 +64,7 @@ def displayT1(p: TriggerPort):
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
     SCREEN.flip()
-    p.setData(trigger_T1)
-    core.wait(0.01)
-    p.setData(0)
+    p.trigger(trigger_T1)
     return target1.text
 
 
@@ -104,9 +89,7 @@ def displayT2(T2_present, p: TriggerPort):
         target2.text = ''
 
     SCREEN.flip()
-    p.setData(trigger_T2)
-    core.wait(0.01)
-    p.setData(0)
+    p.trigger(trigger_T2)
     return target2.text
 
 def displayMask():
@@ -144,9 +127,7 @@ def displayTask2(p: TriggerPort):
 
     rating_scaleT2.draw()
     SCREEN.flip()
-    p.setData(trigger_task2)
-    core.wait(0.01)
-    p.setData(0)
+    p.trigger(trigger_task2)
 
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
@@ -174,9 +155,7 @@ def displayTask1(p: TriggerPort):
                                         pos=(0.0, 0.0), showAccept=False)
     rating_scaleT1.draw()
     SCREEN.flip()
-    p.setData(trigger_task1)
-    core.wait(0.01)
-    p.setData(0)
+    p.trigger(trigger_task1)
 
     while rating_scaleT1.noResponse:
         rating_scaleT1.draw()
@@ -199,9 +178,8 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
     '''
 
     print('++++++ start trial +++++++')
-    p.setData(trigger_start_trial)
-    core.wait(0.01)
-    p.setData(0)
+    p.trigger(trigger_start_trial)
+
     # it starts with the fixation cross
     displayFixCross()
     core.wait(timing_T1_start)
