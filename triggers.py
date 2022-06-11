@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 
 @dataclass(frozen=True)
@@ -10,3 +10,6 @@ class Triggers:
     task1: int = 13
     task2: int = 14
     start_trial: int = 15
+
+    def asdict(self):
+        return asdict(self)
