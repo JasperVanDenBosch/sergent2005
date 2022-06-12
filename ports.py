@@ -24,8 +24,14 @@ class SerialTriggerPort:
 
 class ParallelTriggerPort:
 
-    def __init__(self):
-        self.pport = ParallelPort()
+    def __init__(self, address: str):
+        """
+        Psychopy parallel port documentation uses address examples
+        in hexadecimal literal notation which compiles to integer.
+        So we also convert our string hex addresses to integers.
+        """
+        address_int = int(address, 16)
+        self.pport = ParallelPort(address_int)
 
     def trigger(self, val: int) -> None:
         self.pport.setData(val)
@@ -48,7 +54,7 @@ def openTriggerPort(typ: str, address: str, rate: str) -> TriggerPort:
     if typ == 'dummy':
         return FakeTriggerPort()
     elif typ == 'parallel':
-        return ParallelTriggerPort()
+        return ParallelTriggerPort(address)
     elif typ == 'serial':
         return SerialTriggerPort(address, rate)
     elif typ == 'viewpixx':

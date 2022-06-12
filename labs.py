@@ -23,7 +23,7 @@ lab_settings = dict(
         mon_dist=50,
         mon_resolution=(1920, 1080),
         port_type='parallel',
-        port_address='EFF0',
+        port_address='0xEFF0',
         port_baudrate=0,
     ),
     karine=dict(
@@ -31,7 +31,7 @@ lab_settings = dict(
         mon_dist=60,
         mon_resolution=(1920, 1080),
         port_type='parallel',
-        port_address='C010',
+        port_address='0xC010',
         port_baudrate=0,
     ),
     example=dict(
