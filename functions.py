@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, List, Tuple, Dict, Union
 from parameters import *
 from triggers import Triggers
 from psychopy import visual, event, core
+from psychopy.visual.ratingscale import RatingScale
 import random
 if TYPE_CHECKING:
     from ports import TriggerPort
@@ -108,6 +109,37 @@ def displayFixCross():
     SCREEN.flip()
 
 
+def displayTask1(p: TriggerPort):
+    '''
+    Diplay of choice making task that indicates if the participant correctly
+    recognized T1 as either 'OXXO' or 'XOOX'.
+    '''
+
+    task1_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
+                 '\'OO\' or \'XX\'\n'\
+                 'Press \'space\' to confirm.\n\n'
+    p.trigger(Triggers.taskT1variant)
+    while True:
+        ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
+        ## we simply create a new RatingScale
+        rating_scaleT1 = RatingScale(SCREEN, noMouse=True,
+            choices=['OO', '', 'XX'], markerStart=1, #labels=['OO', '', 'XX'],
+            scale=task1_text, acceptKeys='space', lineColor='DarkGrey',
+            markerColor='DarkGrey', pos=(0.0, 0.0), showAccept=False)
+        rating_scaleT1.draw()
+        SCREEN.flip()
+        while rating_scaleT1.noResponse:
+            rating_scaleT1.draw()
+            SCREEN.flip()
+        if rating_scaleT1.getRating() != '':
+            ## valid choice; continue
+            break
+
+    print('The answer is: ', rating_scaleT1.getRating())
+    # get and return the rating
+    return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
+
+
 def displayTask2(p: TriggerPort):
     '''
     Diplay of rating scale that indicates visibility of target 2. Above the rating
@@ -120,9 +152,10 @@ def displayTask2(p: TriggerPort):
     scale_length = 21 # the maximum visibiliy rating
     task2_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
-    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibility'],
+    random_init = random.choice(range(scale_length))
+    rating_scaleT2 = RatingScale(SCREEN, low=0, high=scale_length-1, labels=['nothing', 'maximal visibility'],
                                         acceptKeys='space', scale=task2_text, noMouse=True, lineColor='DarkGrey',
-                                        markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random.choice(range(scale_length)))
+                                        markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random_init)
 
     rating_scaleT2.draw()
     SCREEN.flip()
@@ -137,33 +170,6 @@ def displayTask2(p: TriggerPort):
 
     # get and return the rating
     return [rating_scaleT2.getRating(), rating_scaleT2.getRT()]
-
-
-
-def displayTask1(p: TriggerPort):
-    '''
-    Diplay of choice making task that indicates if the participant correctly
-    recognized T1 as either 'OXXO' or 'XOOX'.
-    '''
-
-    task1_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
-                 '\'OO\' or \'XX\'\n'\
-                 'Press \'space\' to confirm.\n\n'
-    rating_scaleT1 = visual.RatingScale(SCREEN, noMouse=True, choices=['OO', 'XX'], markerStart=0.5, labels=['OO', 'XX'],
-                                        scale=task1_text, acceptKeys='space', lineColor='DarkGrey', markerColor='DarkGrey',
-                                        pos=(0.0, 0.0), showAccept=False)
-    rating_scaleT1.draw()
-    SCREEN.flip()
-    p.trigger(Triggers.taskT1variant)
-
-    while rating_scaleT1.noResponse:
-        rating_scaleT1.draw()
-        SCREEN.flip()
-
-    print('The answer is: ', rating_scaleT1.getRating())
-    # get and return the rating
-    return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
-
 
 
 def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA: bool, port: TriggerPort):

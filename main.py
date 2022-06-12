@@ -87,7 +87,7 @@ for block in training_blocks:
         T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
         print('Current trial: ', currentTrial['Name'])
         ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
-            dualTask=currentTrial['task']=='dual_task',
+            dualTask=currentTrial['task']=='dual',
             timing_T1_start=T1_start,
             t2Present=currentTrial['T2_presence']=='present',
             longSOA=currentTrial['SOA']=='long',
@@ -132,7 +132,7 @@ for block in test_blocks:
         T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
         print('Current trial: ', currentTrial['Name'])
         ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
-            dualTask=currentTrial['task']=='dual_task',
+            dualTask=currentTrial['task']=='dual',
             timing_T1_start=T1_start,
             t2Present=currentTrial['T2_presence']=='present',
             longSOA=currentTrial['SOA']=='long',
