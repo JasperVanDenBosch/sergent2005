@@ -22,12 +22,12 @@ long_SOA = 0.686
 stimulus_duration = 0.043 #in seconds
 visibility_scale_timing = 0.500 # after third mask offset
 
-n_trials_single = 1#60 # only visibility rating task
-n_trials_dual_critical = 1#60 # attentional blink condition!
-n_trials_dual_easy = 1#60 # no intentional blink
+n_trials_single = 2#32 #160 # only visibility rating task
+n_trials_dual_critical = 2#96 #160 # attentional blink condition!
+n_trials_dual_easy = 2#48 #160 # no intentional blink
 # to calculate the number of trials of each condition in the training session,
 # each number of test trial will be divided by n_training_trial_divisor
-n_training_trial_divisor = 1#8
+n_training_trial_divisor = 2#8
 
 ####################################################
 # Visual features (targets, masks, fixation cross) #
@@ -85,7 +85,7 @@ if not os.path.isdir('behavioral_data'):
     os.makedirs('behavioral_data')
 
 FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
-FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}.csv')
+FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}')
 
 log_fpath = join('logging', f'subject{participantID}.log')
 logFile = logging.LogFile(log_fpath, level=logging.EXP)

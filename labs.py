@@ -5,7 +5,7 @@ mon_dist: distance of the participant to the monitor in cm
 mon_resolution: tuple of the horizontal and vertical number of pixels
 port_type: use serial or parallel port for triggers
 port_address: The address of the port used to send triggers.
-    'parallel' means the default parallel port will be used.
+    'parallel' means the default parallel port will be used (currently doesn't work, please get in touch).
     'serial': Serial port
     'viewpixx': triggers sent through the monitor
     'dummy': print triggers to the command line, for development

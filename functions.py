@@ -33,6 +33,11 @@ def computeStimulusList(
         dual_easy_trials int : Number of trials in the easy dual task conditions
                                (short SOA/T2 absent or long SOA).
     '''
+    if training:
+        ntrials_div = n_training_trial_divisor
+    else:
+        ntrials_div = 1
+
     stimList = []
     for task in ['single', 'dual']:
         for T2_presence in ['present', 'absent']:
@@ -41,11 +46,11 @@ def computeStimulusList(
                 if training:
                     name = name + '_training'
                 if task=='single':
-                    weight = single_trials
+                    weight = int(single_trials/ntrials_div)
                 elif task=='dual' and SOA=='short' and T2_presence=='present':
-                    weight = dual_critical_trials
+                    weight = int(dual_critical_trials/ntrials_div)
                 else:
-                    weight = dual_easy_trials
+                    weight = int(dual_easy_trials/ntrials_div)
 
                 stimList.append({'Name': name, 'task':task, 'T2_presence':T2_presence, 'SOA':SOA, 'weight':weight})
 
