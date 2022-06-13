@@ -190,7 +190,7 @@ def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA
 
     t1TriggerNr = Triggers.get_number(forT2=False, t2Present=t2Present, dualTask=dualTask, longSOA=longSOA)
     textT1 = displayT1(port, t1TriggerNr)
-    core.wait(stimulus_duration)
+    core.wait(stimulus_duration) # - trigger??
 
     # display black screen between stimuli and masks
     SCREEN.flip()

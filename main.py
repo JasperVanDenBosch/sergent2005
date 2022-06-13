@@ -33,6 +33,8 @@ port = openTriggerPort(
     typ=chosen_settings['port_type'],
     address=chosen_settings['port_address'],
     rate=chosen_settings['port_baudrate'],
+    win=SCREEN,
+    scale=scale
 )
 
 # define an experiment handler
@@ -106,6 +108,7 @@ for block in training_blocks:
 
 print('Training done!')
 showMessage(finished_training)
+print(f'dropped frames: {SCREEN.nDroppedFrames}')
 
 ##################################################
 #          TESTING (experiment starts)           #

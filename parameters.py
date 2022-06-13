@@ -5,7 +5,7 @@ experiment by running the main.py file located in the same folder.
 import os
 from os.path import join
 from psychopy import visual, logging
-from labs import lab_settings
+from labs import getLabConfiguration
 from window import configureWindow
 
 
@@ -22,25 +22,21 @@ long_SOA = 0.686
 stimulus_duration = 0.043 #in seconds
 visibility_scale_timing = 0.500 # after third mask offset
 
-n_trials_single = 160 # only visibility rating task
-n_trials_dual_critical = 160 # attentional blink condition!
-n_trials_dual_easy = 160 # no intentional blink
+n_trials_single = 1#60 # only visibility rating task
+n_trials_dual_critical = 1#60 # attentional blink condition!
+n_trials_dual_easy = 1#60 # no intentional blink
 # to calculate the number of trials of each condition in the training session,
 # each number of test trial will be divided by n_training_trial_divisor
-n_training_trial_divisor = 8
+n_training_trial_divisor = 1#8
 
 ####################################################
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
 ## User input
-labs_str = ''.join([f'[{l}] ' for l in lab_settings.keys()])
-lab_name = input(f'Please select your lab {labs_str}:')
-assert lab_name in lab_settings.keys(), 'Unknown lab'
 participantID = int(input('Type in participant ID number: '))
-chosen_settings = lab_settings[lab_name]
-
-SCREEN = configureWindow(chosen_settings, fullscr=False)
+chosen_settings = getLabConfiguration()
+SCREEN, scale = configureWindow(chosen_settings)
 
 # size of stimuli in degrees of visual angle
 square_size = 0.5
@@ -95,7 +91,7 @@ log_fpath = join('logging', f'subject{participantID}.log')
 logFile = logging.LogFile(log_fpath, level=logging.EXP)
 # this outputs to the screen, not a file (setting to critical means silencing
 # console output by ignoring WARNING)
-logging.console.setLevel(logging.CRITICAL)
+logging.console.setLevel(logging.INFO)
 
 
 ################################################
