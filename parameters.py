@@ -2,14 +2,11 @@
 This script contains all parameters needed to execute the attentional blink
 experiment by running the main.py file located in the same folder.
 '''
-
 import os
 from os.path import join
-import psychopy
-from psychopy import visual, core, logging, monitors
-from labs import lab_settings
-import wx
-
+from psychopy import visual, logging
+from labs import getLabConfiguration
+from window import configureWindow
 
 
 ###########################
@@ -25,9 +22,9 @@ long_SOA = 0.686
 stimulus_duration = 0.043 #in seconds
 visibility_scale_timing = 0.500 # after third mask offset
 
-n_trials_single = 160 # only visibility rating task
-n_trials_dual_critical = 160 # attentional blink condition!
-n_trials_dual_easy = 160 # no intentional blink
+n_trials_single = 32 # only visibility rating task
+n_trials_dual_critical = 96  # attentional blink condition!
+n_trials_dual_easy = 48 # no intentional blink
 # to calculate the number of trials of each condition in the training session,
 # each number of test trial will be divided by n_training_trial_divisor
 n_training_trial_divisor = 8
@@ -36,33 +33,10 @@ n_training_trial_divisor = 8
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-
-# pull resolution from system
-app = wx.App(False)
-width, height = wx.GetDisplaySize()
-print(f'Detected display resolution: {width}x{height}')
-
 ## User input
-labs_str = ''.join([f'[{l}] ' for l in lab_settings.keys()])
-lab_name = input(f'Please select your lab {labs_str}:')
-assert lab_name in lab_settings.keys(), 'Unknown lab'
 participantID = int(input('Type in participant ID number: '))
-
-chosen_settings = lab_settings[lab_name]
-width_cm = chosen_settings['mon_width']
-dist_cm = chosen_settings['mon_dist']
-
-# set monitor details
-my_monitor = monitors.Monitor(name='my_monitor', distance=dist_cm)
-my_monitor.setSizePix((width, height))
-my_monitor.setWidth(width_cm)
-my_monitor.saveMon()
-SCREEN = visual.Window(monitor='my_monitor',
-                       color=(-1,-1,-1),
-                       fullscr=True,
-                       units='deg')
-#m = event.Mouse(win=SCREEN)
-#m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
+chosen_settings = getLabConfiguration()
+SCREEN, scale = configureWindow(chosen_settings)
 
 # size of stimuli in degrees of visual angle
 square_size = 0.5
@@ -100,17 +74,6 @@ fix_cross = visual.ShapeStim(
 )
 
 
-#################
-# Trigger codes #
-#################
-
-trigger_T1 = 10
-trigger_T2_present = 11
-trigger_T2_absent = 12
-trigger_task1 = 13
-trigger_task2 = 14
-trigger_start_trial = 15
-
 ####################################################
 # Data/error logging  and experimental data saving #
 ####################################################
@@ -122,13 +85,13 @@ if not os.path.isdir('behavioral_data'):
     os.makedirs('behavioral_data')
 
 FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
-FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}.csv')
+FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}')
 
 log_fpath = join('logging', f'subject{participantID}.log')
 logFile = logging.LogFile(log_fpath, level=logging.EXP)
 # this outputs to the screen, not a file (setting to critical means silencing
 # console output by ignoring WARNING)
-logging.console.setLevel(logging.CRITICAL)
+logging.console.setLevel(logging.INFO)
 
 
 ################################################

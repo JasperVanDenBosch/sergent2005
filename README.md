@@ -14,7 +14,6 @@ Tested on Windows 10. Largely adapted from [this VS Code tutorial](https://code.
 The following steps are all commands to be executed in Powershell
 
 6. You should be able to run `py -3 --version` and it should answer *python 3.8.10*
-
 7. Navigate to the unzipped code directory (e.g. `cd MyProjects\eegmanylabs-sergent2005`)
 8. Create a *Virtual Environment* for our project. This is a directory that will store the required Python packages for our project, without interfering with other projects on your computer. In powershell, execute `py -3 -m venv env`. You should then see a directory `env` in the project directory.
 9. Activate the Virtual Environment with the command `env\scripts\activate`. The word `(env)` should now appear in front of the terminal prompt. Test that this worked by executing `Get-Command python`. It should print a path to the python program inside the project directory.

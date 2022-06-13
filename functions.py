@@ -5,24 +5,13 @@ experiment by running the main.py file located in the same folder.
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Tuple, Dict, Union
 from parameters import *
+from triggers import Triggers
 from psychopy import visual, event, core
+from psychopy.visual.ratingscale import RatingScale
 import random
-from parallel import Parallel
-from serialport import SerialPort
 if TYPE_CHECKING:
-    TriggerPort = Union[SerialPort, Parallel]
+    from ports import TriggerPort
 
-
-def openTriggerPort(settings: Dict) -> TriggerPort:
-    if settings.get('port_type') == 'parallel':
-        return Parallel()
-    elif settings.get('port_type') == 'serial':
-        return SerialPort(
-            settings['port_address'],
-            baud=settings['port_baudrate']
-        )
-    else:
-        raise ValueError('Unknown port type in lab settings.')
 
 def computeStimulusList(
         training: bool,
@@ -44,6 +33,11 @@ def computeStimulusList(
         dual_easy_trials int : Number of trials in the easy dual task conditions
                                (short SOA/T2 absent or long SOA).
     '''
+    if training:
+        ntrials_div = n_training_trial_divisor
+    else:
+        ntrials_div = 1
+
     stimList = []
     for task in ['single', 'dual']:
         for T2_presence in ['present', 'absent']:
@@ -52,11 +46,11 @@ def computeStimulusList(
                 if training:
                     name = name + '_training'
                 if task=='single':
-                    weight = single_trials
+                    weight = int(single_trials/ntrials_div)
                 elif task=='dual' and SOA=='short' and T2_presence=='present':
-                    weight = dual_critical_trials
+                    weight = int(dual_critical_trials/ntrials_div)
                 else:
-                    weight = dual_easy_trials
+                    weight = int(dual_easy_trials/ntrials_div)
 
                 stimList.append({'Name': name, 'task':task, 'T2_presence':T2_presence, 'SOA':SOA, 'weight':weight})
 
@@ -70,20 +64,18 @@ def computeStimulusList(
     return stimuli_single, stimuli_dual
 
 
-def displayT1(p: TriggerPort):
+def displayT1(port: TriggerPort, triggerNr: int):
     '''
     Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
     '''
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
+    port.trigger(triggerNr)
     SCREEN.flip()
-    p.setData(trigger_T1)
-    core.wait(0.01)
-    p.setData(0)
     return target1.text
 
 
-def displayT2(T2_present, p: TriggerPort):
+def displayT2(T2_present, port: TriggerPort, triggerNr: int):
     '''
     Displays the second target (T2) constisting of 4 white squares and (if present
     condition is active) of a number word in capital letters.
@@ -96,17 +88,13 @@ def displayT2(T2_present, p: TriggerPort):
     target2_square4.draw()
 
     if T2_present:
-        trigger_T2 = trigger_T2_present
         target2.text = random.choice(target2_strings)
         target2.draw()
     else:
-        trigger_T2 = trigger_T2_absent
         target2.text = ''
 
+    port.trigger(triggerNr)
     SCREEN.flip()
-    p.setData(trigger_T2)
-    core.wait(0.01)
-    p.setData(0)
     return target2.text
 
 def displayMask():
@@ -126,6 +114,37 @@ def displayFixCross():
     SCREEN.flip()
 
 
+def displayTask1(p: TriggerPort):
+    '''
+    Diplay of choice making task that indicates if the participant correctly
+    recognized T1 as either 'OXXO' or 'XOOX'.
+    '''
+
+    task1_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
+                 '\'OO\' or \'XX\'\n'\
+                 'Press \'space\' to confirm.\n\n'
+    p.trigger(Triggers.taskT1variant)
+    while True:
+        ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
+        ## we simply create a new RatingScale
+        rating_scaleT1 = RatingScale(SCREEN, noMouse=True,
+            choices=['OO', '', 'XX'], markerStart=1, #labels=['OO', '', 'XX'],
+            scale=task1_text, acceptKeys='space', lineColor='DarkGrey',
+            markerColor='DarkGrey', pos=(0.0, 0.0), showAccept=False)
+        rating_scaleT1.draw()
+        SCREEN.flip()
+        while rating_scaleT1.noResponse:
+            rating_scaleT1.draw()
+            SCREEN.flip()
+        if rating_scaleT1.getRating() != '':
+            ## valid choice; continue
+            break
+
+    print('The answer is: ', rating_scaleT1.getRating())
+    # get and return the rating
+    return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
+
+
 def displayTask2(p: TriggerPort):
     '''
     Diplay of rating scale that indicates visibility of target 2. Above the rating
@@ -138,15 +157,14 @@ def displayTask2(p: TriggerPort):
     scale_length = 21 # the maximum visibiliy rating
     task2_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
-    rating_scaleT2 = visual.RatingScale(SCREEN, low=1, high=scale_length, labels=['nothing', 'maximal visibility'],
+    random_init = random.choice(range(scale_length))
+    rating_scaleT2 = RatingScale(SCREEN, low=0, high=scale_length-1, labels=['nothing', 'maximal visibility'],
                                         acceptKeys='space', scale=task2_text, noMouse=True, lineColor='DarkGrey',
-                                        markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random.choice(range(scale_length)))
+                                        markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random_init)
 
     rating_scaleT2.draw()
+    p.trigger(Triggers.taskT2visibility)
     SCREEN.flip()
-    p.setData(trigger_task2)
-    core.wait(0.01)
-    p.setData(0)
 
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:
@@ -159,36 +177,7 @@ def displayTask2(p: TriggerPort):
     return [rating_scaleT2.getRating(), rating_scaleT2.getRT()]
 
 
-
-def displayTask1(p: TriggerPort):
-    '''
-    Diplay of choice making task that indicates if the participant correctly
-    recognized T1 as either 'OXXO' or 'XOOX'.
-    '''
-
-    task1_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
-                 '\'OO\' or \'XX\'\n'\
-                 'Press \'space\' to confirm.\n\n'
-    rating_scaleT1 = visual.RatingScale(SCREEN, noMouse=True, choices=['OO', 'XX'], markerStart=0.5, labels=['OO', 'XX'],
-                                        scale=task1_text, acceptKeys='space', lineColor='DarkGrey', markerColor='DarkGrey',
-                                        pos=(0.0, 0.0), showAccept=False)
-    rating_scaleT1.draw()
-    SCREEN.flip()
-    p.setData(trigger_task1)
-    core.wait(0.01)
-    p.setData(0)
-
-    while rating_scaleT1.noResponse:
-        rating_scaleT1.draw()
-        SCREEN.flip()
-
-    print('The answer is: ', rating_scaleT1.getRating())
-    # get and return the rating
-    return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
-
-
-
-def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA, p: TriggerPort):
+def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA: bool, port: TriggerPort):
     '''
     Starts the real experiment trial.
     Parameters:
@@ -197,17 +186,16 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
         target2_presence bool : False for 'absent' or True for 'present'
         duration_SOA float : 'short' or 'long' (values taken from parameter file)
     '''
-
+    duration_SOA = long_SOA if longSOA else short_SOA
     print('++++++ start trial +++++++')
-    p.setData(trigger_start_trial)
-    core.wait(0.01)
-    p.setData(0)
+
     # it starts with the fixation cross
     displayFixCross()
     core.wait(timing_T1_start)
 
-    textT1 = displayT1(p)
-    core.wait(stimulus_duration)
+    t1TriggerNr = Triggers.get_number(forT2=False, t2Present=t2Present, dualTask=dualTask, longSOA=longSOA)
+    textT1 = displayT1(port, t1TriggerNr)
+    core.wait(stimulus_duration) # - trigger??
 
     # display black screen between stimuli and masks
     SCREEN.flip()
@@ -221,7 +209,8 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
     displayFixCross()
     core.wait(duration_SOA - stimulus_duration*3)
 
-    textT2 = displayT2(target2_presence, p)
+    t2TriggerNr = Triggers.get_number(forT2=True, t2Present=t2Present, dualTask=dualTask, longSOA=longSOA)
+    textT2 = displayT2(t2Present, port, t2TriggerNr)
     core.wait(stimulus_duration)
 
     # display black screen between stimuli and masks
@@ -240,11 +229,11 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
     core.wait(visibility_scale_timing)
 
     # start the visibility rating (happens in single AND dual task conditions)
-    ratingT2 = displayTask2(p)
+    ratingT2 = displayTask2(port)
 
     # only in the dual task condition the question on target 1 is displayed
-    if task_condition == 'dual':
-        ratingT1 = displayTask1(p)
+    if dualTask:
+        ratingT1 = displayTask1(port)
         # accuracy of answer
         correct = True if ratingT1[0] in textT1 else False
         ratingT1.append(correct)

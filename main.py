@@ -19,22 +19,31 @@ The attentional blink is induced by a task on the first target stimulus which is
 presented before the second target.
 
 '''
-import psychopy
 from parameters import *
 from functions import *
-from psychopy import data
+from psychopy.data import TrialHandlerExt, ExperimentHandler
 import random
+from ports import openTriggerPort
 
-# we only have two different blocks, (dual and single)
-exp_conditions = ['single', 'dual']
-# we have 368 trials in total, half of this is short SOA and the other half is long SOA
 
-p = openTriggerPort(chosen_settings)
+port = openTriggerPort(
+    typ=chosen_settings['port_type'],
+    address=chosen_settings['port_address'],
+    rate=chosen_settings['port_baudrate'],
+    win=SCREEN,
+    scale=scale,
+    viewPixBulbSize=7
+)
 
 # define an experiment handler
-exp = data.ExperimentHandler(name=experiment_name,
+exp = ExperimentHandler(name=experiment_name,
     version='0.1',
-    extraInfo={'participant':participantID, 'short_SOA':short_SOA, 'long_SOA':long_SOA, 'stimulus_duration':stimulus_duration},
+    extraInfo=dict(
+        participant=participantID,
+        short_SOA=short_SOA,
+        long_SOA=long_SOA,
+        stimulus_duration=stimulus_duration
+    ),
     runtimeInfo=None,
     originPath=None,
     savePickle=True,
@@ -46,98 +55,60 @@ exp = data.ExperimentHandler(name=experiment_name,
 showMessage(welcome_message, LARGE_FONT)
 showMessage(instructions)
 
-###############################
-#          TRAINING           #
-###############################
-showMessage(training_instructions)
-showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
 
-# calculate how many trials we need for the training
-n_train_trials_single = int(n_trials_single/n_training_trial_divisor)
-n_train_trials_dual_critical = int(n_trials_dual_critical/n_training_trial_divisor)
-n_train_trials_dual_easy = int(n_trials_dual_easy/n_training_trial_divisor)
-
-
-# compute the list of all different trial conditions and store it in two lists,
-# one for the single task and one for the dual task condition
-[train_stim_single, train_stim_dual] = computeStimulusList(True, n_train_trials_single,
-                                        n_train_trials_dual_critical, n_train_trials_dual_easy)
-train_trials_dual = data.TrialHandlerExt(train_stim_dual, 1, method='fullRandom', name='train_dual')
-train_trials_single = data.TrialHandlerExt(train_stim_single, 1, method='fullRandom', name='train_single')
-
-# add the trial handlers to our experiment handler and show the instructions
-exp.addLoop(train_trials_dual)
-exp.addLoop(train_trials_single)
-
-# we loop over two training blocks (dual taks, single task)
-training_blocks = [train_trials_dual, train_trials_single]
-random.shuffle(training_blocks)
-for block in training_blocks:
-    if block.name=='train_dual':
-        showMessage(dual_block_start)
+for phase in ['train', 'test']:
+    if phase == 'train':
+        showMessage(training_instructions)
+        showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
     else:
-        showMessage(single_block_start)
+        showMessage('MAIN EXPERIMENT STARTS', LARGE_FONT, wait=False)
 
-    for currentTrial in block:
-        # 50% chance that T1 is presented quick or slow after trial start
-        T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
-        duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
-        target2_presence = True if currentTrial['T2_presence']=='present' else False
-        print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
-        # save information in the csv-file
-        block.addData('ratingT2', ratingT2[0])
-        block.addData('RTtaskT2', ratingT2[1])
-        block.addData('ratingT1', ratingT1[0])
-        block.addData('RTtaskT1', ratingT1[1])
-        block.addData('ACCtaskT1', ratingT1[2])
-        block.addData('startingT1', T1_start)
-        block.addData('stimulusT1', stimulusT1)
-        block.addData('stimulusT2', stimulusT2)
-        exp.nextEntry()
+    # compute the list of all different trial conditions and store it in two lists,
+    # one for the single task and one for the dual task condition
+    [stim_single, stim_dual] = computeStimulusList(False, n_trials_single,
+        n_trials_dual_critical, n_trials_dual_easy)
+    trials_dual = TrialHandlerExt(stim_dual, 1, method='fullRandom', name=f'{phase}_dual')
+    trials_single = TrialHandlerExt(stim_single, 1, method='fullRandom', name=f'{phase}_single')
 
-print('Training done!')
-showMessage(finished_training)
+    # add the trial handlers to our experiment handler and show the instructions
+    exp.addLoop(trials_dual)
+    exp.addLoop(trials_single)
 
-##################################################
-#          TESTING (experiment starts)           #
-##################################################
+    # we loop over two training blocks (dual taks, single task)
+    blocks = [trials_dual, trials_single]
+    random.shuffle(blocks)
+    for block in blocks:
+        if 'dual' in block.name:
+            showMessage(dual_block_start)
+        else:
+            showMessage(single_block_start)
 
-showMessage('MAIN EXPERIMENT STARTS', LARGE_FONT, wait=False)
+        for currentTrial in block:
+            # 50% chance that T1 is presented quick or slow after trial start
+            T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
+            print('Current trial: ', currentTrial['Name'])
+            ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
+                dualTask=currentTrial['task']=='dual',
+                timing_T1_start=T1_start,
+                t2Present=currentTrial['T2_presence']=='present',
+                longSOA=currentTrial['SOA']=='long',
+                port=port
+            )
+            #save information in the csv-file
+            block.addData('ratingT2', ratingT2[0])
+            block.addData('RTtaskT2', ratingT2[1])
+            block.addData('ratingT1', ratingT1[0])
+            block.addData('RTtaskT1', ratingT1[1])
+            block.addData('ACCtaskT1', ratingT1[2])
+            block.addData('startingT1', T1_start)
+            block.addData('stimulusT1', stimulusT1)
+            block.addData('stimulusT2', stimulusT2)
+            exp.nextEntry()
 
-[test_stim_single, test_stim_dual] = computeStimulusList(False, n_trials_single,
-                                        n_trials_dual_critical, n_trials_dual_easy)
-test_trials_dual = data.TrialHandlerExt(test_stim_dual, name='test_dual', method='fullRandom', nReps=1)
-test_trials_single = data.TrialHandlerExt(test_stim_single, name='test_single', method='fullRandom', nReps=1)
-
-test_blocks = [test_trials_dual, test_trials_single]
-random.shuffle(test_blocks)
-# we loop over the real test blocks
-for block in test_blocks:
-    if block.name=='test_dual':
-        showMessage(dual_block_start)
-    else:
-        showMessage(single_block_start)
-
-    for currentTrial in block:
-        # 50% chance that T1 is presented quick or slow after trial start
-        T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
-        duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
-        target2_presence = True if currentTrial['T2_presence']=='present' else False
-        print('Current trial: ', currentTrial['Name'])
-        ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(currentTrial['task'], T1_start, target2_presence, duration_SOA, p)
-        # save information in the csv-file
-        block.addData('ratingT2', ratingT2[0])
-        block.addData('RTtaskT2', ratingT2[1])
-        block.addData('ratingT1', ratingT1[0])
-        block.addData('RTtaskT1', ratingT1[1])
-        block.addData('ACCtaskT1', ratingT1[2])
-        block.addData('startingT1', T1_start)
-        block.addData('stimulusT1', stimulusT1)
-        block.addData('stimulusT2', stimulusT2)
-        exp.nextEntry()
-
-# save the whole data as txt (additionally to the csv file), this also returns a dataFrame
+    if phase == 'train':
+        showMessage(finished_training)
+        
+print(f'dropped frames: {SCREEN.nDroppedFrames}')
 df = exp.saveAsWideText(FPATH_DATA_TXT)
 
 showMessage(thank_you, wait=False)

@@ -2,6 +2,7 @@ from os.path import join, expanduser
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
 import mne
+from triggers import Triggers
 
 data_dir = expanduser('~/Data/sergent2005EML/pilot/')
 eeg_dir = join(data_dir, 'sub-pilot1', 'eeg')
@@ -51,6 +52,9 @@ raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
 ## plot power spectrum from 10mins to 30mins after start
 raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
+
+# trigger definition
+event_ids = Triggers().asdict()
 
 ## epoching
 reject_criteria = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
