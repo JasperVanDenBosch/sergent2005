@@ -65,8 +65,8 @@ def displayT1(port: TriggerPort, triggerNr: int):
     '''
     target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
     target1.draw()
-    SCREEN.flip()
     port.trigger(triggerNr)
+    SCREEN.flip()
     return target1.text
 
 
@@ -88,8 +88,8 @@ def displayT2(T2_present, port: TriggerPort, triggerNr: int):
     else:
         target2.text = ''
 
-    SCREEN.flip()
     port.trigger(triggerNr)
+    SCREEN.flip()
     return target2.text
 
 def displayMask():
@@ -158,8 +158,8 @@ def displayTask2(p: TriggerPort):
                                         markerColor='LightGrey', pos=(0.0, 0.0), showAccept=False, markerStart=random_init)
 
     rating_scaleT2.draw()
-    SCREEN.flip()
     p.trigger(Triggers.taskT2visibility)
+    SCREEN.flip()
 
     # Show scale and instruction und confirmation of rating is done
     while rating_scaleT2.noResponse:

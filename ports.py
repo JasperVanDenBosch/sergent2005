@@ -19,11 +19,12 @@ class FakeTriggerPort:
 
 class SerialTriggerPort:
 
-    def __init__(self, address: str, baud: int):
+    def __init__(self, win: PsychopyWindow, address: str, baud: int):
         self.sport = Serial(port=address, baudrate=baud)
+        self.win = win
 
     def trigger(self, val: int) -> None:
-        self.sport.write(bytes([val]))
+        self.win.callOnFlip(self.sport.write, bytes([val]))
 
 
 class ParallelTriggerPort:
@@ -60,6 +61,7 @@ class ViewPixxTriggerPort:
         )
 
     def trigger(self, val: int) -> None:
+        val = 200
         self.line.setLineColor((val, val, val))
         self.line.draw()
 
@@ -73,7 +75,7 @@ def openTriggerPort(typ: str, win: PsychopyWindow, scale: float, address: str=''
     elif typ == 'parallel':
         return ParallelTriggerPort(address)
     elif typ == 'serial':
-        return SerialTriggerPort(address, rate)
+        return SerialTriggerPort(win, address, rate)
     elif typ == 'viewpixx':
         return ViewPixxTriggerPort(win, scale, viewPixBulbSize)
     else:

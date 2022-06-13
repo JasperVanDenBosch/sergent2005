@@ -35,8 +35,8 @@ class Triggers:
     t2_present_singleTask_longSOA  : int =  29
     t2_present_dualTask_shortSOA   : int =  30
     t2_present_dualTask_longSOA    : int =  31
-    taskT1variant: int = 200 #64
-    taskT2visibility: int = 200 #65
+    taskT1variant: int = 64
+    taskT2visibility: int = 65
 
     @classmethod
     def get_number(cls, forT2=False, t2Present=False, dualTask=False, longSOA=False) -> int:
