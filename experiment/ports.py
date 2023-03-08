@@ -3,8 +3,6 @@
 from __future__ import annotations
 from typing import Union, TYPE_CHECKING
 from serial import Serial
-from psychopy.parallel import ParallelPort
-from psychopy.core import wait
 from psychopy.visual.line import Line
 if TYPE_CHECKING:
     from psychopy.visual import Window as PsychopyWindow
@@ -25,23 +23,6 @@ class SerialTriggerPort:
     def trigger(self, val: int) -> None:
         self.win.callOnFlip(self.sport.write, bytes([val]))
 
-
-class ParallelTriggerPort:
-
-    def __init__(self, address: str):
-        """
-        Psychopy parallel port documentation uses address examples
-        in hexadecimal literal notation which compiles to integer.
-        So we also convert our string hex addresses to integers.
-        """
-        raise NotImplemented('Parallel port disabled because of critical timing issue')
-        address_int = int(address, 16)
-        self.pport = ParallelPort(address_int)
-
-    def trigger(self, val: int) -> None:
-        self.pport.setData(val)
-        wait(0.01)
-        self.pport.setData(0)
 
 class ViewPixxTriggerPort:
 
@@ -65,14 +46,13 @@ class ViewPixxTriggerPort:
         self.line.draw()
 
 
-TriggerPort = Union[SerialTriggerPort, ParallelTriggerPort, FakeTriggerPort,
+TriggerPort = Union[SerialTriggerPort, FakeTriggerPort,
     ViewPixxTriggerPort]
+
 
 def openTriggerPort(typ: str, win: PsychopyWindow, scale: float, address: str='', rate: int=0, viewPixBulbSize: float=7.0) -> TriggerPort:
     if typ == 'dummy':
         return FakeTriggerPort()
-    elif typ == 'parallel':
-        return ParallelTriggerPort(address)
     elif typ == 'serial':
         return SerialTriggerPort(win, address, rate)
     elif typ == 'viewpixx':
