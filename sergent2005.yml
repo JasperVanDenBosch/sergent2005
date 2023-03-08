@@ -1,0 +1,7 @@
+name: sergent2005
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pyglet==1.4.10
+  - psychopy==2021.1.4

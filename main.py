@@ -26,16 +26,24 @@ TODO:
 - computeStimulusList has fewer trials for training (n_training_trial_divisor)
 - computeStimulusList decide t1 slow or fast
 '''
+import psychopy
 from parameters import *
 from functions import *
 # from psychopy import data
 import random
+from ports import openTriggerPort
 from experiment.engine import PsychopyEngine
 from unittest.mock import Mock
 
 
-#p = openTriggerPort(chosen_settings)
-p = Mock()
+port = openTriggerPort(
+    typ=chosen_settings['port_type'],
+    address=chosen_settings['port_address'],
+    rate=chosen_settings['port_baudrate'],
+    win=SCREEN,
+    scale=scale,
+    viewPixBulbSize=7
+)
 
 # this object represents interactions with psychopy, ie for the actual drawing 
 # and interactions
