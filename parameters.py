@@ -6,11 +6,12 @@ experiment by running the main.py file located in the same folder.
 import os
 from os.path import join
 import psychopy
-from psychopy import visual, core, logging, monitors
+# from psychopy import visual, core, logging, monitors
 from labs import lab_settings
 import wx
+from unittest.mock import Mock
 
-
+SCREEN = Mock()
 
 ###########################
 # Experimental parameters #
@@ -52,6 +53,7 @@ chosen_settings = lab_settings[lab_name]
 width_cm = chosen_settings['mon_width']
 dist_cm = chosen_settings['mon_dist']
 
+""" now in engine
 # set monitor details
 my_monitor = monitors.Monitor(name='my_monitor', distance=dist_cm)
 my_monitor.setSizePix((width, height))
@@ -62,7 +64,7 @@ SCREEN = visual.Window(monitor='my_monitor',
                        fullscr=True,
                        units='deg')
 #m = event.Mouse(win=SCREEN)
-#m.setVisible(0) # mouse could disturb measurements, thus it is deactivated
+#m.setVisible(0) # mouse could disturb measurements, thus it is deactivated """
 
 # size of stimuli in degrees of visual angle
 square_size = 0.5
@@ -70,34 +72,34 @@ string_height = 1
 
 target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 target1_strings = ['OXXO', 'XOOX']
-target1 = visual.TextStim(SCREEN, height=string_height, units='deg')
-target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
-target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square2 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square3 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square4 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+# target1 = visual.TextStim(SCREEN, height=string_height, units='deg')
+# target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
+# target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+# target2_square2 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+# target2_square3 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+# target2_square4 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 
 # the mask is set of 4 capital letters (randomly generated in function file)
 possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']
-mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
+# mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
 
 # the fixation cross
 fix_cross_arm_len = 0.4
-fix_cross = visual.ShapeStim(
-    SCREEN,
-    pos=(0.0, 0.0),
-    vertices=(
-        (0,-fix_cross_arm_len),
-        (0,fix_cross_arm_len),
-        (0,0),
-        (-fix_cross_arm_len,0),
-        (fix_cross_arm_len,0)
-    ),
-    units = 'deg',
-    lineWidth = fix_cross_arm_len,
-    closeShape = False,
-    lineColor = (1, 1, 1)
-)
+# fix_cross = visual.ShapeStim(
+#     SCREEN,
+#     pos=(0.0, 0.0),
+#     vertices=(
+#         (0,-fix_cross_arm_len),
+#         (0,fix_cross_arm_len),
+#         (0,0),
+#         (-fix_cross_arm_len,0),
+#         (fix_cross_arm_len,0)
+#     ),
+#     units = 'deg',
+#     lineWidth = fix_cross_arm_len,
+#     closeShape = False,
+#     lineColor = (1, 1, 1)
+# )
 
 
 #################
@@ -125,10 +127,10 @@ FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt
 FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}.csv')
 
 log_fpath = join('logging', f'subject{participantID}.log')
-logFile = logging.LogFile(log_fpath, level=logging.EXP)
+#logFile = logging.LogFile(log_fpath, level=logging.EXP)
 # this outputs to the screen, not a file (setting to critical means silencing
 # console output by ignoring WARNING)
-logging.console.setLevel(logging.CRITICAL)
+#logging.console.setLevel(logging.CRITICAL)
 
 
 ################################################

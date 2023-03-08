@@ -199,6 +199,7 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
     '''
 
     print('++++++ start trial +++++++')
+    return [None, None, None, None]
     p.setData(trigger_start_trial)
     core.wait(0.01)
     p.setData(0)
@@ -253,11 +254,4 @@ def start_trial(task_condition, timing_T1_start, target2_presence, duration_SOA,
 
     return ratingT2, ratingT1, textT2, textT1
 
-def showMessage(message, text_height=0.6, wait=True):
-    text_to_display = visual.TextStim(SCREEN, text=message, height=text_height)
-    text_to_display.draw()
-    SCREEN.flip()
-    if wait:
-        event.waitKeys(keyList='space')
-    else:
-        core.wait(1.5)
+
