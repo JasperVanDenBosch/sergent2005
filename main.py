@@ -11,6 +11,8 @@ Counterbalance by pid
 - ITI 3-4s Fixation cross off then on
 - integrate ports with engine
 '''
+from os.path import expanduser, join
+from os import makedirs
 from experiment.parameters import *
 from experiment.trials import computeStimulusList
 from experiment.ports import openTriggerPort
@@ -21,28 +23,22 @@ from functions import start_trial
 from unittest.mock import Mock
 import random
 
-####################################################
-# Data/error logging  and experimental data saving #
-####################################################
+## User input
+pid = int(input('Type in participant ID number: '))
+chosen_settings = getLabConfiguration()
 
 # create folder for data and error logging
-if not os.path.isdir('logging'):
-    os.makedirs('logging')
-if not os.path.isdir('behavioral_data'):
-    os.makedirs('behavioral_data')
+data_dir = expanduser(f'~/data/{experiment_name}/{pid:03}')
+makedirs(data_dir, exist_ok=True)
 
-FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
-FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}')
+# sub-01_TS
 
 log_fpath = join('logging', f'subject{participantID}.log')
 #logFile = logging.LogFile(log_fpath, level=logging.EXP)
-# this outputs to the screen, not a file (setting to critical means silencing
-# console output by ignoring WARNING)
 #logging.console.setLevel(logging.INFO)
 
-## User input
-participantID = int(input('Type in participant ID number: '))
-chosen_settings = getLabConfiguration()
+
+
 SCREEN, scale = configureWindow(chosen_settings)
 
 # port = openTriggerPort(
