@@ -11,6 +11,8 @@ port_address: The address of the port used to send triggers.
     'dummy': print triggers to the command line, for development
 port_baudrate: Only used for serial ports.
 """
+from __future__ import annotations
+from typing import Dict, Any
 
 lab_settings = dict(
     jasper=dict(
@@ -47,7 +49,7 @@ lab_settings = dict(
     )
 )
 
-def getLabConfiguration():
+def getLabConfiguration() -> Dict[str, Any]:
     labs_str = ''.join([f'[{l}] ' for l in lab_settings.keys()])
     lab_name = input(f'Please select your lab {labs_str}:')
     assert lab_name in lab_settings.keys(), 'Unknown lab'

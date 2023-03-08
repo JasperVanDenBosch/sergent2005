@@ -1,75 +1,82 @@
 '''
 
 TODO:
+- refactor start_trial
+- refactor computeStimulusList
 - backup parameters
 - counterbalanced single/dual block order
 - i18n
 - ensure psychopy is logging draws as backup
 - computeStimulusList has fewer trials for training (n_training_trial_divisor)
 - computeStimulusList decide t1 slow or fast
+- store site in config file instead
 Counterbalance by pid
 - ITI 3-4s Fixation cross off then on
 - integrate ports with engine
+- cols for evts
+    # save information in the csv-file
+    # block.addData('ratingT2', ratingT2[0])
+    # block.addData('RTtaskT2', ratingT2[1])
+    # block.addData('ratingT1', ratingT1[0])
+    # block.addData('RTtaskT1', ratingT1[1])
+    # block.addData('ACCtaskT1', ratingT1[2])
+    # block.addData('startingT1', T1_start)
+    # block.addData('stimulusT1', stimulusT1)
+    # block.addData('stimulusT2', stimulusT2)
 '''
 from os.path import expanduser, join
+from datetime import datetime
 from os import makedirs
-from experiment.parameters import *
+from experiment.constants import Constants
 from experiment.trials import computeStimulusList
-from experiment.ports import openTriggerPort
 from experiment.engine import PsychopyEngine
 from experiment.labs import getLabConfiguration
-from experiment.window import configureWindow
 from functions import start_trial
 from unittest.mock import Mock
 import random
+CONSTANTS  = Constants()
 
-## User input
-pid = int(input('Type in participant ID number: '))
-chosen_settings = getLabConfiguration()
+## user input
+SITE = 'TST'
+pidx = int(input('Type in participant ID number: '))
+sub = f'{SITE}{pidx:03}'
+chosen_settings = getLabConfiguration() # maybe get from config file instead
 
-# create folder for data and error logging
-data_dir = expanduser(f'~/data/{experiment_name}/{pid:03}')
+## data directory and file paths
+data_dir = expanduser(f'~/data/{CONSTANTS.experiment_name}/sub-{sub}')
 makedirs(data_dir, exist_ok=True)
+dt_str = datetime.now().strftime(f'%y%m%d%H%M%S')
+evt_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_events.tsv')
+log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
-# sub-01_TS
-
-log_fpath = join('logging', f'subject{participantID}.log')
-#logFile = logging.LogFile(log_fpath, level=logging.EXP)
-#logging.console.setLevel(logging.INFO)
-
-
-
-SCREEN, scale = configureWindow(chosen_settings)
-
-# port = openTriggerPort(
-#     typ=chosen_settings['port_type'],
-#     address=chosen_settings['port_address'],
-#     rate=chosen_settings['port_baudrate'],
-#     win=SCREEN,
-#     scale=scale,
-#     viewPixBulbSize=7
-# )
-port = Mock()
-
-# this object represents interactions with psychopy, ie for the actual drawing 
-# and interactions
+# this object represents drawing and interactions via psychopy
 engine = PsychopyEngine()
 
+## set log levels and log file location
+engine.configureLog(log_fpath)
+
+## setup psychopy monitor and window objects
+engine.configureWindow(chosen_settings)
+
+## setup serial port or other trigger port
+engine.connectTriggerInterface(**chosen_settings)
+
 ## stimuli
-target1 = engine.createTextStim(height=string_height)# , units='deg'
-target2 = engine.createTextStim(height=string_height)
-target2_square1 = engine.createRect(size=(square_size, square_size), target2_square1_pos=(-5,-5))
-target2_square2 = engine.createRect(size=(square_size, square_size), target2_square2_pos=(5,-5))
-target2_square3 = engine.createRect(size=(square_size, square_size), target2_square3_pos=(-5,5))
-target2_square4 = engine.createRect(size=(square_size, square_size), target2_square4_pos=(5,5))
-mask = engine.createTextStim(text='INIT', height=string_height)
+target1 = engine.createTextStim('UNSET_TARGET1')
+target2 = engine.createTextStim('UNSET_TARGET2')
+square_size = (CONSTANTS.square_size, CONSTANTS.square_size)
+target2_square1 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square1_pos)
+target2_square2 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square2_pos)
+target2_square3 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square3_pos)
+target2_square4 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square4_pos)
+mask = engine.createTextStim('UNSET_MASK')
 
 # Welcome the participant
-engine.showMessage(welcome_message, LARGE_FONT)
-engine.showMessage(instructions)
+engine.showMessage(CONSTANTS.welcome_message, CONSTANTS.LARGE_FONT)
+engine.showMessage(CONSTANTS.instructions)
 
 ## before experiment
-engine.showMessage(training_instructions)
+engine.showMessage(CONSTANTS.training_instructions)
 
 for phase in ('train', 'test'):
     # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
@@ -78,40 +85,30 @@ for phase in ('train', 'test'):
         [trials, _] = computeStimulusList(
             phase=='train', # training
             block=='dual',
-            n_trials_single,
-            n_trials_dual_critical,
-            n_trials_dual_easy
+            CONSTANTS.n_trials_single,
+            CONSTANTS.n_trials_dual_critical,
+            CONSTANTS.n_trials_dual_easy
         )
         random.shuffle(trials)
         if block=='dual':
-            engine.showMessage(dual_block_start)
+            engine.showMessage(CONSTANTS.dual_block_start)
         else:
-            engine.showMessage(single_block_start)
+            engine.showMessage(CONSTANTS.single_block_start)
 
         for currentTrial in trials:
             # 50% chance that T1 is presented quick or slow after trial start
-            T1_start = start_T1_slow if currentTrial['slow_T1']=='long' else start_T1_quick
-            duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
-            target2_presence = True if currentTrial['T2_presence']=='present' else False
+            T1_start = CONSTANTS.start_T1_slow if currentTrial['slow_T1']=='long' else CONSTANTS.start_T1_quick
+            duration_SOA = CONSTANTS.long_SOA if currentTrial['SOA']=='long' else CONSTANTS.short_SOA
             print('Current trial: ', currentTrial['Name'])
             ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
-                currentTrial['task'],
-                T1_start,
-                target2_presence,
-                duration_SOA, 
-                None, #p
+                dualTask=currentTrial['task']=='dual',
+                timing_T1_start=T1_start,
+                t2Present=currentTrial['T2_presence']=='present',
+                longSOA=currentTrial['SOA']=='long',
+                port=engine.port,
             )
-            # save information in the csv-file
-            # block.addData('ratingT2', ratingT2[0])
-            # block.addData('RTtaskT2', ratingT2[1])
-            # block.addData('ratingT1', ratingT1[0])
-            # block.addData('RTtaskT1', ratingT1[1])
-            # block.addData('ACCtaskT1', ratingT1[2])
-            # block.addData('startingT1', T1_start)
-            # block.addData('stimulusT1', stimulusT1)
-            # block.addData('stimulusT2', stimulusT2)
 
     print(f'{phase} done!')
-    engine.showMessage(finished_training) # TODO phase
+    engine.showMessage(CONSTANTS.finished_training) # TODO phase
 
-engine.showMessage(thank_you, wait=False)
+engine.showMessage(CONSTANTS.thank_you, wait=False)

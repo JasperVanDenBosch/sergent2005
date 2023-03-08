@@ -4,20 +4,19 @@ experiment by running the main.py file located in the same folder.
 '''
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from parameters import *
-from triggers import Triggers
-from psychopy import core
-from psychopy.visual.ratingscale import RatingScale
+from experiment.triggers import Triggers
 import random
+from experiment.constants import Constants
+CONSTANTS  = Constants()
 if TYPE_CHECKING:
-    from ports import TriggerPort
+    from experiment.ports import TriggerInterface as TriggerPort
 
 
 def displayT1(port: TriggerPort, triggerNr: int):
     '''
     Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
     '''
-    target1.text = target1_strings[0] if random.random() > .5 else target1_strings[1]
+    target1.text = CONSTANTS.target1_strings[0] if random.random() > .5 else CONSTANTS.target1_strings[1]
     target1.draw()
     port.trigger(triggerNr)
     SCREEN.flip()
@@ -37,7 +36,7 @@ def displayT2(T2_present, port: TriggerPort, triggerNr: int):
     target2_square4.draw()
 
     if T2_present:
-        target2.text = random.choice(target2_strings)
+        target2.text = random.choice(CONSTANTS.target2_strings)
         target2.draw()
     else:
         target2.text = ''
@@ -52,7 +51,7 @@ def displayMask():
     The selection and order of consonants is ramdomly chosen at every execution.
     '''
     # create random consonants
-    selected_string = random.sample(possible_consonants, 4)
+    selected_string = random.sample(CONSTANTS.possible_consonants, 4)
     mask.text = ''.join(selected_string)
     mask.draw()
     SCREEN.flip()
@@ -135,9 +134,11 @@ def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA
         target2_presence bool : False for 'absent' or True for 'present'
         duration_SOA float : 'short' or 'long' (values taken from parameter file)
     '''
-    duration_SOA = long_SOA if longSOA else short_SOA
+    #T1_start = CONSTANTS.start_T1_slow if currentTrial['slow_T1']=='long' else CONSTANTS.start_T1_quick
+    #target2_presence = True if currentTrial['T2_presence']=='present' else False
+    duration_SOA = CONSTANTS.long_SOA if longSOA else CONSTANTS.short_SOA
     print('++++++ start trial +++++++')
-    return [None, None, None, None]
+    #return [None, None, None, None]
 
 
     # it starts with the fixation cross
@@ -146,38 +147,38 @@ def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA
 
     t1TriggerNr = Triggers.get_number(forT2=False, t2Present=t2Present, dualTask=dualTask, longSOA=longSOA)
     textT1 = displayT1(port, t1TriggerNr)
-    core.wait(stimulus_duration) # - trigger??
+    core.wait(CONSTANTS.stimulus_duration) # - trigger??
 
     # display black screen between stimuli and masks
     SCREEN.flip()
-    core.wait(stimulus_duration)
+    core.wait(CONSTANTS.stimulus_duration)
 
     displayMask()
-    core.wait(stimulus_duration)
+    core.wait(CONSTANTS.stimulus_duration)
 
     # display the fixation cross either short_SOA - 129ms or long_SOA - 129ms,
     # since the target, the mask and the black screen was displayed for 43ms each
     displayFixCross()
-    core.wait(duration_SOA - stimulus_duration*3)
+    core.wait(duration_SOA - CONSTANTS.stimulus_duration*3)
 
     t2TriggerNr = Triggers.get_number(forT2=True, t2Present=t2Present, dualTask=dualTask, longSOA=longSOA)
     textT2 = displayT2(t2Present, port, t2TriggerNr)
-    core.wait(stimulus_duration)
+    core.wait(CONSTANTS.stimulus_duration)
 
     # display black screen between stimuli and masks
     SCREEN.flip()
-    core.wait(stimulus_duration)
+    core.wait(CONSTANTS.stimulus_duration)
 
     # display two masks after another with black screen inbetween
     displayMask()
-    core.wait(stimulus_duration)
+    core.wait(CONSTANTS.stimulus_duration)
     SCREEN.flip()
-    core.wait(stimulus_duration)
+    core.wait(CONSTANTS.stimulus_duration)
     displayMask()
-    core.wait(stimulus_duration)
+    core.wait(CONSTANTS.stimulus_duration)
 
     SCREEN.flip()
-    core.wait(visibility_scale_timing)
+    core.wait(CONSTANTS.visibility_scale_timing)
 
     # start the visibility rating (happens in single AND dual task conditions)
     ratingT2 = displayTask2(port)

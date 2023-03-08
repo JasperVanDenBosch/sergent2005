@@ -1,9 +1,16 @@
 
 from __future__ import annotations
-from typing import Tuple
+from typing import Tuple, Dict
+from psychopy.monitors import Monitor
+from psychopy.visual import Window
+from psychopy.visual.line import Line
+from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
 
 
 class PsychopyEngine(object):
+
+    port: TriggerInterface
+
     # create window
     # create stimulus
     # draw stimulus
@@ -12,16 +19,40 @@ class PsychopyEngine(object):
     # core.wait(stimulus_duration)
     # test message event.waitKeys
 
-    def screen(self):
+    def __init__(self) -> None:
+        self.port = FakeTriggerPort()
 
-        my_monitor = monitors.Monitor(name='my_monitor', distance=dist_cm)
-        my_monitor.setSizePix((width, height))
-        my_monitor.setWidth(width_cm)
+    def configureLog(self, fpath: str):
+        pass
+        # logging.console.setLevel(logging.WARNING)
+        # logging.LogFile(log_fpath, logging.EXP)
+
+        ## timer
+        # clock = core.Clock()
+        # logging.setDefaultClock(clock)
+        # logging.exp(f'time={clock.getTime(applyZero=False)}')
+
+        #logFile = logging.LogFile(log_fpath, level=logging.EXP)
+        #logging.console.setLevel(logging.INFO)
+
+    def configureWindow(self, settings: Dict) -> Tuple[Window, float]:
+        my_monitor = Monitor(name='EMLSergent2005', distance=settings['mon_dist'])
+        my_monitor.setSizePix(settings['mon_resolution'])
+        my_monitor.setWidth(settings['mon_width'])
         my_monitor.saveMon()
-        SCREEN = visual.Window(monitor='my_monitor',
-                            color=(-1,-1,-1),
-                            fullscr=True,
-                            units='deg')
+        win = Window(
+            size=settings['mon_resolution'],
+            monitor='EMLSergent2005',
+            color=(-1,-1,-1),
+            fullscr=True,
+            units='deg'
+        )
+        scaling = settings['mon_resolution'][0] / win.size[0]
+        if scaling == 0.5:
+            print('Looks like a retina display')
+        elif scaling != 0.0:
+            print('Weird scaling. Is your configured monitor resolution correct?')
+        return win, scaling
         
     def createTextStim(self, text: str):
         # target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
@@ -49,6 +80,9 @@ class PsychopyEngine(object):
             lineColor = (1, 1, 1)
         )
 
+    def createLine(self, **kwargs):
+        return Line(**kwargs)
+
     def showMessage(self, message: str, text_height=0.6, wait=True):
         print(f'[showMessage] {message}')
         return
@@ -59,3 +93,14 @@ class PsychopyEngine(object):
             event.waitKeys(keyList='space')
         else:
             core.wait(1.5)
+
+    def connectTriggerInterface(self, port_type: str, port_address: str,
+                                port_baudrate: int) -> None:
+        self.port = createTriggerPort(
+            typ=port_type,
+            engine=self,
+            scale=1.0,
+            address=port_address,
+            rate=port_baudrate,
+            viewPixBulbSize=7.0
+        )
