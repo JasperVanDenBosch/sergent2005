@@ -2,7 +2,6 @@
 """
 from __future__ import annotations
 from typing import Union, TYPE_CHECKING
-from numpy import int0
 from serial import Serial
 from psychopy.parallel import ParallelPort
 from psychopy.core import wait

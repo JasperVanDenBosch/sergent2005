@@ -1,22 +1,4 @@
-# -*- coding: utf-8 -*-
-######################################################
-# The timing of consciousness related brain activity #
-# An attentional blink experiment                    #
-######################################################
-
 '''
-About the experiment:
-This implementation replicates the experiment presented in the paper 'Timing of
-brain events underlying acces to consciousness during attentional blink'
-(Sergent et. al., 2005) in the framework of #eegmanylabs.
-
-In this experiment the subject has to indicate visibility of a second target stimulus
-that in one condition is displayed during the attentional blink and in the other
-condition it is displayed outside of the attentional blink.
-In 50% of the trials the second target is present and in the other 50% only an
-empty screen is displayed.
-The attentional blink is induced by a task on the first target stimulus which is
-presented before the second target.
 
 TODO:
 - backup parameters
@@ -25,15 +7,43 @@ TODO:
 - ensure psychopy is logging draws as backup
 - computeStimulusList has fewer trials for training (n_training_trial_divisor)
 - computeStimulusList decide t1 slow or fast
+Counterbalance by pid
+- ITI 3-4s Fixation cross off then on
+- integrate ports with engine
 '''
-from parameters import *
-from functions import start_trial, computeStimulusList
-# from psychopy import data
-import random
-from ports import openTriggerPort
+from experiment.parameters import *
+from experiment.trials import computeStimulusList
+from experiment.ports import openTriggerPort
 from experiment.engine import PsychopyEngine
+from experiment.labs import getLabConfiguration
+from experiment.window import configureWindow
+from functions import start_trial
 from unittest.mock import Mock
+import random
 
+####################################################
+# Data/error logging  and experimental data saving #
+####################################################
+
+# create folder for data and error logging
+if not os.path.isdir('logging'):
+    os.makedirs('logging')
+if not os.path.isdir('behavioral_data'):
+    os.makedirs('behavioral_data')
+
+FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
+FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}')
+
+log_fpath = join('logging', f'subject{participantID}.log')
+#logFile = logging.LogFile(log_fpath, level=logging.EXP)
+# this outputs to the screen, not a file (setting to critical means silencing
+# console output by ignoring WARNING)
+#logging.console.setLevel(logging.INFO)
+
+## User input
+participantID = int(input('Type in participant ID number: '))
+chosen_settings = getLabConfiguration()
+SCREEN, scale = configureWindow(chosen_settings)
 
 # port = openTriggerPort(
 #     typ=chosen_settings['port_type'],
@@ -49,6 +59,15 @@ port = Mock()
 # and interactions
 engine = PsychopyEngine()
 
+## stimuli
+target1 = engine.createTextStim(height=string_height)# , units='deg'
+target2 = engine.createTextStim(height=string_height)
+target2_square1 = engine.createRect(size=(square_size, square_size), target2_square1_pos=(-5,-5))
+target2_square2 = engine.createRect(size=(square_size, square_size), target2_square2_pos=(5,-5))
+target2_square3 = engine.createRect(size=(square_size, square_size), target2_square3_pos=(-5,5))
+target2_square4 = engine.createRect(size=(square_size, square_size), target2_square4_pos=(5,5))
+mask = engine.createTextStim(text='INIT', height=string_height)
+
 # Welcome the participant
 engine.showMessage(welcome_message, LARGE_FONT)
 engine.showMessage(instructions)
@@ -56,27 +75,18 @@ engine.showMessage(instructions)
 ## before experiment
 engine.showMessage(training_instructions)
 
-
 for phase in ('train', 'test'):
-    engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
+    # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
 
-    # compute the list of all different trial conditions and store it in two lists,
-    # one for the single task and one for the dual task condition
     for block in ('single', 'dual'):
-        [trials, trials] = computeStimulusList(
-            #block, 
-            True, # training
+        [trials, _] = computeStimulusList(
+            phase=='train', # training
+            block=='dual',
             n_trials_single,
             n_trials_dual_critical,
             n_trials_dual_easy
         )
         random.shuffle(trials)
-        # this just randomizes the order
-        #train_trials_dual = data.TrialHandlerExt(train_stim_dual, 1, method='fullRandom', name='train_dual')
-        #train_trials_single = data.TrialHandlerExt(train_stim_single, 1, method='fullRandom', name='train_single')
-
-        # we loop over two training blocks (dual taks, single task)
-
         if block=='dual':
             engine.showMessage(dual_block_start)
         else:
@@ -84,7 +94,7 @@ for phase in ('train', 'test'):
 
         for currentTrial in trials:
             # 50% chance that T1 is presented quick or slow after trial start
-            T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
+            T1_start = start_T1_slow if currentTrial['slow_T1']=='long' else start_T1_quick
             duration_SOA = long_SOA if currentTrial['SOA']=='long' else short_SOA
             target2_presence = True if currentTrial['T2_presence']=='present' else False
             print('Current trial: ', currentTrial['Name'])
@@ -109,4 +119,3 @@ for phase in ('train', 'test'):
     engine.showMessage(finished_training) # TODO phase
 
 engine.showMessage(thank_you, wait=False)
-

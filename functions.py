@@ -3,65 +3,14 @@ This script contains all functions needed to execute the attentional blink
 experiment by running the main.py file located in the same folder.
 '''
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Dict, Union
+from typing import TYPE_CHECKING
 from parameters import *
 from triggers import Triggers
-from psychopy import visual, event, core
+from psychopy import core
 from psychopy.visual.ratingscale import RatingScale
 import random
 if TYPE_CHECKING:
     from ports import TriggerPort
-
-
-def computeStimulusList(
-        training: bool,
-        single_trials: int,
-        dual_critical_trials: int,
-        dual_easy_trials: int
-    ) -> Tuple[List[Dict], List[Dict]]:
-    '''
-    In this function a list of dictionaries containing all possible combination of
-    trial types is created. It returns two lists, one for the dual task condition
-    and one for the single task condition. These lists are handed over to TrialHandlers
-    that control for randomized (and weighted) trials execution in training and
-    testing sessions.
-    Parameters:
-        training bool : True if this is used for a training session
-        single_trials int : Number of trials in the single condition
-        dual_critical_trials int : Number of trials in the critical dual task
-                                   condition (short SOA and present T2).
-        dual_easy_trials int : Number of trials in the easy dual task conditions
-                               (short SOA/T2 absent or long SOA).
-    '''
-    if training:
-        ntrials_div = n_training_trial_divisor
-    else:
-        ntrials_div = 1
-
-    stimList = []
-    for task in ['single', 'dual']:
-        for T2_presence in ['present', 'absent']:
-            for SOA in ['short', 'long']:
-                name = '_'.join([task, T2_presence, SOA])
-                if training:
-                    name = name + '_training'
-                if task=='single':
-                    weight = int(single_trials/ntrials_div)
-                elif task=='dual' and SOA=='short' and T2_presence=='present':
-                    weight = int(dual_critical_trials/ntrials_div)
-                else:
-                    weight = int(dual_easy_trials/ntrials_div)
-
-                stimList.append({'Name': name, 'task':task, 'T2_presence':T2_presence, 'SOA':SOA, 'weight':weight})
-
-    stimuli_single = stimList[0:int(len(stimList)/2)]
-    stimuli_dual = stimList[int(len(stimList)/2):len(stimList)]
-    print('Single: ')
-    [print(single) for single in stimuli_single]
-    print('DUAL: ')
-    [print(dual) for dual in stimuli_dual]
-
-    return stimuli_single, stimuli_dual
 
 
 def displayT1(port: TriggerPort, triggerNr: int):
@@ -190,6 +139,7 @@ def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA
     print('++++++ start trial +++++++')
     return [None, None, None, None]
 
+
     # it starts with the fixation cross
     displayFixCross()
     core.wait(timing_T1_start)
@@ -242,12 +192,3 @@ def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA
         ratingT1 = [None, None, None]
 
     return ratingT2, ratingT1, textT2, textT1
-
-def showMessage(message, text_height=0.6, wait=True):
-    text_to_display = visual.TextStim(SCREEN, text=message, height=text_height)
-    text_to_display.draw()
-    SCREEN.flip()
-    if wait:
-        event.waitKeys(keyList='space')
-    else:
-        core.wait(1.5)

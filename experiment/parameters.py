@@ -2,11 +2,6 @@
 This script contains all parameters needed to execute the attentional blink
 experiment by running the main.py file located in the same folder.
 '''
-import os
-from os.path import join
-from labs import getLabConfiguration
-from window import configureWindow
-
 
 ###########################
 # Experimental parameters #
@@ -32,49 +27,20 @@ n_training_trial_divisor = 8
 # Visual features (targets, masks, fixation cross) #
 ####################################################
 
-## User input
-participantID = int(input('Type in participant ID number: '))
-chosen_settings = getLabConfiguration()
-SCREEN, scale = configureWindow(chosen_settings)
-
 # size of stimuli in degrees of visual angle
 square_size = 0.5
 string_height = 1
 
 target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 target1_strings = ['OXXO', 'XOOX']
-target1 = engine.createTextStim(SCREEN, height=string_height, units='deg')
-target2 = engine.createTextStim(SCREEN, height=string_height, units='deg')
-target2_square1 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square2 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square3 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square4 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+
+target2_square1_pos=(-5,-5)
+target2_square2_pos=(5,-5)
+target2_square3_pos=(-5,5)
+target2_square4_pos=(5,5)
 
 # the mask is set of 4 capital letters (randomly generated in function file)
 possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']
-mask = engine.createTextStim(SCREEN, text='INIT', height=string_height, units='deg')
-
-
-
-
-####################################################
-# Data/error logging  and experimental data saving #
-####################################################
-
-# create folder for data and error logging
-if not os.path.isdir('logging'):
-    os.makedirs('logging')
-if not os.path.isdir('behavioral_data'):
-    os.makedirs('behavioral_data')
-
-FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt')
-FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}')
-
-log_fpath = join('logging', f'subject{participantID}.log')
-#logFile = logging.LogFile(log_fpath, level=logging.EXP)
-# this outputs to the screen, not a file (setting to critical means silencing
-# console output by ignoring WARNING)
-#logging.console.setLevel(logging.INFO)
 
 
 ################################################
