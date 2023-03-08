@@ -1,5 +1,11 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, List
+from experiment.trial import Trial, Phase, Task
+if TYPE_CHECKING:
+    from experiment.constants import Constants
+
+def generateTrials(phase: Phase, task: Task, constants: Constants) -> List[Trial]:
+    return []
 
 
 def computeStimulusList(

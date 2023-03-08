@@ -13,6 +13,7 @@ TODO:
 Counterbalance by pid
 - ITI 3-4s Fixation cross off then on
 - integrate ports with engine
+- squares as list
 - cols for evts
     # save information in the csv-file
     # block.addData('ratingT2', ratingT2[0])
@@ -28,12 +29,15 @@ from os.path import expanduser, join
 from datetime import datetime
 from os import makedirs
 from experiment.constants import Constants
-from experiment.trials import computeStimulusList
+from experiment.trials import generateTrials
 from experiment.engine import PsychopyEngine
 from experiment.labs import getLabConfiguration
 from functions import start_trial
 from unittest.mock import Mock
 import random
+from typing import TYPE_CHECKING, Union, Literal
+if TYPE_CHECKING:
+    from experiment.trial import Trial
 CONSTANTS  = Constants()
 
 ## user input
@@ -82,31 +86,27 @@ for phase in ('train', 'test'):
     # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
 
     for block in ('single', 'dual'):
-        [trials, _] = computeStimulusList(
-            phase=='train', # training
-            block=='dual',
-            CONSTANTS.n_trials_single,
-            CONSTANTS.n_trials_dual_critical,
-            CONSTANTS.n_trials_dual_easy
-        )
+        trials = generateTrials(phase, block, CONSTANTS)
         random.shuffle(trials)
-        if block=='dual':
+
+        if block == 'dual':
             engine.showMessage(CONSTANTS.dual_block_start)
         else:
             engine.showMessage(CONSTANTS.single_block_start)
 
-        for currentTrial in trials:
-            # 50% chance that T1 is presented quick or slow after trial start
-            T1_start = CONSTANTS.start_T1_slow if currentTrial['slow_T1']=='long' else CONSTANTS.start_T1_quick
-            duration_SOA = CONSTANTS.long_SOA if currentTrial['SOA']=='long' else CONSTANTS.short_SOA
-            print('Current trial: ', currentTrial['Name'])
-            ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
-                dualTask=currentTrial['task']=='dual',
-                timing_T1_start=T1_start,
-                t2Present=currentTrial['T2_presence']=='present',
-                longSOA=currentTrial['SOA']=='long',
-                port=engine.port,
-            )
+        for trial in trials:
+            # # 50% chance that T1 is presented quick or slow after trial start
+            # T1_start = CONSTANTS.start_T1_slow if currentTrial['slow_T1']=='long' else CONSTANTS.start_T1_quick
+            # duration_SOA = CONSTANTS.long_SOA if currentTrial['SOA']=='long' else CONSTANTS.short_SOA
+            # print('Current trial: ', currentTrial['Name'])
+            # ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
+            #     dualTask=currentTrial['task']=='dual',
+            #     timing_T1_start=T1_start,
+            #     t2Present=currentTrial['T2_presence']=='present',
+            #     longSOA=currentTrial['SOA']=='long',
+            #     port=engine.port,
+            # )
+            trial.run(engine)
 
     print(f'{phase} done!')
     engine.showMessage(CONSTANTS.finished_training) # TODO phase
