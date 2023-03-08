@@ -188,6 +188,7 @@ def start_trial(dualTask: bool, timing_T1_start: float, t2Present: bool, longSOA
     '''
     duration_SOA = long_SOA if longSOA else short_SOA
     print('++++++ start trial +++++++')
+    return [None, None, None, None]
 
     # it starts with the fixation cross
     displayFixCross()

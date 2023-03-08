@@ -4,7 +4,6 @@ experiment by running the main.py file located in the same folder.
 '''
 import os
 from os.path import join
-from psychopy import visual, logging
 from labs import getLabConfiguration
 from window import configureWindow
 
@@ -44,34 +43,18 @@ string_height = 1
 
 target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 target1_strings = ['OXXO', 'XOOX']
-target1 = visual.TextStim(SCREEN, height=string_height, units='deg')
-target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
-target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square2 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square3 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-target2_square4 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target1 = engine.createTextStim(SCREEN, height=string_height, units='deg')
+target2 = engine.createTextStim(SCREEN, height=string_height, units='deg')
+target2_square1 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square2 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square3 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+target2_square4 = engine.createRect(SCREEN, size=(square_size, square_size), units='deg', pos=(5,5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
 
 # the mask is set of 4 capital letters (randomly generated in function file)
 possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']
-mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
+mask = engine.createTextStim(SCREEN, text='INIT', height=string_height, units='deg')
 
-# the fixation cross
-fix_cross_arm_len = 0.4
-fix_cross = visual.ShapeStim(
-    SCREEN,
-    pos=(0.0, 0.0),
-    vertices=(
-        (0,-fix_cross_arm_len),
-        (0,fix_cross_arm_len),
-        (0,0),
-        (-fix_cross_arm_len,0),
-        (fix_cross_arm_len,0)
-    ),
-    units = 'deg',
-    lineWidth = fix_cross_arm_len,
-    closeShape = False,
-    lineColor = (1, 1, 1)
-)
+
 
 
 ####################################################
@@ -88,10 +71,10 @@ FPATH_DATA_TXT = join('behavioral_data', f'{experiment_name}_{participantID}.txt
 FPATH_DATA_CSV = join('behavioral_data', f'{experiment_name}_{participantID}')
 
 log_fpath = join('logging', f'subject{participantID}.log')
-logFile = logging.LogFile(log_fpath, level=logging.EXP)
+#logFile = logging.LogFile(log_fpath, level=logging.EXP)
 # this outputs to the screen, not a file (setting to critical means silencing
 # console output by ignoring WARNING)
-logging.console.setLevel(logging.INFO)
+#logging.console.setLevel(logging.INFO)
 
 
 ################################################
