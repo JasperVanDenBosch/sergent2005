@@ -26,6 +26,9 @@ class Constants(object):
     # each number of test trial will be divided by n_training_trial_divisor
     n_training_trial_divisor = 8
 
+    # number of options for visibility rating
+    scale_length = 21
+
     ####################################################
     # Visual features (targets, masks, fixation cross) #
     ####################################################
@@ -71,5 +74,8 @@ class Constants(object):
                         ' \n\n Please press \'space\' if you are ready to start.'
     start_trial_text = 'Press \'space\' to start the trial.'
     thank_you = 'Great! You completed all trials. Thank you for your participation.'
-
-
+    task2_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
+                 'Press \'space\' to confirm.\n\n'
+    task1_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
+                 '\'OO\' or \'XX\'\n'\
+                 'Press \'space\' to confirm.\n\n'

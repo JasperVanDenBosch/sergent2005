@@ -32,24 +32,23 @@ from experiment.constants import Constants
 from experiment.trials import generateTrials
 from experiment.engine import PsychopyEngine
 from experiment.labs import getLabConfiguration
-from functions import start_trial
 from unittest.mock import Mock
 import random
-from typing import TYPE_CHECKING, Union, Literal
-if TYPE_CHECKING:
-    from experiment.trial import Trial
-CONSTANTS  = Constants()
+from typing import TYPE_CHECKING
+CONSTANTS  = Constants()  # load fixed parameters wrt timing, sizing etc
 
 ## user input
 SITE = 'TST'
 pidx = int(input('Type in participant ID number: '))
-sub = f'{SITE}{pidx:03}'
+sub = f'{SITE}{pidx:03}' # the subject ID is a combination of lab ID + subject index
 chosen_settings = getLabConfiguration() # maybe get from config file instead
 
 ## data directory and file paths
 data_dir = expanduser(f'~/data/{CONSTANTS.experiment_name}/sub-{sub}')
-makedirs(data_dir, exist_ok=True)
+makedirs(data_dir, exist_ok=True) # ensure data directory exists
+# current date+time to seconds, helps to generate unique files, prevent overwriting
 dt_str = datetime.now().strftime(f'%y%m%d%H%M%S')
+# full file path to events (structured) and log (unstructured) output 
 evt_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_events.tsv')
 log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
@@ -74,6 +73,7 @@ target2_square2 = engine.createRect(size=square_size, pos=CONSTANTS.target2_squa
 target2_square3 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square3_pos)
 target2_square4 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square4_pos)
 mask = engine.createTextStim('UNSET_MASK')
+fix_cross
 
 # Welcome the participant
 engine.showMessage(CONSTANTS.welcome_message, CONSTANTS.LARGE_FONT)
@@ -87,7 +87,7 @@ for phase in ('train', 'test'):
 
     for block in ('single', 'dual'):
         trials = generateTrials(phase, block, CONSTANTS)
-        random.shuffle(trials)
+        random.shuffle(trials) # TODO check if this is good enough, do we worry about conseq reps
 
         if block == 'dual':
             engine.showMessage(CONSTANTS.dual_block_start)
