@@ -57,29 +57,45 @@ class PsychopyEngine(object):
         elif scaling != 0.0:
             print('Weird scaling. Is your configured monitor resolution correct?')
         return win, scaling
+    
+    def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
+        target1 = engine.createTextStim('UNSET_TARGET1')
+        target2 = engine.createTextStim('UNSET_TARGET2')
+        square_size = (squareSize, squareSize)
+        target2_square1_pos=(-squareOffset,-squareOffset)
+        target2_square2_pos=(squareOffset,-squareOffset)
+        target2_square3_pos=(-squareOffset,squareOffset)
+        target2_square4_pos=(squareOffset,squareOffset)
+        target2_square1 = engine.createRect(size=square_size, pos=target2_square1_pos)
+        target2_square2 = engine.createRect(size=square_size, pos=target2_square2_pos)
+        target2_square3 = engine.createRect(size=square_size, pos=target2_square3_pos)
+        target2_square4 = engine.createRect(size=square_size, pos=target2_square4_pos)
+        mask = engine.createTextStim('UNSET_MASK')
         
     def createTextStim(self, text: str):
         # target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
         #mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
+        pass
 
 
     def createRect(self, size: Tuple[float, float], pos: Tuple[int, int]):
         # target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+        pass
 
-    def createFixCross(self):
-        fix_cross_arm_len = 0.4
+    def createFixCross(self, arm_length: float):
+        #fix_cross_arm_len = 0.4
         fix_cross = visual.ShapeStim(
             SCREEN,
             pos=(0.0, 0.0),
             vertices=(
-                (0,-fix_cross_arm_len),
-                (0,fix_cross_arm_len),
+                (0,-arm_length),
+                (0,arm_length),
                 (0,0),
-                (-fix_cross_arm_len,0),
-                (fix_cross_arm_len,0)
+                (-arm_length,0),
+                (arm_length,0)
             ),
             units = 'deg',
-            lineWidth = fix_cross_arm_len,
+            lineWidth = arm_length,
             closeShape = False,
             lineColor = (1, 1, 1)
         )
@@ -111,7 +127,58 @@ class PsychopyEngine(object):
             viewPixBulbSize=7.0
         )
 
-    def prompt1(self, prompt: str, options: Tuple[str, str], trigger: int) -> choice, rt:
+    def displayEmptyScreen(self, duration: int) -> None:
+        # screen.flip()
+        pass
+
+    def displayT1(self, val: str, triggerNr: int, duration: int):
+        '''
+        Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
+        '''
+        target1.text = val
+        target1.draw()
+        port.trigger(triggerNr)
+        SCREEN.flip()
+        return target1.text
+
+    def displayT2(self, val: str, triggerNr: int, duration: int):
+        '''
+        Displays the second target (T2) constisting of 4 white squares and (if present
+        condition is active) of a number word in capital letters.
+        Parameters:
+            T2_present bool: True for present or False for absent
+        '''
+        target2_square1.draw()
+        target2_square2.draw()
+        target2_square3.draw()
+        target2_square4.draw()
+
+        if len(val):
+            target2.text = val #random.choice(constants.target2_strings)
+            target2.draw()
+        else:
+            target2.text = ''
+
+        port.trigger(triggerNr)
+        SCREEN.flip()
+        return target2.text
+
+    def displayMask(self, val: str, duration: int):
+        '''
+        Displays a mask consisting of 4 consonants. The mask appears after the targets.
+        The selection and order of consonants is ramdomly chosen at every execution.
+        '''
+        # create random consonants
+        selected_string = #random.sample(constants.possible_consonants, 4)
+        mask.text = val #''.join(selected_string)
+        mask.draw()
+        SCREEN.flip()
+
+    def displayFixCross(self, duration: int):
+        fix_cross.draw()
+        SCREEN.flip()
+
+    def promptIdentity(self, prompt: str, options: Tuple[str, str], trigger: int) -> Tuple[int, int]:
         while True:
             ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
             ## we simply create a new RatingScale
@@ -131,7 +198,7 @@ class PsychopyEngine(object):
         # get and return the rating int, int
         return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
     
-    def prompt2(self, prompt: str, labels: List[str], scale_length: int, init: int, trigger: int) -> choice, rt:
+    def promptVisibility(self, prompt: str, labels: List[str], scale_length: int, init: int, trigger: int) -> Tuple[int, int]:
     # the rating scale has to be re-initialized in every function call, because
     # the marker start can't be randomized and updated when using the same rating
     # scale object again and again.

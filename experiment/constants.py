@@ -10,14 +10,17 @@ class Constants(object):
     # Experimental parameters #
     ###########################
 
+    ## original study: 70Hz, 14.286ms
+    ## current flip nrs for 60hz
+
     experiment_name = 'eegmanylabs_sergent2005'
     start_T1_quick = 0.514
     start_T1_slow = 0.857
 
-    short_SOA = 0.257
-    long_SOA = 0.686
-    stimulus_duration = 0.043 #in seconds
-    visibility_scale_timing = 0.500 # after third mask offset
+    short_SOA = 15 # 0.257
+    long_SOA = 41 # 0.686
+    stimulus_duration = 3 #0.043s #in seconds
+    visibility_scale_timing = 30 # 0.500s # after third mask offset
 
     n_trials_single = 32 # only visibility rating task
     n_trials_dual_critical = 96  # attentional blink condition!
@@ -44,6 +47,9 @@ class Constants(object):
     target2_square2_pos=(5,-5)
     target2_square3_pos=(-5,5)
     target2_square4_pos=(5,5)
+    target2_square_offset = 5
+
+    fix_cross_arm_len = 0.4
 
     # the mask is set of 4 capital letters (randomly generated in function file)
     possible_consonants = ['W', 'R', 'Z', 'P', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'C', 'B', 'Y', 'N', 'M']

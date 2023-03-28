@@ -1,7 +1,6 @@
 '''
 
 TODO:
-- refactor start_trial
 - refactor computeStimulusList
 - backup parameters
 - counterbalanced single/dual block order
@@ -14,6 +13,7 @@ Counterbalance by pid
 - ITI 3-4s Fixation cross off then on
 - integrate ports with engine
 - squares as list
+- calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
     # save information in the csv-file
     # block.addData('ratingT2', ratingT2[0])
@@ -65,15 +65,11 @@ engine.configureWindow(chosen_settings)
 engine.connectTriggerInterface(**chosen_settings)
 
 ## stimuli
-target1 = engine.createTextStim('UNSET_TARGET1')
-target2 = engine.createTextStim('UNSET_TARGET2')
-square_size = (CONSTANTS.square_size, CONSTANTS.square_size)
-target2_square1 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square1_pos)
-target2_square2 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square2_pos)
-target2_square3 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square3_pos)
-target2_square4 = engine.createRect(size=square_size, pos=CONSTANTS.target2_square4_pos)
-mask = engine.createTextStim('UNSET_MASK')
-fix_cross
+engine.loadStimuli(
+    squareSize=CONSTANTS.square_size,
+    squareOffset=CONSTANTS.target2_square_offset,
+    fixSize=CONSTANTS.fix_cross_arm_len,
+)
 
 # Welcome the participant
 engine.showMessage(CONSTANTS.welcome_message, CONSTANTS.LARGE_FONT)
@@ -95,17 +91,6 @@ for phase in ('train', 'test'):
             engine.showMessage(CONSTANTS.single_block_start)
 
         for trial in trials:
-            # # 50% chance that T1 is presented quick or slow after trial start
-            # T1_start = CONSTANTS.start_T1_slow if currentTrial['slow_T1']=='long' else CONSTANTS.start_T1_quick
-            # duration_SOA = CONSTANTS.long_SOA if currentTrial['SOA']=='long' else CONSTANTS.short_SOA
-            # print('Current trial: ', currentTrial['Name'])
-            # ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
-            #     dualTask=currentTrial['task']=='dual',
-            #     timing_T1_start=T1_start,
-            #     t2Present=currentTrial['T2_presence']=='present',
-            #     longSOA=currentTrial['SOA']=='long',
-            #     port=engine.port,
-            # )
             trial.run(engine)
 
     print(f'{phase} done!')
