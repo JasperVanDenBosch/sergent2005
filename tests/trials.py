@@ -43,6 +43,8 @@ class TrialGenerationTests(TestCase):
 
 # masks x3
 #    selected_string = random.sample(CONSTANTS.possible_consonants, 4)
+        # create random consonants
+
 
             # # 50% chance that T1 is presented quick or slow after trial start
             # T1_start = CONSTANTS.start_T1_slow if currentTrial['slow_T1']=='long' else CONSTANTS.start_T1_quick

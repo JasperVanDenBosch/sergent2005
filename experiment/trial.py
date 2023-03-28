@@ -47,6 +47,11 @@ class Trial(object):
         )
 
     def run(self, engine: PsychopyEngine):
+        """Present this trial
+
+        Args:
+            engine (PsychopyEngine): This is a wrapper for the experiment software
+        """
 
         # it starts with the fixation cross
         engine.displayFixCross(self.iti)

@@ -3,17 +3,24 @@ https://psychopy.org/coder/codeStimuli.html
 https://psychopy.org/general/timing/detectingFrameDrops.html#warn-me-if-i-drop-a-frame
 """
 from __future__ import annotations
+from typing import List
 from typing import Tuple, Dict
 from psychopy.monitors import Monitor
-from psychopy.visual import Window
+from psychopy.visual import Window, TextStim, ShapeStim
 from psychopy.visual.line import Line
 from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
-
 
 
 class PsychopyEngine(object):
 
     port: TriggerInterface
+
+    ## stimuli
+    target1: TextStim
+    target2: TextStim
+    target2_squares: List[ShapeStim]
+    mask: TextStim
+    fixCross: ShapeStim
 
     # create window
     # create stimulus
@@ -59,24 +66,24 @@ class PsychopyEngine(object):
         return win, scaling
     
     def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
-        target1 = engine.createTextStim('UNSET_TARGET1')
-        target2 = engine.createTextStim('UNSET_TARGET2')
+        self.target1 = engine.createTextStim('UNSET_TARGET1')
+        self.target2 = engine.createTextStim('UNSET_TARGET2')
         square_size = (squareSize, squareSize)
         target2_square1_pos=(-squareOffset,-squareOffset)
         target2_square2_pos=(squareOffset,-squareOffset)
         target2_square3_pos=(-squareOffset,squareOffset)
         target2_square4_pos=(squareOffset,squareOffset)
-        target2_square1 = engine.createRect(size=square_size, pos=target2_square1_pos)
-        target2_square2 = engine.createRect(size=square_size, pos=target2_square2_pos)
-        target2_square3 = engine.createRect(size=square_size, pos=target2_square3_pos)
-        target2_square4 = engine.createRect(size=square_size, pos=target2_square4_pos)
-        mask = engine.createTextStim('UNSET_MASK')
+        for pos in []:
+            target2_square1 = engine.createRect(size=square_size, pos=target2_square1_pos)
+            rect = Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
+            self.target2_squares.append(rect)
+        self.mask = engine.createTextStim('UNSET_MASK')
+        self.fixCross = self.createFixCross()
         
     def createTextStim(self, text: str):
         # target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
         #mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
         pass
-
 
     def createRect(self, size: Tuple[float, float], pos: Tuple[int, int]):
         # target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
@@ -84,7 +91,7 @@ class PsychopyEngine(object):
 
     def createFixCross(self, arm_length: float):
         #fix_cross_arm_len = 0.4
-        fix_cross = visual.ShapeStim(
+        fix_cross = ShapeStim(
             SCREEN,
             pos=(0.0, 0.0),
             vertices=(
@@ -101,6 +108,10 @@ class PsychopyEngine(object):
         )
 
     def createLine(self, **kwargs):
+        """Paint a line of pixels
+
+        Used by viewpixx triggers
+        """
         return Line(**kwargs)
 
     def showMessage(self, message: str, text_height=0.6, wait=True):
@@ -131,51 +142,45 @@ class PsychopyEngine(object):
         # screen.flip()
         pass
 
-    def displayT1(self, val: str, triggerNr: int, duration: int):
+    def displayT1(self, val: str, triggerNr: int, duration: int) -> None:
         '''
         Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
         '''
-        target1.text = val
-        target1.draw()
+        self.target1.text = val
+        self.target1.draw()
         port.trigger(triggerNr)
         SCREEN.flip()
-        return target1.text
 
-    def displayT2(self, val: str, triggerNr: int, duration: int):
+    def displayT2(self, val: str, triggerNr: int, duration: int) -> None:
         '''
         Displays the second target (T2) constisting of 4 white squares and (if present
         condition is active) of a number word in capital letters.
         Parameters:
             T2_present bool: True for present or False for absent
         '''
-        target2_square1.draw()
-        target2_square2.draw()
-        target2_square3.draw()
-        target2_square4.draw()
+        for square in self.squares:
+            square.draw()
 
         if len(val):
-            target2.text = val #random.choice(constants.target2_strings)
-            target2.draw()
+            self.target2.text = val #random.choice(constants.target2_strings)
+            self.target2.draw()
         else:
             target2.text = ''
 
         port.trigger(triggerNr)
         SCREEN.flip()
-        return target2.text
 
-    def displayMask(self, val: str, duration: int):
+    def displayMask(self, val: str, duration: int) -> None:
         '''
         Displays a mask consisting of 4 consonants. The mask appears after the targets.
         The selection and order of consonants is ramdomly chosen at every execution.
         '''
-        # create random consonants
-        selected_string = #random.sample(constants.possible_consonants, 4)
-        mask.text = val #''.join(selected_string)
-        mask.draw()
+        self.mask.text = val #''.join(selected_string)
+        self.mask.draw()
         SCREEN.flip()
 
     def displayFixCross(self, duration: int):
-        fix_cross.draw()
+        self.fix_cross.draw()
         SCREEN.flip()
 
     def promptIdentity(self, prompt: str, options: Tuple[str, str], trigger: int) -> Tuple[int, int]:
