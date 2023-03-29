@@ -30,7 +30,7 @@ class Constants(object):
     n_training_trial_divisor = 8
 
     # number of options for visibility rating
-    scale_length = 21
+    vis_scale_length = 21
 
     ####################################################
     # Visual features (targets, masks, fixation cross) #

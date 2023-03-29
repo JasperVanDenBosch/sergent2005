@@ -18,13 +18,13 @@ class Trial(object):
     t2presence: bool
     soa: bool
 
-    #soa_frames: int
-    delay: bool # t1 delay
-    #iti: int # aka T1_start or timing_T1_start
-    t1: str
-    t2: str
-    masks: Tuple[str, str, str] # three masks of four characters each
+    delay_index: int # t1 delay
+    t1_index: int
+    t2_index: int
     vis_init: int # random initial state of visibility rating
+
+    masks: Tuple[str, str, str] # three masks of four characters each
+
 
     ## response data
     id_choice: Optional[int] = None
