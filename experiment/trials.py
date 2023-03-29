@@ -5,6 +5,8 @@ if TYPE_CHECKING:
     from experiment.constants import Constants
 
 def generateTrials(phase: Phase, task: Task, constants: Constants) -> List[Trial]:
+    div = constants.n_training_trial_divisor if phase == 'train' else 1
+    
     return []
 
 
@@ -35,32 +37,32 @@ def computeStimulusList(
     # target2_presence = True if currentTrial['T2_presence']=='present' else False
 
 
-    if training:
-        ntrials_div = n_training_trial_divisor
-    else:
-        ntrials_div = 1
+    # if training:
+    #     ntrials_div = n_training_trial_divisor
+    # else:
+    #     ntrials_div = 1
 
-    stimList = []
-    for task in ['single', 'dual']:
-        for T2_presence in ['present', 'absent']:
-            for SOA in ['short', 'long']:
-                name = '_'.join([task, T2_presence, SOA])
-                if training:
-                    name = name + '_training'
-                if task=='single':
-                    weight = int(single_trials/ntrials_div)
-                elif task=='dual' and SOA=='short' and T2_presence=='present':
-                    weight = int(dual_critical_trials/ntrials_div)
-                else:
-                    weight = int(dual_easy_trials/ntrials_div)
+    # stimList = []
+    # for task in ['single', 'dual']:
+    #     for T2_presence in ['present', 'absent']:
+    #         for SOA in ['short', 'long']:
+    #             name = '_'.join([task, T2_presence, SOA])
+    #             if training:
+    #                 name = name + '_training'
+    #             if task=='single':
+    #                 weight = int(single_trials/ntrials_div)
+    #             elif task=='dual' and SOA=='short' and T2_presence=='present':
+    #                 weight = int(dual_critical_trials/ntrials_div)
+    #             else:
+    #                 weight = int(dual_easy_trials/ntrials_div)
 
-                stimList.append({'Name': name, 'task':task, 'T2_presence':T2_presence, 'SOA':SOA, 'weight':weight})
+    #             stimList.append({'Name': name, 'task':task, 'T2_presence':T2_presence, 'SOA':SOA, 'weight':weight})
 
-    stimuli_single = stimList[0:int(len(stimList)/2)]
-    stimuli_dual = stimList[int(len(stimList)/2):len(stimList)]
-    print('Single: ')
-    [print(single) for single in stimuli_single]
-    print('DUAL: ')
-    [print(dual) for dual in stimuli_dual]
+    # stimuli_single = stimList[0:int(len(stimList)/2)]
+    # stimuli_dual = stimList[int(len(stimList)/2):len(stimList)]
+    # print('Single: ')
+    # [print(single) for single in stimuli_single]
+    # print('DUAL: ')
+    # [print(dual) for dual in stimuli_dual]
 
     return stimuli_single, stimuli_dual

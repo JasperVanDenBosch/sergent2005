@@ -9,7 +9,7 @@ TODO:
 - computeStimulusList has fewer trials for training (n_training_trial_divisor)
 - computeStimulusList decide t1 slow or fast
 - store site in config file instead
-Counterbalance by pid
+- Counterbalance by pid + SITE: counterbalance the task order (single/dual): 
 - ITI 3-4s Fixation cross off then on
 - integrate ports with engine
 - squares as list

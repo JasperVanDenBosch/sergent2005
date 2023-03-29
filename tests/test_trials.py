@@ -1,32 +1,62 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from unittest.mock import Mock
 
 
 class TrialGenerationTests(TestCase):
 
+    def setUp(self) -> None:
+        self.consts = Mock()
+        self.consts.start_T1_quick = 31
+        self.consts.start_T1_slow = 51
+        self.consts.short_SOA = 15
+        self.consts.long_SOA = 41
+        self.consts.n_trials_single = 32
+        self.consts.n_trials_dual_critical = 96
+        self.consts.n_trials_dual_easy = 48
+        self.consts.n_training_trial_divisor = 8
+        self.consts.target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
+        self.consts.target1_strings = ['OXXO', 'XOOX']
+        self.consts.possible_consonants = list([c for c in 'WRZPSDFGHJKCBYNM'])
+
     def test_phase(self):
         from experiment.trials import generateTrials
-        consts = Mock()
-        trials = generateTrials('train', 'single', consts)
+        trials = generateTrials('train', 'single', self.consts)
         self.assertEqual(len(trials), 4)
-        # all trainn
+        trials = generateTrials('train', 'dual', self.consts)
+        self.assertEqual(len(trials), 30)
 
-    def test_conditions(self):
-        #0.5 SOA
-        #0.5 T2pres
-        self.fail('todo')
+    def test_count_by_condition(self):
+        from experiment.trials import generateTrials
+        trials = generateTrials('test', 'dual', self.consts)
+        self.assertEqual(len(trials), 240, 'total trials should be 240')
+        present_short = filter(lambda t: t.t2present and t.soa == 'short', trials)
+        self.assertEqual(len(list(present_short)), self.consts.n_trials_dual_critical)
+        present_long = filter(lambda t: t.t2present and t.soa == 'long', trials)
+        self.assertEqual(len(list(present_long)), self.consts.n_trials_dual_easy)
+        absent_short = filter(lambda t: t.t2present == False and t.soa == 'short', trials)
+        self.assertEqual(len(list(absent_short)), self.consts.n_trials_dual_easy)
+        absent_long = filter(lambda t: t.t2present == False and t.soa == 'long', trials)
+        self.assertEqual(len(list(absent_long)), self.consts.n_trials_dual_easy)
 
-    def test_repetitions(self):
-        self.fail('todo')
-
+    @skip('todo')
     def test_iti_range(self):
         self.fail('todo')
 
+    @skip('todo')
     def test_t1_sampling(self):
         self.fail('todo')
 
+    @skip('todo')
     def test_t2_sampling(self):
         self.fail('todo')
+
+    @skip('todo')
+    def test_mask_sampling(self):
+        self.fail('todo')
+
+    @skip('todo')
+    def test_triggers_numbers_preset(self):
+        pass
 
 
 ## trial creation SNIPPETS
