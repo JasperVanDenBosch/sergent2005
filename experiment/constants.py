@@ -14,8 +14,8 @@ class Constants(object):
     ## current flip nrs for 60hz
 
     experiment_name = 'eegmanylabs_sergent2005'
-    start_T1_quick = 0.514
-    start_T1_slow = 0.857
+    start_T1_quick = 31 # 0.514
+    start_T1_slow = 51 #0.857
 
     short_SOA = 15 # 0.257
     long_SOA = 41 # 0.686

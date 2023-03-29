@@ -1,8 +1,10 @@
 from __future__ import annotations
 from typing import List
-from unittest import TestCase, skip
+from unittest import TestCase
 from unittest.mock import Mock
 from itertools import groupby
+from itertools import chain
+from experiment.triggers import Triggers
 
 
 class TrialGenerationTests(TestCase):
@@ -103,72 +105,22 @@ class TrialGenerationTests(TestCase):
         self.assertMaxConsecReps(2, sample1)
         self.assertNotEqual(sample1, sample2)
 
-    @skip('todo')
     def test_mask_sampling(self):
-        self.fail('todo')
-
-    @skip('todo')
+        masks_by_trial = [t.masks for t in self.sampleTrials()]
+        ## three masks per trial
+        self.assertEqual(len(masks_by_trial[0]), 3)
+        ## mask is 4 chars long
+        self.assertEqual(len(masks_by_trial[0][0]), 4)
+        ## all masks unique
+        all_masks = list(chain.from_iterable(masks_by_trial))
+        self.assertAlmostEqual(len(set(all_masks)), len(all_masks), delta=1)
+        
     def test_triggers_numbers_preset(self):
-        pass
-
-    # def test_t2_absent(self):
-    #     sample = [t.t2_index for t in self.sampleTrials() if t.t2presence]
-    #     self.assertEqual(1.5, sample1)
-    #     self.assertMaxConsecReps(3, sample1)
-    #     self.assertNotEqual(sample1, sample2)
-
-
-## trial creation SNIPPETS
-    # T1
-    #target1.text = CONSTANTS.target1_strings[0] if random.random() > .5 else CONSTANTS.target1_strings[1]
-# T2
-# target2.text = random.choice(CONSTANTS.target2_strings)
-
-    # if T2_present:
-    #     target2.text = random.choice(CONSTANTS.target2_strings)
-    #     target2.draw()
-    # else:
-    #     target2.text = ''
-
-# masks x3
-#    selected_string = random.sample(CONSTANTS.possible_consonants, 4)
-        # create random consonants
-
-
-            # # 50% chance that T1 is presented quick or slow after trial start
-            # T1_start = CONSTANTS.start_T1_slow if currentTrial['slow_T1']=='long' else CONSTANTS.start_T1_quick
-            # duration_SOA = CONSTANTS.long_SOA if currentTrial['SOA']=='long' else CONSTANTS.short_SOA
-            # print('Current trial: ', currentTrial['Name'])
-            # ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
-            #     dualTask=currentTrial['task']=='dual',
-            #     timing_T1_start=T1_start,
-            #     t2Present=currentTrial['T2_presence']=='present',
-            #     longSOA=currentTrial['SOA']=='long',
-            #     port=engine.port,
-            # )
-
-                ## construction
-    #'Name': name, 'task':task, 'T2_presence':T2_presence, 'SOA':SOA, 'weight':weight}
-    # T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
-    # training vs test
-    # target2.text = random.choice(CONSTANTS.target2_strings)
-    # target1.text = CONSTANTS.target1_strings[0] if random.random() > .5 else CONSTANTS.target1_strings[1]
-    # toDict() for results
-
-    #     @property
-    # def t1TriggerNr(self):
-    #     return Triggers.get_number(
-    #         forT2=False,
-    #         t2Present=self.t2present,
-    #         dualTask=self.task=='dual',
-    #         longSOA=self.soa=='long'
-    #     )
-    
-    # @property
-    # def t2TriggerNr(self):
-    #     return Triggers.get_number(
-    #         forT2=True,
-    #         t2Present=self.t2present,
-    #         dualTask=self.task=='dual',
-    #         longSOA=self.soa=='long'
-    #     )
+        from experiment.trials import generateTrials
+        trials = generateTrials('test', 'dual', self.consts)
+        present_short = filter(lambda t: t.t2presence and (not t.soa), trials)
+        a_trial = list(present_short)[0]
+        self.assertEqual(
+            a_trial.t1_trigger,
+            Triggers.t1_present_dualTask_shortSOA
+        )
