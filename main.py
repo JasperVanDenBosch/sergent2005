@@ -10,9 +10,7 @@ TODO:
 - ITI 3-4s Fixation cross off then on
 - integrate ports with engine
 - squares as list
-- duration simulating engine
-- printing engine
-- responding engine
+- responding simulation engine
 - calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
 '''
