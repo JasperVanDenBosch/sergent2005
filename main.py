@@ -2,7 +2,7 @@
 
 TODO:
 - refactor computeStimulusList
-- backup parameters
+- backup parameters on run
 - counterbalanced single/dual block order
 - i18n
 - ensure psychopy is logging draws as backup
@@ -13,6 +13,9 @@ TODO:
 - ITI 3-4s Fixation cross off then on
 - integrate ports with engine
 - squares as list
+- duration simulating engine
+- printing engine
+- responding engine
 - calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
     # save information in the csv-file

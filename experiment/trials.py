@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, List, Dict, Union, Literal
 from dataclasses import dataclass, asdict
 from experiment.trial import Trial, Phase, Task
+from random import shuffle
+from math import ceil
 if TYPE_CHECKING:
     from experiment.constants import Constants
     SoaCondition = Union[Literal['short'], Literal['long']]
@@ -32,15 +34,19 @@ def generateTrials(phase: Phase, task: Task, constants: Constants) -> List[Trial
     return trials
 
 def trialsFor(recipe: TrialRecipe, n: int) -> List[Trial]:
-    trial = Trial(
-        delay=False,
-        t1='',
-        t2='',
-        masks=('', '', ''),
-        vis_init=1,
-        **asdict(recipe)
-    )
-    return [trial]*n
+    delays = [True, False] * ceil(n/2)
+    shuffle(delays)
+    trials = []
+    for t in range(n):
+        trials.append(Trial(
+            delay=delays[t],
+            t1='',
+            t2='',
+            masks=('', '', ''),
+            vis_init=1,
+            **asdict(recipe)
+        ))
+    return trials
 
 
 def computeStimulusList(

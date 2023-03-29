@@ -1,5 +1,8 @@
+from __future__ import annotations
+from typing import List
 from unittest import TestCase, skip
 from unittest.mock import Mock
+from itertools import groupby
 
 
 class TrialGenerationTests(TestCase):
@@ -17,6 +20,14 @@ class TrialGenerationTests(TestCase):
         self.consts.target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
         self.consts.target1_strings = ['OXXO', 'XOOX']
         self.consts.possible_consonants = list([c for c in 'WRZPSDFGHJKCBYNM'])
+
+    def assertMeanEqual(self, exp: float, vals: List[bool]) -> None:
+        mean = sum(vals) / len(vals)
+        self.assertEqual(exp, mean)
+    
+    def assertMaxConsecReps(self, exp: int, vals: List[bool]) -> None:
+        reps = [len(list(g)) for _, g in groupby(vals)]
+        self.assertLessEqual(exp, max(reps))
 
     def test_phase(self):
         from experiment.trials import generateTrials
@@ -51,9 +62,17 @@ class TrialGenerationTests(TestCase):
         absent_long = filter(lambda t: t.t2presence == False and t.soa, trials)
         self.assertEqual(len(list(absent_long)), self.consts.n_trials_single)
 
-    @skip('todo')
-    def test_iti_range(self):
-        self.fail('todo')
+    def test_delay_sampling(self):
+        from experiment.trials import generateTrials
+        trials = generateTrials('test', 'dual', self.consts)
+        cond_trials = filter(lambda t: t.t2presence and t.soa, trials)
+        delays1 = [t.delay for t in cond_trials]
+        trials = generateTrials('test', 'dual', self.consts)
+        cond_trials = filter(lambda t: t.t2presence and t.soa, trials)
+        delays2 = [t.delay for t in cond_trials]
+        self.assertMeanEqual(0.5, delays1)
+        self.assertMaxConsecReps(4, delays1)
+        self.assertNotEqual(delays1, delays2)
 
     @skip('todo')
     def test_t1_sampling(self):

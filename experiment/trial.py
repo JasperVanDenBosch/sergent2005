@@ -36,7 +36,7 @@ class Trial(object):
     def t1TriggerNr(self):
         return Triggers.get_number(
             forT2=False,
-            t2Present=self.t2present,
+            t2Present=self.t2presence,
             dualTask=self.task=='dual',
             longSOA=self.soa=='long'
         )
@@ -45,7 +45,7 @@ class Trial(object):
     def t2TriggerNr(self):
         return Triggers.get_number(
             forT2=True,
-            t2Present=self.t2present,
+            t2Present=self.t2presence,
             dualTask=self.task=='dual',
             longSOA=self.soa=='long'
         )
