@@ -13,7 +13,7 @@ class TrialRecipe(object):
     phase: Phase
     task: Task
     t2presence: bool
-    soa: bool
+    soa_long: bool
 
 
 def generateTrials(phase: Phase, task: Task, const: Constants) -> List[Trial]:
@@ -66,13 +66,13 @@ def createTrial(recipe: TrialRecipe, delay: int, t1: int, t2: int, vis: int,
             forT2=False,
             t2Present=recipe.t2presence,
             dualTask=recipe.task=='dual',
-            longSOA=recipe.soa
+            longSOA=recipe.soa_long
         ),
         t2_trigger=Triggers.get_number(
             forT2=True,
             t2Present=recipe.t2presence,
             dualTask=recipe.task=='dual',
-            longSOA=recipe.soa
+            longSOA=recipe.soa_long
         ),
         masks=tuple(masks),
         vis_init=vis,

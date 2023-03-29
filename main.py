@@ -15,26 +15,17 @@ TODO:
 - responding engine
 - calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
-    # save information in the csv-file
-    # block.addData('ratingT2', ratingT2[0])
-    # block.addData('RTtaskT2', ratingT2[1])
-    # block.addData('ratingT1', ratingT1[0])
-    # block.addData('RTtaskT1', ratingT1[1])
-    # block.addData('ACCtaskT1', ratingT1[2])
-    # block.addData('startingT1', T1_start)
-    # block.addData('stimulusT1', stimulusT1)
-    # block.addData('stimulusT2', stimulusT2)
 '''
 from os.path import expanduser, join
 from datetime import datetime
 from os import makedirs
+from typing import TYPE_CHECKING
+import random
 from experiment.constants import Constants
 from experiment.trials import generateTrials
-from experiment.engine import PsychopyEngine
+#from experiment.engine import PsychopyEngine
+from experiment.fake_engine import FakeEngine
 from experiment.labs import getLabConfiguration
-from unittest.mock import Mock
-import random
-from typing import TYPE_CHECKING
 CONSTANTS  = Constants()  # load fixed parameters wrt timing, sizing etc
 
 ## user input
@@ -53,7 +44,8 @@ evt_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_events.tsv')
 log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
 # this object represents drawing and interactions via psychopy
-engine = PsychopyEngine()
+#engine = PsychopyEngine()
+engine = FakeEngine()
 
 ## set log levels and log file location
 engine.configureLog(log_fpath)
@@ -62,7 +54,7 @@ engine.configureLog(log_fpath)
 engine.configureWindow(chosen_settings)
 
 ## setup serial port or other trigger port
-engine.connectTriggerInterface(**chosen_settings)
+# engine.connectTriggerInterface(**chosen_settings)
 
 ## stimuli
 engine.loadStimuli(
