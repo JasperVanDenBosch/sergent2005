@@ -1,13 +1,46 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, List, Dict
+from typing import TYPE_CHECKING, Tuple, List, Dict, Union, Literal
+from dataclasses import dataclass, asdict
 from experiment.trial import Trial, Phase, Task
 if TYPE_CHECKING:
     from experiment.constants import Constants
+    SoaCondition = Union[Literal['short'], Literal['long']]
+
+@dataclass
+class TrialRecipe(object):
+    phase: Phase
+    task: Task
+    t2presence: bool
+    soa: bool
+
 
 def generateTrials(phase: Phase, task: Task, constants: Constants) -> List[Trial]:
     div = constants.n_training_trial_divisor if phase == 'train' else 1
-    
-    return []
+    trials = []
+    for presence in (False, True):
+        for soa in (False, True):
+            recipe = TrialRecipe(phase, task, presence, soa)
+            if task == 'single':
+                n = constants.n_trials_single // div
+                trials += trialsFor(recipe, n)
+            elif presence and (not soa):
+                n = constants.n_trials_dual_critical // div
+                trials += trialsFor(recipe, n)
+            else:
+                n = constants.n_trials_dual_easy // div
+                trials += trialsFor(recipe, n)
+    return trials
+
+def trialsFor(recipe: TrialRecipe, n: int) -> List[Trial]:
+    trial = Trial(
+        delay=False,
+        t1='',
+        t2='',
+        masks=('', '', ''),
+        vis_init=1,
+        **asdict(recipe)
+    )
+    return [trial]*n
 
 
 def computeStimulusList(

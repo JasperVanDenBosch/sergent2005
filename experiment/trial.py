@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Union, Literal, Tuple
+from typing import TYPE_CHECKING, Union, Literal, Tuple, Optional
+from dataclasses import dataclass
 from experiment.constants import Constants
 from experiment.triggers import Triggers
 if TYPE_CHECKING:
@@ -10,23 +11,26 @@ SoaCondition = Union[Literal['short'], Literal['long']]
 CONSTANTS = Constants()
 
 
+@dataclass(frozen=True)
 class Trial(object):
     phase: Phase
     task: Task
-    t2present: bool
-    soa: SoaCondition
-    soa_frames: int
-    iti: int # aka T1_start or timing_T1_start
+    t2presence: bool
+    soa: bool
+
+    #soa_frames: int
+    delay: bool # t1 delay
+    #iti: int # aka T1_start or timing_T1_start
     t1: str
     t2: str
     masks: Tuple[str, str, str] # three masks of four characters each
     vis_init: int # random initial state of visibility rating
 
     ## response data
-    id_choice: int
-    id_rt: int
-    vis_rating: int
-    vis_rt: int
+    id_choice: Optional[int] = None
+    id_rt: Optional[int] = None
+    vis_rating: Optional[int] = None
+    vis_rt: Optional[int] = None
 
     @property
     def t1TriggerNr(self):

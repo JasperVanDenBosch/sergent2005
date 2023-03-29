@@ -203,7 +203,7 @@ class PsychopyEngine(object):
         # get and return the rating int, int
         return [rating_scaleT1.getRating(), rating_scaleT1.getRT()]
     
-    def promptVisibility(self, prompt: str, labels: List[str], scale_length: int, init: int, trigger: int) -> Tuple[int, int]:
+    def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, trigger: int) -> Tuple[int, int]:
     # the rating scale has to be re-initialized in every function call, because
     # the marker start can't be randomized and updated when using the same rating
     # scale object again and again.

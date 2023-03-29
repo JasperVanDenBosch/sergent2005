@@ -21,22 +21,35 @@ class TrialGenerationTests(TestCase):
     def test_phase(self):
         from experiment.trials import generateTrials
         trials = generateTrials('train', 'single', self.consts)
-        self.assertEqual(len(trials), 4)
+        self.assertEqual(len(trials), 16)
         trials = generateTrials('train', 'dual', self.consts)
         self.assertEqual(len(trials), 30)
 
-    def test_count_by_condition(self):
+    def test_count_by_conditions_dual_task(self):
         from experiment.trials import generateTrials
         trials = generateTrials('test', 'dual', self.consts)
         self.assertEqual(len(trials), 240, 'total trials should be 240')
-        present_short = filter(lambda t: t.t2present and t.soa == 'short', trials)
+        present_short = filter(lambda t: t.t2presence and (not t.soa), trials)
         self.assertEqual(len(list(present_short)), self.consts.n_trials_dual_critical)
-        present_long = filter(lambda t: t.t2present and t.soa == 'long', trials)
+        present_long = filter(lambda t: t.t2presence and t.soa, trials)
         self.assertEqual(len(list(present_long)), self.consts.n_trials_dual_easy)
-        absent_short = filter(lambda t: t.t2present == False and t.soa == 'short', trials)
+        absent_short = filter(lambda t: t.t2presence == False and (not t.soa), trials)
         self.assertEqual(len(list(absent_short)), self.consts.n_trials_dual_easy)
-        absent_long = filter(lambda t: t.t2present == False and t.soa == 'long', trials)
+        absent_long = filter(lambda t: t.t2presence == False and t.soa, trials)
         self.assertEqual(len(list(absent_long)), self.consts.n_trials_dual_easy)
+
+    def test_count_by_conditions_single_task(self):
+        from experiment.trials import generateTrials
+        trials = generateTrials('test', 'single', self.consts)
+        self.assertEqual(len(trials), 128, 'total trials should be 128')
+        present_short = filter(lambda t: t.t2presence and (not t.soa), trials)
+        self.assertEqual(len(list(present_short)), self.consts.n_trials_single)
+        present_long = filter(lambda t: t.t2presence and t.soa, trials)
+        self.assertEqual(len(list(present_long)), self.consts.n_trials_single)
+        absent_short = filter(lambda t: t.t2presence == False and (not t.soa), trials)
+        self.assertEqual(len(list(absent_short)), self.consts.n_trials_single)
+        absent_long = filter(lambda t: t.t2presence == False and t.soa, trials)
+        self.assertEqual(len(list(absent_long)), self.consts.n_trials_single)
 
     @skip('todo')
     def test_iti_range(self):
