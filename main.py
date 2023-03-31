@@ -86,4 +86,4 @@ for phase in ('train', 'test'):
     print(f'{phase} done!')
     engine.showMessage(CONSTANTS.finished_training) # TODO phase
 
-engine.showMessage(CONSTANTS.thank_you, wait=False)
+engine.showMessage(CONSTANTS.thank_you, confirm=False)

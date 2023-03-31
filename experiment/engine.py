@@ -6,29 +6,26 @@ from __future__ import annotations
 from typing import List
 from typing import Tuple, Dict
 from psychopy.monitors import Monitor
-from psychopy.visual import Window, TextStim, ShapeStim
+from psychopy.event import waitKeys
+from psychopy.core import wait
+from psychopy.visual import Window, TextStim
 from psychopy.visual.line import Line
+from psychopy.visual.rect import Rect
+from psychopy.visual.shape import ShapeStim
 from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
 
 
 class PsychopyEngine(object):
 
+    win: Window
     port: TriggerInterface
 
     ## stimuli
     target1: TextStim
     target2: TextStim
-    target2_squares: List[ShapeStim]
+    target2_squares: List[Rect]
     mask: TextStim
     fixCross: ShapeStim
-
-    # create window
-    # create stimulus
-    # draw stimulus
-    # flip
-    # RatingScale
-    # core.wait(stimulus_duration)
-    # test message event.waitKeys
 
     def __init__(self) -> None:
         self.port = FakeTriggerPort()
@@ -46,63 +43,53 @@ class PsychopyEngine(object):
         #logFile = logging.LogFile(log_fpath, level=logging.EXP)
         #logging.console.setLevel(logging.INFO)
 
-    def configureWindow(self, settings: Dict) -> Tuple[Window, float]:
+    def configureWindow(self, settings: Dict) -> None:
         my_monitor = Monitor(name='EMLSergent2005', distance=settings['mon_dist'])
         my_monitor.setSizePix(settings['mon_resolution'])
         my_monitor.setWidth(settings['mon_width'])
         my_monitor.saveMon()
-        win = Window(
+        self.win = Window(
             size=settings['mon_resolution'],
             monitor='EMLSergent2005',
             color=(-1,-1,-1),
             fullscr=True,
             units='deg'
         )
-        scaling = settings['mon_resolution'][0] / win.size[0]
-        if scaling == 0.5:
+        scaling = settings['mon_resolution'][0] / self.win.size[0]
+        if scaling == 0.5: 
             print('Looks like a retina display')
         elif scaling != 0.0:
             print('Weird scaling. Is your configured monitor resolution correct?')
-        return win, scaling
-    
+
     def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
-        self.target1 = engine.createTextStim('UNSET_TARGET1')
-        self.target2 = engine.createTextStim('UNSET_TARGET2')
+        self.target1 = TextStim(self.win, height=1, units='deg')
+        self.target2 = TextStim(self.win, height=1, units='deg')
+        self.mask = TextStim(self.win, height=1, units='deg')
         square_size = (squareSize, squareSize)
-        target2_square1_pos=(-squareOffset,-squareOffset)
-        target2_square2_pos=(squareOffset,-squareOffset)
-        target2_square3_pos=(-squareOffset,squareOffset)
-        target2_square4_pos=(squareOffset,squareOffset)
-        for pos in []:
-            target2_square1 = engine.createRect(size=square_size, pos=target2_square1_pos)
-            rect = Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-            self.target2_squares.append(rect)
-        self.mask = engine.createTextStim('UNSET_MASK')
-        self.fixCross = self.createFixCross()
-        
-    def createTextStim(self, text: str):
-        # target2 = visual.TextStim(SCREEN, height=string_height, units='deg')
-        #mask = visual.TextStim(SCREEN, text='INIT', height=string_height, units='deg')
-        pass
-
-    def createRect(self, size: Tuple[float, float], pos: Tuple[int, int]):
-        # target2_square1 = visual.Rect(SCREEN, size=(square_size, square_size), units='deg', pos=(-5,-5), lineColor=(1, 1, 1), fillColor=(1, 1, 1))
-        pass
-
-    def createFixCross(self, arm_length: float):
-        #fix_cross_arm_len = 0.4
-        fix_cross = ShapeStim(
-            SCREEN,
+        o = squareOffset
+        positions = [(-o, -o), (o, -o), (-o, o), (o, o)]
+        self.target2_squares = []
+        for pos in positions:
+            self.target2_squares.append(Rect(
+                self.win,
+                size=(square_size, square_size),
+                units='deg',
+                pos=pos,
+                lineColor=(1, 1, 1),
+                fillColor=(1, 1, 1)
+            ))
+        self.fixCross = ShapeStim(
+            self.win,
             pos=(0.0, 0.0),
             vertices=(
-                (0,-arm_length),
-                (0,arm_length),
+                (0,-fixSize),
+                (0,fixSize),
                 (0,0),
-                (-arm_length,0),
-                (arm_length,0)
+                (-fixSize,0),
+                (fixSize,0)
             ),
             units = 'deg',
-            lineWidth = arm_length,
+            lineWidth = fixSize,
             closeShape = False,
             lineColor = (1, 1, 1)
         )
@@ -114,19 +101,16 @@ class PsychopyEngine(object):
         """
         return Line(**kwargs)
 
-    def showMessage(self, message: str, text_height=0.6, wait=True):
-        print(f'[showMessage] {message}')
-        return
-        text_to_display = visual.TextStim(SCREEN, text=message, height=text_height)
-        text_to_display.draw()
-        SCREEN.flip()
-        if wait:
-            event.waitKeys(keyList='space')
+    def showMessage(self, message: str, height=0.6, confirm=True):
+        self.msg = TextStim(self.win, text=message, height=height, units='deg')
+        self.msg.draw()
+        self.win.flip()
+        if confirm:
+            waitKeys(keyList='space')
         else:
-            core.wait(1.5)
+            wait(1.5)
 
     ## display duration, custom text, trigger on flip
-
     def connectTriggerInterface(self, port_type: str, port_address: str,
                                 port_baudrate: int) -> None:
         self.port = createTriggerPort(
@@ -139,8 +123,8 @@ class PsychopyEngine(object):
         )
 
     def displayEmptyScreen(self, duration: int) -> None:
-        # screen.flip()
-        pass
+        for _ in range(duration):
+            self.win.flip()
 
     def displayT1(self, val: str, triggerNr: int, duration: int) -> None:
         '''
@@ -148,8 +132,9 @@ class PsychopyEngine(object):
         '''
         self.target1.text = val
         self.target1.draw()
-        port.trigger(triggerNr)
-        SCREEN.flip()
+        self.port.trigger(triggerNr)
+        for _ in range(duration):
+            self.win.flip()
 
     def displayT2(self, val: str, triggerNr: int, duration: int) -> None:
         '''
@@ -158,30 +143,33 @@ class PsychopyEngine(object):
         Parameters:
             T2_present bool: True for present or False for absent
         '''
-        for square in self.squares:
+        for square in self.target2_squares:
             square.draw()
 
         if len(val):
             self.target2.text = val #random.choice(constants.target2_strings)
             self.target2.draw()
         else:
-            target2.text = ''
+            self.target2.text = ''
 
-        port.trigger(triggerNr)
-        SCREEN.flip()
+        self.port.trigger(triggerNr)
+        for _ in range(duration):
+            self.win.flip()
 
     def displayMask(self, val: str, duration: int) -> None:
         '''
         Displays a mask consisting of 4 consonants. The mask appears after the targets.
         The selection and order of consonants is ramdomly chosen at every execution.
         '''
-        self.mask.text = val #''.join(selected_string)
+        self.mask.text = val
         self.mask.draw()
-        SCREEN.flip()
+        for _ in range(duration):
+            self.win.flip()
 
     def displayFixCross(self, duration: int):
-        self.fix_cross.draw()
-        SCREEN.flip()
+        self.fixCross.draw()
+        for _ in range(duration):
+            self.win.flip()
 
     def promptIdentity(self, prompt: str, options: Tuple[str, str], trigger: int) -> Tuple[int, int]:
         while True:
