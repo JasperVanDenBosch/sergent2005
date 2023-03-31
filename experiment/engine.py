@@ -1,4 +1,8 @@
 """
+This is an interface / wrapper around the psychopy functionality.
+This makes it easier to work on the rest of the code without psychopy,
+and to debug trial order, data formatting etc.
+
 https://psychopy.org/coder/codeStimuli.html
 https://psychopy.org/general/timing/detectingFrameDrops.html#warn-me-if-i-drop-a-frame
 """
@@ -114,7 +118,6 @@ class PsychopyEngine(object):
         else:
             wait(1.5)
 
-    ## display duration, custom text, trigger on flip
     def connectTriggerInterface(self, port_type: str, port_address: str,
                                 port_baudrate: int) -> None:
         self.port = createTriggerPort(
@@ -129,7 +132,7 @@ class PsychopyEngine(object):
     def drawFlipAndTrigger(self, stims: List[Stimulus], duration: int, triggerNr: int):
         for stim in stims:
             stim.draw()
-        self.port.trigger(triggerNr)
+        self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
         for _ in range(duration-1):
             for stim in stims:
@@ -176,8 +179,9 @@ class PsychopyEngine(object):
             self.fixCross.draw()
             self.win.flip()
 
-    def promptIdentity(self, prompt: str, options: Tuple[str, str], trigger: int) -> Tuple[int, int]:
+    def promptIdentity(self, prompt: str, options: Tuple[str, str], triggerNr: int) -> Tuple[int, int]:
         choices = [options[0], '', options[1]]
+        self.win.callOnFlip(self.port.trigger, triggerNr)
         while True:
             ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
             ## we simply create a new RatingScale
@@ -226,7 +230,7 @@ class PsychopyEngine(object):
         )
 
         scale.draw()
-        self.port.trigger(triggerNr)
+        self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
 
         # Show scale and instruction und confirmation of rating is done

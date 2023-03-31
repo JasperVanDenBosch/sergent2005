@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 import random
 from experiment.constants import Constants
 from experiment.trials import generateTrials
-#from experiment.engine import PsychopyEngine
+from experiment.engine import PsychopyEngine
 from experiment.fake_engine import FakeEngine
 from experiment.labs import getLabConfiguration
 CONSTANTS  = Constants()  # load fixed parameters wrt timing, sizing etc
@@ -43,8 +43,8 @@ evt_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_events.tsv')
 log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
 # this object represents drawing and interactions via psychopy
-#engine = PsychopyEngine()
-engine = FakeEngine()
+engine = PsychopyEngine()
+#engine = FakeEngine()
 
 ## set log levels and log file location
 engine.configureLog(log_fpath)

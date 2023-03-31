@@ -14,7 +14,7 @@ engine.configureWindow(dict(
     mon_resolution=(1920, 1080)
 ))
 engine.loadStimuli(0.5, 5, 0.5)
-engine.showMessage('Hello World!', height=2, confirm=True)
+engine.showMessage('Hello World! Press SPACE', height=2, confirm=True)
 engine.displayEmptyScreen(60)
 engine.displayT1('OIIO', 99, 60)
 engine.displayT2('QUOI', 99, 60)
