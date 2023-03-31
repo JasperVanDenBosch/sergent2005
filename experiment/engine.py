@@ -58,11 +58,11 @@ class PsychopyEngine(object):
             fullscr=True,
             units='deg'
         )
+        self.win.mouseVisible = False 
         scaling = settings['mon_resolution'][0] / self.win.size[0]
-        print(scaling)
         if scaling == 0.5: 
             print('Looks like a retina display')
-        elif scaling != 0.0:
+        if scaling != 1.0:
             print('Weird scaling. Is your configured monitor resolution correct?')
 
     def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
@@ -70,14 +70,13 @@ class PsychopyEngine(object):
         self.target2 = TextStim(self.win, height=1, units='deg')
         self.target2_dummy = DummyStim()
         self.mask = TextStim(self.win, height=1, units='deg')
-        square_size = (squareSize, squareSize)
         o = squareOffset
         positions = [(-o, -o), (o, -o), (-o, o), (o, o)]
         self.squares = []
         for pos in positions:
             self.squares.append(Rect(
                 self.win,
-                size=(square_size, square_size),
+                size=(squareSize, squareSize),
                 units='deg',
                 pos=pos,
                 lineColor=(1, 1, 1),
@@ -178,35 +177,41 @@ class PsychopyEngine(object):
             self.win.flip()
 
     def promptIdentity(self, prompt: str, options: Tuple[str, str], trigger: int) -> Tuple[int, int]:
+        choices = [options[0], '', options[1]]
         while True:
             ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
             ## we simply create a new RatingScale
-            rating_scaleT1 = RatingScale(
-                self.win, noMouse=True,
-                choices=['OO', '', 'XX'], markerStart=1,
-                scale=prompt, acceptKeys='space', lineColor='DarkGrey',
-                markerColor='DarkGrey', pos=(0.0, 0.0), showAccept=False)
-            rating_scaleT1.draw()
+            scale = RatingScale(
+                self.win,
+                noMouse=True,
+                choices=choices,
+                markerStart=1,
+                scale=prompt,
+                acceptKeys='space',
+                lineColor='DarkGrey',
+                markerColor='DarkGrey',
+                pos=(0.0, 0.0),
+                showAccept=False
+            )
+            scale.draw()
             self.win.flip()
-            while rating_scaleT1.noResponse:
-                rating_scaleT1.draw()
+            while scale.noResponse:
+                scale.draw()
                 self.win.flip()
-            if rating_scaleT1.getRating() != '':
+            if scale.getRating() != '':
                 ## valid choice; continue
                 break
 
-        print(rating_scaleT1.getRating())
-        print(rating_scaleT1.getRT())
-
-        # get and return the rating int, int
-        return rating_scaleT1.getRating(), rating_scaleT1.getRT()
+        choice_index = options.index(scale.getRating()) # index of response wrt labels
+        rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
+        return choice_index, rt
     
     def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, triggerNr: int) -> Tuple[int, int]:
         # the rating scale has to be re-initialized in every function call, because
         # the marker start can't be randomized and updated when using the same rating
         # scale object again and again.
         # The marker start needs to be defined randomly beforehand
-        rating_scaleT2 = RatingScale(
+        scale = RatingScale(
             self.win, low=0,
             high=scale_length-1,
             labels=['nothing', 'maximal visibility'],
@@ -220,16 +225,19 @@ class PsychopyEngine(object):
             markerStart=init
         )
 
-        rating_scaleT2.draw()
+        scale.draw()
         self.port.trigger(triggerNr)
         self.win.flip()
 
         # Show scale and instruction und confirmation of rating is done
-        while rating_scaleT2.noResponse:
-            rating_scaleT2.draw()
+        while scale.noResponse:
+            scale.draw()
             self.win.flip()
-        print(rating_scaleT2.getRating())
-        print(rating_scaleT2.getRT())
 
-        # get and return the rating
-        return rating_scaleT2.getRating(), rating_scaleT2.getRT()
+        choice_index = int(scale.getRating() or -999) # index of response wrt scale
+        rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
+        return choice_index, rt
+    
+    def stop(self) -> None:
+        self.win.close()
+

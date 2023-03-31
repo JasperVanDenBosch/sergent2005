@@ -13,7 +13,7 @@ engine.configureWindow(dict(
     mon_width=50,
     mon_resolution=(1920, 1080)
 ))
-engine.loadStimuli(5, 5, 5)
+engine.loadStimuli(0.5, 5, 0.5)
 engine.showMessage('Hello World!', height=2, confirm=True)
 engine.displayEmptyScreen(60)
 engine.displayT1('OIIO', 99, 60)
@@ -22,3 +22,4 @@ engine.displayMask('XXX', 60)
 engine.displayFixCross(60)
 engine.promptIdentity('ID question', ('start', 'end'), 99)
 engine.promptVisibility('Viz question', ('start', 'end'), 21, 7, 99)
+engine.stop()

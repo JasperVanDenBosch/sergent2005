@@ -1,5 +1,4 @@
 '''
-
 TODO:
 - backup parameters on run
 - counterbalanced single/dual block order
@@ -7,12 +6,14 @@ TODO:
 - ensure psychopy is logging draws as backup
 - store site in config file instead
 - Counterbalance by pid + SITE: counterbalance the task order (single/dual): 
-- ITI 3-4s Fixation cross off then on
+- ITI 3-4s Fixation cross off then on  --> this is on top of t1 slow/ quick
+- separate triggers for training
+- some "empty room" recording 
 - integrate ports with engine
-- squares as list
 - responding simulation engine
 - calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
+- optimize flip count based on refresh rate (print while logging)
 '''
 from os.path import expanduser, join
 from datetime import datetime
@@ -87,3 +88,4 @@ for phase in ('train', 'test'):
     engine.showMessage(CONSTANTS.finished_training) # TODO phase
 
 engine.showMessage(CONSTANTS.thank_you, confirm=False)
+engine.stop()

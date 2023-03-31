@@ -78,3 +78,6 @@ class FakeEngine(object):
         """Simulated duration in seconds
         """
         return self.secs + round(self.flips * (1/60))
+    
+    def stop(self) -> None:
+        print(f'[ENGINE] Stopping')
