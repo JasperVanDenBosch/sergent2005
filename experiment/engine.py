@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Tuple, Dict, List, Union
 from psychopy.monitors import Monitor
 from psychopy.event import waitKeys
 from psychopy.core import wait
+from psychopy import logging
 from psychopy.visual import Window, TextStim
 from psychopy.visual.ratingscale import RatingScale
 from psychopy.visual.line import Line
@@ -38,17 +39,13 @@ class PsychopyEngine(object):
         self.port = FakeTriggerPort()
 
     def configureLog(self, fpath: str):
-        pass
-        # logging.console.setLevel(logging.WARNING)
-        # logging.LogFile(log_fpath, logging.EXP)
-
-        ## timer
-        # clock = core.Clock()
-        # logging.setDefaultClock(clock)
+        logging.console.setLevel(logging.INFO)
+        lastLog = logging.LogFile(fpath, level=logging.INFO, filemode='w')
         # logging.exp(f'time={clock.getTime(applyZero=False)}')
 
-        #logFile = logging.LogFile(log_fpath, level=logging.EXP)
-        #logging.console.setLevel(logging.INFO)
+
+    def flush(self) -> None:
+        logging.flush()
 
     def configureWindow(self, settings: Dict) -> None:
         my_monitor = Monitor(name='EMLSergent2005', distance=settings['mon_dist'])
@@ -132,6 +129,7 @@ class PsychopyEngine(object):
     def drawFlipAndTrigger(self, stims: List[Stimulus], duration: int, triggerNr: int):
         for stim in stims:
             stim.draw()
+        self.win.logOnFlip(level=logging.EXP, msg=f'logged trigger: {triggerNr}')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
         for _ in range(duration-1):

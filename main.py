@@ -9,7 +9,6 @@ TODO:
 - ITI 3-4s Fixation cross off then on  --> this is on top of t1 slow/ quick
 - separate triggers for training
 - some "empty room" recording 
-- integrate ports with engine
 - responding simulation engine
 - calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
@@ -18,7 +17,6 @@ TODO:
 from os.path import expanduser, join
 from datetime import datetime
 from os import makedirs
-from typing import TYPE_CHECKING
 import random
 from experiment.constants import Constants
 from experiment.trials import generateTrials
@@ -37,7 +35,7 @@ chosen_settings = getLabConfiguration() # maybe get from config file instead
 data_dir = expanduser(f'~/data/{CONSTANTS.experiment_name}/sub-{sub}')
 makedirs(data_dir, exist_ok=True) # ensure data directory exists
 # current date+time to seconds, helps to generate unique files, prevent overwriting
-dt_str = datetime.now().strftime(f'%y%m%d%H%M%S')
+dt_str = datetime.now().strftime(f'%Y%m%d%H%M%S')
 # full file path to events (structured) and log (unstructured) output 
 evt_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_events.tsv')
 log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
@@ -74,7 +72,7 @@ for phase in ('train', 'test'):
 
     for block in ('single', 'dual'):
         trials = generateTrials(phase, block, CONSTANTS)
-        random.shuffle(trials) # TODO check if this is good enough, do we worry about conseq reps
+        random.shuffle(trials)
 
         if block == 'dual':
             engine.showMessage(CONSTANTS.dual_block_start)

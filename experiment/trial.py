@@ -102,3 +102,5 @@ class Trial(object):
                 Triggers.taskT1variant
             )
 
+        engine.flush()
+

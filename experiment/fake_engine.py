@@ -79,5 +79,8 @@ class FakeEngine(object):
         """
         return self.secs + round(self.flips * (1/60))
     
+    def flush(self) -> None:
+        print(f'[ENGINE] Flushing')
+    
     def stop(self) -> None:
         print(f'[ENGINE] Stopping')
