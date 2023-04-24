@@ -36,8 +36,8 @@ class FakeEngine(object):
         """
         print('[ENGINE] createLine()')
 
-    def showMessage(self, message: str, text_height=0.6, wait=True):
-        print(f'[ENGINE] Message: {"WAIT" if wait else ""} {message}')
+    def showMessage(self, message: str, height=0.6, confirm=True):
+        print(f'[ENGINE] Message: {"WAIT" if confirm else ""} {message}')
         self.secs += 20
 
     def displayEmptyScreen(self, duration: int) -> None:
@@ -78,3 +78,9 @@ class FakeEngine(object):
         """Simulated duration in seconds
         """
         return self.secs + round(self.flips * (1/60))
+    
+    def flush(self) -> None:
+        print(f'[ENGINE] Flushing')
+    
+    def stop(self) -> None:
+        print(f'[ENGINE] Stopping')

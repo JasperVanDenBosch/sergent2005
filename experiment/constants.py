@@ -13,7 +13,7 @@ class Constants(object):
     ## original study: 70Hz, 14.286ms
     ## current flip nrs for 60hz
 
-    experiment_name = 'eegmanylabs_sergent2005'
+    experiment_name = 'EMLsergent2005'
     start_T1_quick = 31 # 0.514
     start_T1_slow = 51 #0.857
 
@@ -41,7 +41,10 @@ class Constants(object):
     string_height = 1
 
     target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
-    target1_strings = ['OXXO', 'XOOX']
+    target1_strings = ['XOOX', 'OXXO']
+
+    task_vis_labels = ('nothing', 'maximal visibility')
+    task_identity_options = ('OO', 'XX')
 
     target2_square1_pos=(-5,-5)
     target2_square2_pos=(5,-5)
@@ -80,8 +83,8 @@ class Constants(object):
                         ' \n\n Please press \'space\' if you are ready to start.'
     start_trial_text = 'Press \'space\' to start the trial.'
     thank_you = 'Great! You completed all trials. Thank you for your participation.'
-    task2_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
+    task_vis_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
-    task1_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
+    task_identity_text = 'Please indicate whether the two letters \n in the center of target 1 were ' \
                  '\'OO\' or \'XX\'\n'\
                  'Press \'space\' to confirm.\n\n'

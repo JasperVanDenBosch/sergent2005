@@ -87,8 +87,8 @@ class Trial(object):
         # start the visibility rating (happens in single AND dual task conditions)
         # ratingT2 is tuple of rating, RT
         self.vis_rating, self.vis_rt = engine.promptVisibility(
-            CONSTANTS.task2_text,
-            ('nothing', 'maximal visibility'),
+            CONSTANTS.task_vis_text,
+            CONSTANTS.task_vis_labels,
             CONSTANTS.vis_scale_length,
             self.vis_init,
             Triggers.taskT2visibility
@@ -97,8 +97,10 @@ class Trial(object):
         # only in the dual task condition the question on target 1 is displayed
         if self.task == 'dual':
             self.id_choice, self.id_rt = engine.promptIdentity(
-                CONSTANTS.task1_text,
-                ('OO', 'XX'),
+                CONSTANTS.task_identity_text,
+                CONSTANTS.task_identity_options,
                 Triggers.taskT1variant
             )
+
+        engine.flush()
 
