@@ -13,6 +13,10 @@ TODO:
 - responding simulation engine
 - calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
+- triggers for rating tasks? on display (current) or on response? - fine
+- ITI 3-4s Fixation cross off then on -  where did this come from - add this to T1 delay
+- triggers for training - yes
+- empty room recording
 '''
 from os.path import expanduser, join
 from datetime import datetime
