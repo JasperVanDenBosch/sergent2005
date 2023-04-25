@@ -5,16 +5,12 @@ TODO:
 - store site in config file instead
 - Counterbalance by pid + SITE: counterbalance the task order (single/dual): 
 - ITI 3-4s Fixation cross off then on  --> this is on top of t1 slow/ quick
-- separate triggers for training
 - some "empty room" recording 
 - responding simulation engine
 - calculate correct column # correct = True if ratingT1[0] in self.t1 else False # ratingT1 is tuple of rating, RT
 - cols for evts
 - optimize flip count based on refresh rate (print while logging)
-- triggers for rating tasks? on display (current) or on response? - fine
 - ITI 3-4s Fixation cross off then on -  where did this come from - add this to T1 delay
-- triggers for training - yes
-- empty room recording
 '''
 from os.path import expanduser, join
 from datetime import datetime

@@ -41,7 +41,7 @@ class TrialGenerationTests(TestCase):
     def sampleTrials(self):
         from experiment.trials import generateTrials
         trials = generateTrials('test', 'dual', self.consts)
-        cond_trials = filter(lambda t: t.t2presence and t.soa, trials)
+        cond_trials = filter(lambda t: t.t2presence and t.soa_long, trials)
         return list(cond_trials)
 
     def test_phase(self):
@@ -55,26 +55,26 @@ class TrialGenerationTests(TestCase):
         from experiment.trials import generateTrials
         trials = generateTrials('test', 'dual', self.consts)
         self.assertEqual(len(trials), 240, 'total trials should be 240')
-        present_short = filter(lambda t: t.t2presence and (not t.soa), trials)
+        present_short = filter(lambda t: t.t2presence and (not t.soa_long), trials)
         self.assertEqual(len(list(present_short)), self.consts.n_trials_dual_critical)
-        present_long = filter(lambda t: t.t2presence and t.soa, trials)
+        present_long = filter(lambda t: t.t2presence and t.soa_long, trials)
         self.assertEqual(len(list(present_long)), self.consts.n_trials_dual_easy)
-        absent_short = filter(lambda t: t.t2presence == False and (not t.soa), trials)
+        absent_short = filter(lambda t: t.t2presence == False and (not t.soa_long), trials)
         self.assertEqual(len(list(absent_short)), self.consts.n_trials_dual_easy)
-        absent_long = filter(lambda t: t.t2presence == False and t.soa, trials)
+        absent_long = filter(lambda t: t.t2presence == False and t.soa_long, trials)
         self.assertEqual(len(list(absent_long)), self.consts.n_trials_dual_easy)
 
     def test_count_by_conditions_single_task(self):
         from experiment.trials import generateTrials
         trials = generateTrials('test', 'single', self.consts)
         self.assertEqual(len(trials), 128, 'total trials should be 128')
-        present_short = filter(lambda t: t.t2presence and (not t.soa), trials)
+        present_short = filter(lambda t: t.t2presence and (not t.soa_long), trials)
         self.assertEqual(len(list(present_short)), self.consts.n_trials_single)
-        present_long = filter(lambda t: t.t2presence and t.soa, trials)
+        present_long = filter(lambda t: t.t2presence and t.soa_long, trials)
         self.assertEqual(len(list(present_long)), self.consts.n_trials_single)
-        absent_short = filter(lambda t: t.t2presence == False and (not t.soa), trials)
+        absent_short = filter(lambda t: t.t2presence == False and (not t.soa_long), trials)
         self.assertEqual(len(list(absent_short)), self.consts.n_trials_single)
-        absent_long = filter(lambda t: t.t2presence == False and t.soa, trials)
+        absent_long = filter(lambda t: t.t2presence == False and t.soa_long, trials)
         self.assertEqual(len(list(absent_long)), self.consts.n_trials_single)
 
     def test_delay_sampling(self):
@@ -118,9 +118,36 @@ class TrialGenerationTests(TestCase):
     def test_triggers_numbers_preset(self):
         from experiment.trials import generateTrials
         trials = generateTrials('test', 'dual', self.consts)
-        present_short = filter(lambda t: t.t2presence and (not t.soa), trials)
+        present_short = filter(lambda t: t.t2presence and (not t.soa_long), trials)
         a_trial = list(present_short)[0]
         self.assertEqual(
             a_trial.t1_trigger,
             Triggers.t1_present_dualTask_shortSOA
         )
+        self.assertEqual(
+            a_trial.task_variant_trigger,
+            Triggers.taskT1variant
+        )
+        self.assertEqual(
+            a_trial.task_visibility_trigger,
+            Triggers.taskT2visibility
+        )
+
+    def test_triggers_numbers_preset_training(self):
+        from experiment.trials import generateTrials
+        trials = generateTrials('train', 'single', self.consts)
+        absent_long = filter(lambda t: (not t.t2presence) and t.soa_long, trials)
+        a_trial = list(absent_long)[0]
+        self.assertEqual(
+            a_trial.t2_trigger,
+            Triggers.t2_absent_singleTask_longSOA_training
+        )
+        self.assertEqual(
+            a_trial.task_variant_trigger,
+            Triggers.taskT1variant_training
+        )
+        self.assertEqual(
+            a_trial.task_visibility_trigger,
+            Triggers.taskT2visibility_training
+        )
+

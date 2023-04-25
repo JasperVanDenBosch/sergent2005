@@ -58,22 +58,31 @@ def createTrial(recipe: TrialRecipe, delay: int, t1: int, t2: int, vis: int,
     """Create a single trial, initializing unbalanced random variables
     """
     masks = [''.join(sample(const.possible_consonants, 4)) for _ in range(3)]
+    task_variant_trigger = Triggers.taskT1variant
+    task_visibility_trigger = Triggers.taskT2visibility
+    if recipe.phase=='train':
+        task_variant_trigger = Triggers.taskT1variant_training
+        task_visibility_trigger = Triggers.taskT2visibility_training
     return Trial(
         delay_index=delay,
         t1_index=t1,
         t2_index=t2,
         t1_trigger=Triggers.get_number(
+            training=recipe.phase=='train',
             forT2=False,
             t2Present=recipe.t2presence,
             dualTask=recipe.task=='dual',
             longSOA=recipe.soa_long
         ),
         t2_trigger=Triggers.get_number(
+            training=recipe.phase=='train',
             forT2=True,
             t2Present=recipe.t2presence,
             dualTask=recipe.task=='dual',
             longSOA=recipe.soa_long
         ),
+        task_variant_trigger=task_variant_trigger,
+        task_visibility_trigger=task_visibility_trigger,
         masks=tuple(masks),
         vis_init=vis,
         **asdict(recipe)

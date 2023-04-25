@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Literal, Tuple, Optional
 from dataclasses import dataclass
 from experiment.constants import Constants
-from experiment.triggers import Triggers
 if TYPE_CHECKING:
     from experiment.engine import PsychopyEngine
 Phase = Union[Literal['train'], Literal['test']]
@@ -24,6 +23,8 @@ class Trial(object):
     t1_trigger: int
     t2_trigger: int
     masks: Tuple[str, str, str] # three masks of four characters each
+    task_variant_trigger: int
+    task_visibility_trigger: int
 
     ## response data
     id_choice: Optional[int] = None
@@ -91,7 +92,7 @@ class Trial(object):
             CONSTANTS.task_vis_labels,
             CONSTANTS.vis_scale_length,
             self.vis_init,
-            Triggers.taskT2visibility
+            self.task_visibility_trigger
         )
 
         # only in the dual task condition the question on target 1 is displayed
@@ -99,7 +100,7 @@ class Trial(object):
             self.id_choice, self.id_rt = engine.promptIdentity(
                 CONSTANTS.task_identity_text,
                 CONSTANTS.task_identity_options,
-                Triggers.taskT1variant
+                self.task_variant_trigger
             )
 
         engine.flush()
