@@ -1,8 +1,6 @@
 '''
 TODO:
 - backup parameters on run
-- counterbalanced single/dual block order
-- i18n
 - ensure psychopy is logging draws as backup
 - store site in config file instead
 - Counterbalance by pid + SITE: counterbalance the task order (single/dual): 
@@ -71,10 +69,13 @@ engine.showMessage(CONSTANTS.instructions)
 ## before experiment
 engine.showMessage(CONSTANTS.training_instructions)
 
+## counterbalance task type based on the participant index being odd or even
+blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
+
 for phase in ('train', 'test'):
     # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
 
-    for block in ('single', 'dual'):
+    for block in blocks:
         trials = generateTrials(phase, block, CONSTANTS)
         random.shuffle(trials)
 
