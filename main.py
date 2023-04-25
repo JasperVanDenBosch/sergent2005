@@ -55,7 +55,7 @@ engine.configureLog(log_fpath)
 engine.configureWindow(chosen_settings)
 
 ## setup serial port or other trigger port
-# engine.connectTriggerInterface(**chosen_settings)
+engine.connectTriggerInterface(**chosen_settings)
 
 ## stimuli
 engine.loadStimuli(

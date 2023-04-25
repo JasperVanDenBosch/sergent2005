@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union
 from serial import Serial
+from psychopy.hardware.labjacks import U3
 if TYPE_CHECKING:
     from experiment.engine import PsychopyEngine
 
@@ -20,6 +21,15 @@ class SerialTriggerPort:
 
     def trigger(self, val: int) -> None:
         self.sport.write(bytes([val]))
+
+
+class LabJackPort:
+
+    def __init__(self):
+        self.inner = U3()
+
+    def trigger(self, val: int) -> None:
+        self.inner.setData(val, address='FIO')
 
 
 class ViewPixxTriggerPort:
@@ -45,7 +55,7 @@ class ViewPixxTriggerPort:
 
 
 TriggerInterface = Union[SerialTriggerPort, FakeTriggerPort,
-    ViewPixxTriggerPort]
+    ViewPixxTriggerPort, LabJackPort]
 
 def createTriggerPort(typ: str, engine: PsychopyEngine, scale: float, address: str='', rate: int=0, viewPixBulbSize: float=7.0) -> TriggerInterface:
     if typ == 'dummy':
@@ -54,5 +64,7 @@ def createTriggerPort(typ: str, engine: PsychopyEngine, scale: float, address: s
         return SerialTriggerPort(address, rate)
     elif typ == 'viewpixx':
         return ViewPixxTriggerPort(engine, scale, viewPixBulbSize)
+    elif typ == 'labjack':
+        return LabJackPort()
     else:
         raise ValueError('Unknown port type in lab settings.')

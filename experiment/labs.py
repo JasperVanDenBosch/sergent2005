@@ -15,13 +15,11 @@ from __future__ import annotations
 from typing import Dict, Any
 
 lab_settings = dict(
-    jasper=dict(
+    damian=dict(
         mon_width=62.23,
         mon_dist=50,
         mon_resolution=(1920, 1080),
-        port_type='serial',
-        port_address='/dev/pts/2', # '/dev/ttyUSB0',
-        port_baudrate=9600, # 115200,
+        port_type='labjack',
     ),
     maria=dict(
         mon_width=54.37,

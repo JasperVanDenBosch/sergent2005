@@ -22,6 +22,8 @@ from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPor
 if TYPE_CHECKING:
     Stimulus = Union[TextStim, DummyStim, ShapeStim, Rect]
 
+
+
 class PsychopyEngine(object):
 
     win: Window
@@ -242,4 +244,5 @@ class PsychopyEngine(object):
     
     def stop(self) -> None:
         self.win.close()
+
 
