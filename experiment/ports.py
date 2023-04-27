@@ -8,10 +8,7 @@ if TYPE_CHECKING:
     from experiment.engine import PsychopyEngine
 
 
-class FakeTriggerPort:
 
-    def trigger(self, val: int) -> None:
-        print(f'TRIGGER: {val}')
 
 
 class SerialTriggerPort:

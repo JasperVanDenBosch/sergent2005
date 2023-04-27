@@ -3,12 +3,15 @@ when psychopy is not available
 """
 from __future__ import annotations
 from typing import Tuple, Dict
-from experiment.ports import TriggerInterface, FakeTriggerPort
+
+
+class FakeTriggerPort:
+
+    def trigger(self, val: int) -> None:
+        print(f'[TRIGGER] {val}')
 
 
 class FakeEngine(object):
-
-    port: TriggerInterface
 
     flips = 0
     secs = 0

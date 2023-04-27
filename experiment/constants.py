@@ -13,7 +13,6 @@ class Constants(object):
     ## original study: 70Hz, 14.286ms
     ## current flip nrs for 60hz
 
-    experiment_name = 'EMLsergent2005'
     start_T1_quick = 31 # 0.514
     start_T1_slow = 51 #0.857
 
