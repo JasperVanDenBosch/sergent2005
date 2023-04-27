@@ -117,40 +117,45 @@ class PsychopyEngine(object):
         else:
             wait(1.5)
 
-    def connectTriggerInterface(self, port_type: str, port_address: str,
-                                port_baudrate: int) -> None:
+    def connectTriggerInterface(self, settings: Dict) -> None:
         self.port = createTriggerPort(
-            typ=port_type,
+            typ=settings.get('type', '?'),
             engine=self,
             scale=1.0,
-            address=port_address,
-            rate=port_baudrate,
+            address=settings.get('address', ''),
+            rate=settings.get('baudrate', 0) 
             viewPixBulbSize=7.0
         )
 
-    def drawFlipAndTrigger(self, stims: List[Stimulus], duration: int, triggerNr: int):
+    def drawFlipAndTrigger(self, stims: List[Stimulus], duration: int, triggerNr: int) -> float:
+        record = dict()
         for stim in stims:
             stim.draw()
         self.win.logOnFlip(level=logging.EXP, msg=f'logged trigger: {triggerNr}')
+        self.win.getTimeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
         for _ in range(duration-1):
             for stim in stims:
                 stim.draw()
             self.win.flip()
+        return record.get('flipTime', -99.99)
 
-    def displayEmptyScreen(self, duration: int) -> None:
+    def displayEmptyScreen(self, duration: int) -> float:
+        record = dict()
+        self.win.getTimeOnFlip(record, 'flipTime')
         for _ in range(duration):
             self.win.flip()
+        return record.get('flipTime', -99.99)
 
-    def displayT1(self, val: str, triggerNr: int, duration: int) -> None:
+    def displayT1(self, val: str, triggerNr: int, duration: int) -> float:
         '''
         Displays the first target (T1) consisting of either the string 'OXXO' or 'XOOX'
         '''
         self.target1.text = val
-        self.drawFlipAndTrigger([self.target1], duration, triggerNr)
+        return self.drawFlipAndTrigger([self.target1], duration, triggerNr)
 
-    def displayT2(self, val: str, triggerNr: int, duration: int) -> None:
+    def displayT2(self, val: str, triggerNr: int, duration: int) -> float:
         '''
         Displays the second target (T2) constisting of 4 white squares and (if present
         condition is active) of a number word in capital letters.
@@ -162,7 +167,7 @@ class PsychopyEngine(object):
         else:
             target2 = self.target2_dummy
         target2.text = val
-        self.drawFlipAndTrigger([target2]+self.squares, duration, triggerNr)
+        return self.drawFlipAndTrigger([target2]+self.squares, duration, triggerNr)
 
     def displayMask(self, val: str, duration: int) -> None:
         '''
@@ -179,8 +184,10 @@ class PsychopyEngine(object):
             self.fixCross.draw()
             self.win.flip()
 
-    def promptIdentity(self, prompt: str, options: Tuple[str, str], triggerNr: int) -> Tuple[int, int]:
+    def promptIdentity(self, prompt: str, options: Tuple[str, str], triggerNr: int) -> Tuple[int, float, int]:
         choices = [options[0], '', options[1]]
+        record = dict()
+        self.win.getTimeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         while True:
             ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
@@ -208,9 +215,9 @@ class PsychopyEngine(object):
 
         choice_index = options.index(scale.getRating()) # index of response wrt labels
         rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
-        return choice_index, rt
+        return choice_index, record.get('flipTime', -99.99), rt
     
-    def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, triggerNr: int) -> Tuple[int, int]:
+    def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, triggerNr: int) -> Tuple[int, float, int]:
         # the rating scale has to be re-initialized in every function call, because
         # the marker start can't be randomized and updated when using the same rating
         # scale object again and again.
@@ -230,6 +237,8 @@ class PsychopyEngine(object):
         )
 
         scale.draw()
+        record = dict()
+        self.win.getTimeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
 
@@ -240,7 +249,7 @@ class PsychopyEngine(object):
 
         choice_index = int(scale.getRating() or -999) # index of response wrt scale
         rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
-        return choice_index, rt
+        return choice_index, record.get('flipTime', -99.99), rt
     
     def stop(self) -> None:
         self.win.close()

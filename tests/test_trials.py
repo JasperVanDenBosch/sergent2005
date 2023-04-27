@@ -125,11 +125,11 @@ class TrialGenerationTests(TestCase):
             Triggers.t1_present_dualTask_shortSOA
         )
         self.assertEqual(
-            a_trial.task_variant_trigger,
+            a_trial.id_trigger,
             Triggers.taskT1variant
         )
         self.assertEqual(
-            a_trial.task_visibility_trigger,
+            a_trial.vis_trigger,
             Triggers.taskT2visibility
         )
 
@@ -143,11 +143,11 @@ class TrialGenerationTests(TestCase):
             Triggers.t2_absent_singleTask_longSOA_training
         )
         self.assertEqual(
-            a_trial.task_variant_trigger,
+            a_trial.id_trigger,
             Triggers.taskT1variant_training
         )
         self.assertEqual(
-            a_trial.task_visibility_trigger,
+            a_trial.vis_trigger,
             Triggers.taskT2visibility_training
         )
 

@@ -39,8 +39,8 @@ class Constants(object):
     square_size = 0.5
     string_height = 1
 
-    target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
     target1_strings = ['XOOX', 'OXXO']
+    target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 
     task_vis_labels = ('nothing', 'maximal visibility')
     task_identity_options = ('OO', 'XX')

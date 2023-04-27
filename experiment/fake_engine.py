@@ -3,6 +3,7 @@ when psychopy is not available
 """
 from __future__ import annotations
 from typing import Tuple, Dict
+import random
 
 
 class FakeTriggerPort:
@@ -15,6 +16,7 @@ class FakeEngine(object):
 
     flips = 0
     secs = 0
+    flip_dur = 0.016
 
     def __init__(self) -> None:
         self.port = FakeTriggerPort()
@@ -22,8 +24,7 @@ class FakeEngine(object):
     def configureLog(self, fpath: str):
         pass
 
-    def connectTriggerInterface(self, port_type: str, port_address: str,
-                                port_baudrate: int) -> None:
+    def connectTriggerInterface(self, settings: Dict) -> None:
         print('[ENGINE] connectTriggerInterface()')
 
     def configureWindow(self, settings: Dict):
@@ -43,19 +44,22 @@ class FakeEngine(object):
         print(f'[ENGINE] Message: {"WAIT" if confirm else ""} {message}')
         self.secs += 20
 
-    def displayEmptyScreen(self, duration: int) -> None:
+    def displayEmptyScreen(self, duration: int) -> float:
         print(f'[ENGINE] EmptyScreen ({duration} x flip)')
         self.flips += duration
+        return (self.flips - duration) * self.flip_dur
 
-    def displayT1(self, val: str, trigger: int, duration: int) -> None:
+    def displayT1(self, val: str, trigger: int, duration: int) -> float:
         print(f'[ENGINE] Target 1 "{val}" ({duration} x flip)')
         self.port.trigger(trigger)
         self.flips += duration
+        return (self.flips - duration) * self.flip_dur
 
-    def displayT2(self, val: str, trigger: int, duration: int) -> None:
+    def displayT2(self, val: str, trigger: int, duration: int) -> float:
         print(f'[ENGINE] Target 2 "{val}" ({duration} x flip)')
         self.port.trigger(trigger)
         self.flips += duration
+        return (self.flips - duration) * self.flip_dur
 
     def displayMask(self, val: str, duration: int) -> None:
         print(f'[ENGINE] Mask "{val}" ({duration} x flip)')
@@ -65,17 +69,19 @@ class FakeEngine(object):
         print(f'[ENGINE] Fixation ({duration} x flip)')
         self.flips += duration
 
-    def promptIdentity(self, prompt: str, options: Tuple[str, str], trigger: int) -> Tuple[int, int]:
+    def promptIdentity(self, prompt: str, options: Tuple[str, str], trigger: int) -> Tuple[int, float, int]:
         print(f'[ENGINE] Identity Task')
         self.port.trigger(trigger)
         self.secs += 3
-        return (0, 0)
+        onset = self.flips * self.flip_dur
+        return (random.randint(0, 1), onset, random.randint(800, 1200))
     
-    def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, trigger: int) -> Tuple[int, int]:
+    def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, trigger: int) -> Tuple[int, float, int]:
         print(f'[ENGINE] Identity Task')
         self.port.trigger(trigger)
         self.secs += 4
-        return (0, 0)
+        onset = self.flips * self.flip_dur
+        return (random.randint(0, scale_length-1), onset, random.randint(800, 1200))
     
     def estimateDuration(self) -> int:
         """Simulated duration in seconds

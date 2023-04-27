@@ -81,8 +81,8 @@ def createTrial(recipe: TrialRecipe, delay: int, t1: int, t2: int, vis: int,
             dualTask=recipe.task=='dual',
             longSOA=recipe.soa_long
         ),
-        task_variant_trigger=task_variant_trigger,
-        task_visibility_trigger=task_visibility_trigger,
+        id_trigger=task_variant_trigger,
+        vis_trigger=task_visibility_trigger,
         masks=tuple(masks),
         vis_init=vis,
         **asdict(recipe)
