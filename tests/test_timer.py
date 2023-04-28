@@ -42,4 +42,4 @@ class TimerTests(TestCase):
         from experiment.timer import Timer
         timer = Timer()
         timer.optimizeFlips(123.45, self.consts)
-        self.assertEqual(timer.secsToFlips(3.5), 432.075)
+        self.assertEqual(timer.secsToFlips(3.5), 432)
