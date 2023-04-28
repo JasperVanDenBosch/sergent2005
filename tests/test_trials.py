@@ -10,11 +10,12 @@ from experiment.triggers import Triggers
 class TrialGenerationTests(TestCase):
 
     def setUp(self) -> None:
+        self.timer = Mock()
+        self.timer.short_T1_delay = 31
+        self.timer.long_T1_delay = 51
+        self.timer.short_SOA = 15
+        self.timer.long_SOA = 41
         self.consts = Mock()
-        self.consts.short_T1_delay = 31
-        self.consts.long_T1_delay = 51
-        self.consts.short_SOA = 15
-        self.consts.long_SOA = 41
         self.consts.n_trials_single = 32
         self.consts.n_trials_dual_critical = 96
         self.consts.n_trials_dual_easy = 48
@@ -41,21 +42,24 @@ class TrialGenerationTests(TestCase):
         self.assertLessEqual(max(reps), exp)
 
     def sampleTrials(self):
-        from experiment.trials import generateTrials
-        trials = generateTrials('test', 'dual', self.consts)
+        from experiment.trials import TrialGenerator
+        generator = TrialGenerator(self.timer, self.consts)
+        trials = generator.generate('test', 'dual')
         cond_trials = filter(lambda t: t.t2presence and t.soa_long, trials)
         return list(cond_trials)
 
     def test_phase(self):
-        from experiment.trials import generateTrials
-        trials = generateTrials('train', 'single', self.consts)
+        from experiment.trials import TrialGenerator
+        generator = TrialGenerator(self.timer, self.consts)
+        trials = generator.generate('train', 'single')
         self.assertEqual(len(trials), 16)
-        trials = generateTrials('train', 'dual', self.consts)
+        trials = generator.generate('train', 'dual')
         self.assertEqual(len(trials), 30)
 
     def test_count_by_conditions_dual_task(self):
-        from experiment.trials import generateTrials
-        trials = generateTrials('test', 'dual', self.consts)
+        from experiment.trials import TrialGenerator
+        generator = TrialGenerator(self.timer, self.consts)
+        trials = generator.generate('test', 'dual')
         self.assertEqual(len(trials), 240, 'total trials should be 240')
         present_short = filter(lambda t: t.t2presence and (not t.soa_long), trials)
         self.assertEqual(len(list(present_short)), self.consts.n_trials_dual_critical)
@@ -67,8 +71,9 @@ class TrialGenerationTests(TestCase):
         self.assertEqual(len(list(absent_long)), self.consts.n_trials_dual_easy)
 
     def test_count_by_conditions_single_task(self):
-        from experiment.trials import generateTrials
-        trials = generateTrials('test', 'single', self.consts)
+        from experiment.trials import TrialGenerator
+        generator = TrialGenerator(self.timer, self.consts)
+        trials = generator.generate('test', 'single')
         self.assertEqual(len(trials), 128, 'total trials should be 128')
         present_short = filter(lambda t: t.t2presence and (not t.soa_long), trials)
         self.assertEqual(len(list(present_short)), self.consts.n_trials_single)
@@ -118,8 +123,9 @@ class TrialGenerationTests(TestCase):
         self.assertAlmostEqual(len(set(all_masks)), len(all_masks), delta=1)
         
     def test_triggers_numbers_preset(self):
-        from experiment.trials import generateTrials
-        trials = generateTrials('test', 'dual', self.consts)
+        from experiment.trials import TrialGenerator
+        generator = TrialGenerator(self.timer, self.consts)
+        trials = generator.generate('test', 'dual')
         present_short = filter(lambda t: t.t2presence and (not t.soa_long), trials)
         a_trial = list(present_short)[0]
         self.assertEqual(
@@ -136,8 +142,9 @@ class TrialGenerationTests(TestCase):
         )
 
     def test_triggers_numbers_preset_training(self):
-        from experiment.trials import generateTrials
-        trials = generateTrials('train', 'single', self.consts)
+        from experiment.trials import TrialGenerator
+        generator = TrialGenerator(self.timer, self.consts)
+        trials = generator.generate('train', 'single')
         absent_long = filter(lambda t: (not t.t2presence) and t.soa_long, trials)
         a_trial = list(absent_long)[0]
         self.assertEqual(
@@ -154,9 +161,13 @@ class TrialGenerationTests(TestCase):
         )
 
     def test_iti_sampling(self):
+        self.timer.secsToFlips.side_effect = lambda s: int(s*100)
         itis = [t.iti for t in self.sampleTrials()]
+        print(itis)
         ## iti range
-        self.assertTrue(all([iti > 99 for iti in itis]))
-        self.assertTrue(all([iti < 99 for iti in itis]))
-        ## all unique
-        self.assertEqual(len(set(itis)), len(itis))
+        min_flips = self.consts.iti_min_sec * 100
+        max_flips = self.consts.iti_max_sec * 100
+        self.assertTrue(all([iti > min_flips for iti in itis]))
+        self.assertTrue(all([iti < max_flips for iti in itis]))
+        ## variety in ITI
+        self.assertGreater(len(set(itis)), 30)

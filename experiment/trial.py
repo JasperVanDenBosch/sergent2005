@@ -4,9 +4,9 @@ from dataclasses import dataclass, asdict
 from experiment.constants import Constants
 if TYPE_CHECKING:
     from experiment.engine import PsychopyEngine
+    from experiment.timer import Timer
 Phase = Union[Literal['train'], Literal['test']]
 Task = Union[Literal['single'], Literal['dual']]
-SoaCondition = Union[Literal['short'], Literal['long']]
 CONSTANTS = Constants()
 
 
@@ -16,7 +16,9 @@ class Trial(object):
     task: Task
     t2presence: bool
     soa_long: bool
+    soa: int
     delay_index: int # t1 delay
+    delay: int
     iti: int
     t1_index: int
     t2_index: int
@@ -38,15 +40,6 @@ class Trial(object):
     t1_offset: Optional[float] = None
     t2_onset: Optional[float] = None
     t2_offset: Optional[float] = None
-    
-    @property
-    def delay(self):
-        vals = [CONSTANTS.short_T1_delay, CONSTANTS.long_T1_delay]
-        return vals[self.delay_index]
-
-    @property
-    def soa(self):
-        return CONSTANTS.long_SOA if self.soa_long else CONSTANTS.short_SOA
 
     @property 
     def target1(self):
@@ -64,7 +57,7 @@ class Trial(object):
         full_dict['target2'] = self.target2
         return full_dict
 
-    def run(self, engine: PsychopyEngine):
+    def run(self, engine: PsychopyEngine, timer: Timer):
         """Present this trial
 
         Args:
@@ -75,31 +68,31 @@ class Trial(object):
         # it starts with the fixation cross
         engine.displayFixCross(self.delay)
 
-        self.t1_onset = engine.displayT1(self.target1, self.t1_trigger, CONSTANTS.target_dur)
+        self.t1_onset = engine.displayT1(self.target1, self.t1_trigger, timer.target_dur)
 
         # display black screen between stimuli and masks
-        self.t1_offset = engine.displayEmptyScreen(CONSTANTS.target_dur)
+        self.t1_offset = engine.displayEmptyScreen(timer.target_dur)
 
-        engine.displayMask(self.masks[0], CONSTANTS.target_dur)
+        engine.displayMask(self.masks[0], timer.target_dur)
 
         # display the fixation cross either short_SOA - 129ms or long_SOA - 129ms,
         # since the target, the mask and the black screen was displayed for 43ms each
-        fix_dur = self.soa - CONSTANTS.target_dur*3
+        fix_dur = self.soa - timer.target_dur*3
         engine.displayFixCross(fix_dur)
 
-        self.t2_onset = engine.displayT2(self.target2, self.t2_trigger, CONSTANTS.target_dur)
+        self.t2_onset = engine.displayT2(self.target2, self.t2_trigger, timer.target_dur)
 
         # display black screen between stimuli and masks
-        self.t2_offset = engine.displayEmptyScreen(CONSTANTS.target_dur)
+        self.t2_offset = engine.displayEmptyScreen(timer.target_dur)
 
         # display two masks after another with black screen inbetween
-        engine.displayMask(self.masks[1], CONSTANTS.target_dur)
+        engine.displayMask(self.masks[1], timer.target_dur)
 
-        engine.displayEmptyScreen(CONSTANTS.target_dur)
+        engine.displayEmptyScreen(timer.target_dur)
 
-        engine.displayMask(self.masks[2], CONSTANTS.target_dur)
+        engine.displayMask(self.masks[2], timer.target_dur)
 
-        engine.displayEmptyScreen(CONSTANTS.task_delay)
+        engine.displayEmptyScreen(timer.task_delay)
 
         # start the visibility rating (happens in single AND dual task conditions)
         # ratingT2 is tuple of rating, RT

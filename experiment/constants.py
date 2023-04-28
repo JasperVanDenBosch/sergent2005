@@ -1,7 +1,5 @@
-'''
-This script contains all parameters needed to execute the attentional blink
-experiment by running the main.py file located in the same folder.
-'''
+"""Design-time parameters of the experiment
+"""
 
 
 class Constants(object):
@@ -17,7 +15,7 @@ class Constants(object):
     target_dur = 3      # 43ms
     task_delay = 37     # 500ms
 
-    ## The range of the inter stimulus interval in seconds
+    ## The range of the inter trial interval in seconds
     iti_min_sec = 3 #seconds
     iti_max_sec = 4 #seconds
 

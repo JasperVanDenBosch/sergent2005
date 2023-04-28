@@ -1,9 +1,9 @@
 '''
 TODO:
 - ensure psychopy is logging draws as backup
-- optimize flip count based on refresh rate (print while logging)
 - ITI 3-4s Fixation cross off then on -  where did this come from - add this to T1 delay
 - identity RT needs to be sum if redrawing scale (middle button)
+- check meas fliprate vs configured
 '''
 from os.path import expanduser, join
 from datetime import datetime
@@ -11,11 +11,12 @@ from os import makedirs
 import random, platform
 from pandas import DataFrame
 from experiment.constants import Constants
-from experiment.trials import generateTrials
+from experiment.timer import Timer
+from experiment.trials import TrialGenerator
 #from experiment.engine import PsychopyEngine
 from experiment.fake_engine import FakeEngine
 from experiment.labs import getLabConfiguration
-CONSTANTS = Constants()  # load fixed parameters wrt timing, sizing etc
+const = Constants()  # load fixed parameters wrt timing, sizing etc
 
 ## user input
 config = getLabConfiguration()
@@ -48,56 +49,52 @@ engine.logDictionary('SITE_CONFIG', config)
 performance = engine.measureHardwarePerformance()
 engine.logDictionary('PERFORMANCE', performance)
 
-
 ## setup psychopy monitor and window objects
 engine.configureWindow(config)
-
-raise ValueError
 
 ## setup serial port or other trigger port
 engine.connectTriggerInterface(config['triggers'])
 
 ## stimuli
 engine.loadStimuli(
-    squareSize=CONSTANTS.square_size,
-    squareOffset=CONSTANTS.target2_square_offset,
-    fixSize=CONSTANTS.fix_cross_arm_len,
+    squareSize=const.square_size,
+    squareOffset=const.target2_square_offset,
+    fixSize=const.fix_cross_arm_len,
 )
 
 # Welcome the participant
-engine.showMessage(CONSTANTS.welcome_message, CONSTANTS.LARGE_FONT)
-engine.showMessage(CONSTANTS.instructions)
+engine.showMessage(const.welcome_message, const.LARGE_FONT)
+engine.showMessage(const.instructions)
 
 ## before experiment
-engine.showMessage(CONSTANTS.training_instructions)
+engine.showMessage(const.training_instructions)
 
 ## counterbalance task type based on the participant index being odd or even
 blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
 
-all_trials = []
+timer = Timer()
+timer.optimizeFlips(99999.9, const)
+trials = TrialGenerator(timer, const)
 for phase in ('train', 'test'):
-    # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
+    # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False) # TODO
 
     for block in blocks:
-        trials = generateTrials(phase, block, CONSTANTS)
-        random.shuffle(trials)
+        block_trials = trials.generate(phase, block)
 
         if block == 'dual':
-            engine.showMessage(CONSTANTS.dual_block_start)
+            engine.showMessage(const.dual_block_start)
         else:
-            engine.showMessage(CONSTANTS.single_block_start)
+            engine.showMessage(const.single_block_start)
 
-        for trial in trials:
-            trial.run(engine)
-
-        all_trials += trials
+        for trial in block_trials:
+            trial.run(engine, timer)
 
     if phase == 'train':
-        engine.showMessage(CONSTANTS.finished_training)
+        engine.showMessage(const.finished_training)
 
 ## Create table from trials and save to csv file
-df = DataFrame([t.todict() for t in all_trials])
+df = DataFrame([t.todict() for t in trials.all])
 df.to_csv(trials_fpath, float_format='%.4f')
 
-engine.showMessage(CONSTANTS.thank_you, confirm=False)
+engine.showMessage(const.thank_you, confirm=False)
 engine.stop()
