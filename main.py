@@ -1,7 +1,6 @@
 '''
 TODO:
 - ensure psychopy is logging draws as backup
-- script to summarize divergence from timing?
 - optimize flip count based on refresh rate (print while logging)
 - ITI 3-4s Fixation cross off then on -  where did this come from - add this to T1 delay
 - identity RT needs to be sum if redrawing scale (middle button)

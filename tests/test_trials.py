@@ -23,6 +23,8 @@ class TrialGenerationTests(TestCase):
         self.consts.target1_strings = ['OXXO', 'XOOX']
         self.consts.possible_consonants = list([c for c in 'WRZPSDFGHJKCBYNM'])
         self.consts.vis_scale_length = 21
+        self.consts.iti_min = 3s
+        self.consts.iti_max = 4s
 
     def assertMeanEqual(self, exp: float, vals: List[bool] | List[int]) -> None:
         mean = sum(vals) / len(vals)
@@ -151,3 +153,10 @@ class TrialGenerationTests(TestCase):
             Triggers.taskT2visibility_training
         )
 
+    def test_iti_sampling(self):
+        itis = [t.iti for t in self.sampleTrials()]
+        ## iti range
+        self.assertTrue(all([iti > x for iti in itis]))
+        self.assertTrue(all([iti > x for iti in itis]))
+        ## all unique
+        self.assertEqual(len(set(itis)), len(itis))

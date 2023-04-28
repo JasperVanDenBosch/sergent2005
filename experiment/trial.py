@@ -17,6 +17,7 @@ class Trial(object):
     t2presence: bool
     soa_long: bool
     delay_index: int # t1 delay
+    iti: int
     t1_index: int
     t2_index: int
     vis_init: int # random initial state of visibility rating
@@ -69,6 +70,7 @@ class Trial(object):
         Args:
             engine (PsychopyEngine): This is a wrapper for the experiment software
         """
+        engine.displayEmptyScreen(self.iti)
 
         # it starts with the fixation cross
         engine.displayFixCross(self.delay)
