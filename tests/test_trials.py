@@ -11,8 +11,8 @@ class TrialGenerationTests(TestCase):
 
     def setUp(self) -> None:
         self.consts = Mock()
-        self.consts.start_T1_quick = 31
-        self.consts.start_T1_slow = 51
+        self.consts.short_T1_delay = 31
+        self.consts.long_T1_delay = 51
         self.consts.short_SOA = 15
         self.consts.long_SOA = 41
         self.consts.n_trials_single = 32
@@ -23,8 +23,8 @@ class TrialGenerationTests(TestCase):
         self.consts.target1_strings = ['OXXO', 'XOOX']
         self.consts.possible_consonants = list([c for c in 'WRZPSDFGHJKCBYNM'])
         self.consts.vis_scale_length = 21
-        self.consts.iti_min = 3s
-        self.consts.iti_max = 4s
+        self.consts.iti_min_sec = 3
+        self.consts.iti_max_sec = 4
 
     def assertMeanEqual(self, exp: float, vals: List[bool] | List[int]) -> None:
         mean = sum(vals) / len(vals)
@@ -156,7 +156,7 @@ class TrialGenerationTests(TestCase):
     def test_iti_sampling(self):
         itis = [t.iti for t in self.sampleTrials()]
         ## iti range
-        self.assertTrue(all([iti > x for iti in itis]))
-        self.assertTrue(all([iti > x for iti in itis]))
+        self.assertTrue(all([iti > 99 for iti in itis]))
+        self.assertTrue(all([iti < 99 for iti in itis]))
         ## all unique
         self.assertEqual(len(set(itis)), len(itis))

@@ -6,26 +6,25 @@ experiment by running the main.py file located in the same folder.
 
 class Constants(object):
 
-    ###########################
-    # Experimental parameters #
-    ###########################
+    """These are the times in number of frames at 70Hz,
+    the refresh rate in the original experiment, given
+    the timing reported in the manuscript (in comments below).
+    """
+    short_T1_delay = 36 # 516ms
+    long_T1_delay = 60  # 860ms
+    short_SOA = 15      # 258ms
+    long_SOA = 41       # 688ms
+    target_dur = 3      # 43ms
+    task_delay = 37     # 500ms
 
-    ## original study: 70Hz, 14.286ms
-    ## current flip nrs for 60hz
+    ## The range of the inter stimulus interval in seconds
+    iti_min_sec = 3 #seconds
+    iti_max_sec = 4 #seconds
 
-    start_T1_quick = 31 # 0.514
-    start_T1_slow = 51 #0.857
-
-    short_SOA = 15 # 0.257
-    long_SOA = 41 # 0.686
-    stimulus_duration = 3 #0.043s #in seconds
-    visibility_scale_timing = 30 # 0.500s # after third mask offset
-
+    ## number of trials
     n_trials_single = 32 # only visibility rating task
     n_trials_dual_critical = 96  # attentional blink condition!
     n_trials_dual_easy = 48 # no intentional blink
-    # to calculate the number of trials of each condition in the training session,
-    # each number of test trial will be divided by n_training_trial_divisor
     n_training_trial_divisor = 8
 
     # number of options for visibility rating

@@ -41,7 +41,7 @@ class Trial(object):
     
     @property
     def delay(self):
-        vals = [CONSTANTS.start_T1_quick, CONSTANTS.start_T1_slow]
+        vals = [CONSTANTS.short_T1_delay, CONSTANTS.long_T1_delay]
         return vals[self.delay_index]
 
     @property
@@ -75,31 +75,31 @@ class Trial(object):
         # it starts with the fixation cross
         engine.displayFixCross(self.delay)
 
-        self.t1_onset = engine.displayT1(self.target1, self.t1_trigger, CONSTANTS.stimulus_duration)
+        self.t1_onset = engine.displayT1(self.target1, self.t1_trigger, CONSTANTS.target_dur)
 
         # display black screen between stimuli and masks
-        self.t1_offset = engine.displayEmptyScreen(CONSTANTS.stimulus_duration)
+        self.t1_offset = engine.displayEmptyScreen(CONSTANTS.target_dur)
 
-        engine.displayMask(self.masks[0], CONSTANTS.stimulus_duration)
+        engine.displayMask(self.masks[0], CONSTANTS.target_dur)
 
         # display the fixation cross either short_SOA - 129ms or long_SOA - 129ms,
         # since the target, the mask and the black screen was displayed for 43ms each
-        fix_dur = self.soa - CONSTANTS.stimulus_duration*3
+        fix_dur = self.soa - CONSTANTS.target_dur*3
         engine.displayFixCross(fix_dur)
 
-        self.t2_onset = engine.displayT2(self.target2, self.t2_trigger, CONSTANTS.stimulus_duration)
+        self.t2_onset = engine.displayT2(self.target2, self.t2_trigger, CONSTANTS.target_dur)
 
         # display black screen between stimuli and masks
-        self.t2_offset = engine.displayEmptyScreen(CONSTANTS.stimulus_duration)
+        self.t2_offset = engine.displayEmptyScreen(CONSTANTS.target_dur)
 
         # display two masks after another with black screen inbetween
-        engine.displayMask(self.masks[1], CONSTANTS.stimulus_duration)
+        engine.displayMask(self.masks[1], CONSTANTS.target_dur)
 
-        engine.displayEmptyScreen(CONSTANTS.stimulus_duration)
+        engine.displayEmptyScreen(CONSTANTS.target_dur)
 
-        engine.displayMask(self.masks[2], CONSTANTS.stimulus_duration)
+        engine.displayMask(self.masks[2], CONSTANTS.target_dur)
 
-        engine.displayEmptyScreen(CONSTANTS.visibility_scale_timing)
+        engine.displayEmptyScreen(CONSTANTS.task_delay)
 
         # start the visibility rating (happens in single AND dual task conditions)
         # ratingT2 is tuple of rating, RT
