@@ -2,7 +2,8 @@
 when psychopy is not available
 """
 from __future__ import annotations
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Any
+import json
 import random
 
 
@@ -24,11 +25,18 @@ class FakeEngine(object):
     def configureLog(self, fpath: str):
         pass
 
+    def logDictionary(self, label: str, content: Dict[str, Any]) -> None:
+        msg = json.dumps({label: content}, sort_keys=True, indent=4)
+        print(f'[DICT] {msg}')
+
     def connectTriggerInterface(self, settings: Dict) -> None:
         print('[ENGINE] connectTriggerInterface()')
 
     def configureWindow(self, settings: Dict):
         print('[ENGINE] configureWindow()')
+
+    def measureHardwarePerformance(self) -> Dict[str, Any]:
+        return dict()
     
     def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
         print('[ENGINE] loadStimuli()')

@@ -7,7 +7,8 @@ https://psychopy.org/coder/codeStimuli.html
 https://psychopy.org/general/timing/detectingFrameDrops.html#warn-me-if-i-drop-a-frame
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Dict, List, Union
+from typing import TYPE_CHECKING, Tuple, Dict, List, Union, Any
+import json
 from psychopy.monitors import Monitor
 from psychopy.event import waitKeys
 from psychopy.core import wait
@@ -17,6 +18,7 @@ from psychopy.visual.ratingscale import RatingScale
 from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
+from psychopy.info import RunTimeInfo
 from experiment.dummy import DummyStim
 from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
 if TYPE_CHECKING:
@@ -45,6 +47,8 @@ class PsychopyEngine(object):
         lastLog = logging.LogFile(fpath, level=logging.INFO, filemode='w')
         # logging.exp(f'time={clock.getTime(applyZero=False)}')
 
+    def logDictionary(self, label: str, content: Dict[str, Any]) -> None:
+        logging.info(json.dumps({label: content}, sort_keys=True, indent=4))
 
     def flush(self) -> None:
         logging.flush()
@@ -67,6 +71,9 @@ class PsychopyEngine(object):
             print('Looks like a retina display')
         if scaling != 1.0:
             print('Weird scaling. Is your configured monitor resolution correct?')
+
+    def measureHardwarePerformance(self) -> Dict[str, Any]:
+        return RunTimeInfo()
 
     def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
         self.target1 = TextStim(self.win, height=1, units='deg')
@@ -123,7 +130,7 @@ class PsychopyEngine(object):
             engine=self,
             scale=1.0,
             address=settings.get('address', ''),
-            rate=settings.get('baudrate', 0) 
+            rate=settings.get('baudrate', 0),
             viewPixBulbSize=7.0
         )
 

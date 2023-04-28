@@ -1,19 +1,15 @@
 '''
 TODO:
-- backup parameters on run
-- backup lab config
-- backup detected settings
 - ensure psychopy is logging draws as backup
-- script to summarize divergence from timing
+- script to summarize divergence from timing?
 - optimize flip count based on refresh rate (print while logging)
 - ITI 3-4s Fixation cross off then on -  where did this come from - add this to T1 delay
-- get refresh rate https://psychopy.org/api/info.html
 - identity RT needs to be sum if redrawing scale (middle button)
 '''
 from os.path import expanduser, join
 from datetime import datetime
 from os import makedirs
-import random
+import random, platform
 from pandas import DataFrame
 from experiment.constants import Constants
 from experiment.trials import generateTrials
@@ -44,8 +40,20 @@ engine = FakeEngine()
 ## set log levels and log file location
 engine.configureLog(log_fpath)
 
+## record some basic info
+engine.logDictionary('SESSION', dict(
+    participant_index=pidx,
+    date_str=dt_str))
+engine.logDictionary('PLATFORM', platform.uname()._asdict())
+engine.logDictionary('SITE_CONFIG', config)
+performance = engine.measureHardwarePerformance()
+engine.logDictionary('PERFORMANCE', performance)
+
+
 ## setup psychopy monitor and window objects
 engine.configureWindow(config)
+
+raise ValueError
 
 ## setup serial port or other trigger port
 engine.connectTriggerInterface(config['triggers'])
