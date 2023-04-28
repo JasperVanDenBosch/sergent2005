@@ -1,14 +1,12 @@
 '''
 TODO:
 - ensure psychopy is logging draws as backup
-- ITI 3-4s Fixation cross off then on -  where did this come from - add this to T1 delay
-- identity RT needs to be sum if redrawing scale (middle button)
-- check meas fliprate vs configured
 '''
 from os.path import expanduser, join
 from datetime import datetime
 from os import makedirs
-import random, platform
+from math import isclose
+import platform
 from pandas import DataFrame
 from experiment.constants import Constants
 from experiment.timer import Timer
@@ -49,6 +47,11 @@ engine.logDictionary('SITE_CONFIG', config)
 performance = engine.measureHardwarePerformance()
 engine.logDictionary('PERFORMANCE', performance)
 
+fr_conf = config['monitor']['refresh_rate']
+fr_meas = performance['window']['xyz']
+msg = f'Configured ({fr_conf}) and measured ({fr_meas}) refresh rate differ by more than 1Hz'
+assert isclose(fr_conf, fr_meas, abs_tol=1), msg
+
 ## setup psychopy monitor and window objects
 engine.configureWindow(config)
 
@@ -73,7 +76,7 @@ engine.showMessage(const.training_instructions)
 blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
 
 timer = Timer()
-timer.optimizeFlips(99999.9, const)
+timer.optimizeFlips(fr_conf, const)
 trials = TrialGenerator(timer, const)
 for phase in ('train', 'test'):
     # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False) # TODO

@@ -196,6 +196,7 @@ class PsychopyEngine(object):
         record = dict()
         self.win.getTimeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
+        total_rt = 0
         while True:
             ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
             ## we simply create a new RatingScale
@@ -216,13 +217,13 @@ class PsychopyEngine(object):
             while scale.noResponse:
                 scale.draw()
                 self.win.flip()
+            ## in case we have to restart the prompt, store RT
+            total_rt += round((scale.getRT() or -999)*1000)
             if scale.getRating() != '':
                 ## valid choice; continue
                 break
-
         choice_index = options.index(scale.getRating()) # index of response wrt labels
-        rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
-        return choice_index, record.get('flipTime', -99.99), rt
+        return choice_index, record.get('flipTime', -99.99), total_rt
     
     def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, triggerNr: int) -> Tuple[int, float, int]:
         # the rating scale has to be re-initialized in every function call, because
