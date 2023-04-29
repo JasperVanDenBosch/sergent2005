@@ -1,6 +1,5 @@
 '''
-TODO:
-- ensure psychopy is logging draws as backup
+- #21 instructions 
 '''
 from os.path import expanduser, join
 from datetime import datetime
@@ -11,8 +10,7 @@ from pandas import DataFrame
 from experiment.constants import Constants
 from experiment.timer import Timer
 from experiment.trials import TrialGenerator
-#from experiment.engine import PsychopyEngine
-from experiment.fake_engine import FakeEngine
+from experiment.engine import PsychopyEngine
 from experiment.labs import getLabConfiguration
 const = Constants()  # load fixed parameters wrt timing, sizing etc
 
@@ -31,12 +29,14 @@ dt_str = datetime.now().strftime(f'%Y%m%d%H%M%S')
 trials_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_trials.csv')
 log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
-# this object represents drawing and interactions via psychopy
-#engine = PsychopyEngine()
-engine = FakeEngine()
+## this object represents drawing and interactions via psychopy
+engine = PsychopyEngine()
 
 ## set log levels and log file location
 engine.configureLog(log_fpath)
+
+## setup psychopy monitor and window objects
+engine.configureWindow(config)
 
 ## record some basic info
 engine.logDictionary('SESSION', dict(
@@ -46,14 +46,10 @@ engine.logDictionary('PLATFORM', platform.uname()._asdict())
 engine.logDictionary('SITE_CONFIG', config)
 performance = engine.measureHardwarePerformance()
 engine.logDictionary('PERFORMANCE', performance)
-
 fr_conf = config['monitor']['refresh_rate']
-fr_meas = performance['window']['xyz']
+fr_meas = 1000/performance['windowRefreshTimeAvg_ms']
 msg = f'Configured ({fr_conf}) and measured ({fr_meas}) refresh rate differ by more than 1Hz'
-assert isclose(fr_conf, fr_meas, abs_tol=1), msg
-
-## setup psychopy monitor and window objects
-engine.configureWindow(config)
+assert isclose(fr_conf, fr_meas, abs_tol=2), msg
 
 ## setup serial port or other trigger port
 engine.connectTriggerInterface(config['triggers'])

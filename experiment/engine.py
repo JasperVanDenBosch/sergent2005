@@ -19,11 +19,18 @@ from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 from psychopy.info import RunTimeInfo
+import numpy
 from experiment.dummy import DummyStim
 from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
 if TYPE_CHECKING:
     Stimulus = Union[TextStim, DummyStim, ShapeStim, Rect]
 
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 
 class PsychopyEngine(object):
@@ -43,54 +50,62 @@ class PsychopyEngine(object):
         self.port = FakeTriggerPort()
 
     def configureLog(self, fpath: str):
-        logging.console.setLevel(logging.INFO)
-        lastLog = logging.LogFile(fpath, level=logging.INFO, filemode='w')
-        # logging.exp(f'time={clock.getTime(applyZero=False)}')
+        logging.console.setLevel(logging.WARN)
+        logging.LogFile(fpath, level=logging.INFO, filemode='w')
 
     def logDictionary(self, label: str, content: Dict[str, Any]) -> None:
-        logging.info(json.dumps({label: content}, sort_keys=True, indent=4))
+        logging.info(
+            json.dumps({label: content}, sort_keys=True, indent=4, cls=NumpyEncoder)
+        )
 
     def flush(self) -> None:
         logging.flush()
 
     def configureWindow(self, settings: Dict) -> None:
-        my_monitor = Monitor(name='EMLSergent2005', distance=settings['mon_dist'])
-        my_monitor.setSizePix(settings['mon_resolution'])
-        my_monitor.setWidth(settings['mon_width'])
+        mon_settings = settings['monitor']
+        my_monitor = Monitor(
+            name='EMLSergent2005',
+            distance=mon_settings['distance'])
+        my_monitor.setSizePix(mon_settings['resolution'])
+        my_monitor.setWidth(mon_settings['width'])
         my_monitor.saveMon()
         self.win = Window(
-            size=settings['mon_resolution'],
-            monitor='EMLSergent2005',
-            color=(-1,-1,-1),
+            size=mon_settings['resolution'],
+            monitor=my_monitor,
+            color='black',
             fullscr=True,
             units='deg'
         )
         self.win.mouseVisible = False 
-        scaling = settings['mon_resolution'][0] / self.win.size[0]
+        scaling = mon_settings['resolution'][0] / self.win.size[0]
         if scaling == 0.5: 
             print('Looks like a retina display')
         if scaling != 1.0:
             print('Weird scaling. Is your configured monitor resolution correct?')
 
     def measureHardwarePerformance(self) -> Dict[str, Any]:
-        return RunTimeInfo()
+        return RunTimeInfo(win=self.win)
 
     def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
-        self.target1 = TextStim(self.win, height=1, units='deg')
-        self.target2 = TextStim(self.win, height=1, units='deg')
+        self.target1 = TextStim(self.win, height=1, units='deg', name='target1')
+        self.target1.autoLog = True
+        self.target2 = TextStim(self.win, height=1, units='deg', name='target2')
+        self.target2.autoLog = True
         self.target2_dummy = DummyStim()
-        self.mask = TextStim(self.win, height=1, units='deg')
+        self.mask = TextStim(self.win, height=1, units='deg', name='mask')
+        self.mask.autoLog = True
         o = squareOffset
         positions = [(-o, -o), (o, -o), (-o, o), (o, o)]
         self.squares = []
-        for pos in positions:
+        for p, pos in enumerate(positions):
             self.squares.append(Rect(
-                self.win,
+                win=self.win,
                 size=(squareSize, squareSize),
                 units='deg',
                 pos=pos,
                 lineColor=(1, 1, 1),
-                fillColor=(1, 1, 1)
+                fillColor=(1, 1, 1),
+                name=f'square{p}'
             ))
         self.fixCross = ShapeStim(
             self.win,
@@ -105,8 +120,10 @@ class PsychopyEngine(object):
             units = 'deg',
             lineWidth = fixSize,
             closeShape = False,
-            lineColor = (1, 1, 1)
+            lineColor=(1, 1, 1),
+            name='fixCross'
         )
+        self.fixCross.autoLog = True
 
     def createLine(self, **kwargs):
         """Paint a line of pixels
@@ -116,8 +133,10 @@ class PsychopyEngine(object):
         return Line(**kwargs)
 
     def showMessage(self, message: str, height=0.6, confirm=True):
-        self.msg = TextStim(self.win, text=message, height=height, units='deg')
-        self.msg.draw()
+        msg = TextStim(self.win, text=message, height=height, units='deg',
+                            name='message')
+        msg.autoLog = True
+        msg.draw()
         self.win.flip()
         if confirm:
             waitKeys(keyList='space')
@@ -138,8 +157,8 @@ class PsychopyEngine(object):
         record = dict()
         for stim in stims:
             stim.draw()
-        self.win.logOnFlip(level=logging.EXP, msg=f'logged trigger: {triggerNr}')
-        self.win.getTimeOnFlip(record, 'flipTime')
+        self.win.logOnFlip(level=logging.DATA, msg=f'flip {triggerNr}')
+        self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
         for _ in range(duration-1):
@@ -150,7 +169,8 @@ class PsychopyEngine(object):
 
     def displayEmptyScreen(self, duration: int) -> float:
         record = dict()
-        self.win.getTimeOnFlip(record, 'flipTime')
+        self.win.logOnFlip(level=logging.DATA, msg=f'flip blank')
+        self.win.timeOnFlip(record, 'flipTime')
         for _ in range(duration):
             self.win.flip()
         return record.get('flipTime', -99.99)
@@ -194,7 +214,7 @@ class PsychopyEngine(object):
     def promptIdentity(self, prompt: str, options: Tuple[str, str], triggerNr: int) -> Tuple[int, float, int]:
         choices = [options[0], '', options[1]]
         record = dict()
-        self.win.getTimeOnFlip(record, 'flipTime')
+        self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         total_rt = 0
         while True:
@@ -210,7 +230,8 @@ class PsychopyEngine(object):
                 lineColor='DarkGrey',
                 markerColor='DarkGrey',
                 pos=(0.0, 0.0),
-                showAccept=False
+                showAccept=False,
+                name='promptId'
             )
             scale.draw()
             self.win.flip()
@@ -241,12 +262,13 @@ class PsychopyEngine(object):
             markerColor='LightGrey',
             pos=(0.0, 0.0),
             showAccept=False,
-            markerStart=init
+            markerStart=init,
+            name='promptVis'
         )
 
         scale.draw()
         record = dict()
-        self.win.getTimeOnFlip(record, 'flipTime')
+        self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
 

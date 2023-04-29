@@ -3,12 +3,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union
 from serial import Serial
-from psychopy.hardware.labjacks import U3
+from experiment.fake_engine import FakeTriggerPort
 if TYPE_CHECKING:
     from experiment.engine import PsychopyEngine
-
-
-
 
 
 class SerialTriggerPort:
@@ -23,6 +20,7 @@ class SerialTriggerPort:
 class LabJackPort:
 
     def __init__(self):
+        from psychopy.hardware.labjacks import U3
         self.inner = U3()
 
     def trigger(self, val: int) -> None:
