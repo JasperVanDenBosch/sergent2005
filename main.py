@@ -1,115 +1,99 @@
-# -*- coding: utf-8 -*-
-######################################################
-# The timing of consciousness related brain activity #
-# An attentional blink experiment                    #
-######################################################
+"""This is the main script to run the experiment
+"""
+from os.path import expanduser, join
+from datetime import datetime
+from os import makedirs
+from math import isclose
+import platform
+from pandas import DataFrame
+from experiment.constants import Constants
+from experiment.timer import Timer
+from experiment.trials import TrialGenerator
+from experiment.engine import PsychopyEngine
+from experiment.labs import getLabConfiguration
+const = Constants()  # load fixed parameters wrt timing, sizing etc
 
-'''
-About the experiment:
-This implementation replicates the experiment presented in the paper 'Timing of
-brain events underlying acces to consciousness during attentional blink'
-(Sergent et. al., 2005) in the framework of #eegmanylabs.
+## user input
+config = getLabConfiguration()
+SITE = config['site']['abbreviation']
+pidx = int(input('Type in participant ID number: '))
+sub = f'{SITE}{pidx:03}' # the subject ID is a combination of lab ID + subject index
 
-In this experiment the subject has to indicate visibility of a second target stimulus
-that in one condition is displayed during the attentional blink and in the other
-condition it is displayed outside of the attentional blink.
-In 50% of the trials the second target is present and in the other 50% only an
-empty screen is displayed.
-The attentional blink is induced by a task on the first target stimulus which is
-presented before the second target.
+## data directory and file paths
+data_dir = expanduser(f'~/data/EMLsergent2005/sub-{sub}')
+makedirs(data_dir, exist_ok=True) # ensure data directory exists
+# current date+time to seconds, helps to generate unique files, prevent overwriting
+dt_str = datetime.now().strftime(f'%Y%m%d%H%M%S')
+# full file path to trials (structured) and log (unstructured) output 
+trials_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_trials.csv')
+log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
-'''
-from parameters import *
-from functions import *
-from psychopy.data import TrialHandlerExt, ExperimentHandler
-import random
-from ports import openTriggerPort
+## this object represents drawing and interactions via psychopy
+engine = PsychopyEngine()
 
+## set log levels and log file location
+engine.configureLog(log_fpath)
 
-port = openTriggerPort(
-    typ=chosen_settings['port_type'],
-    address=chosen_settings['port_address'],
-    rate=chosen_settings['port_baudrate'],
-    win=SCREEN,
-    scale=scale,
-    viewPixBulbSize=7
-)
+## setup psychopy monitor and window objects
+engine.configureWindow(config)
 
-# define an experiment handler
-exp = ExperimentHandler(name=experiment_name,
-    version='0.1',
-    extraInfo=dict(
-        participant=participantID,
-        short_SOA=short_SOA,
-        long_SOA=long_SOA,
-        stimulus_duration=stimulus_duration
-    ),
-    runtimeInfo=None,
-    originPath=None,
-    savePickle=True,
-    saveWideText=True,
-    dataFileName=FPATH_DATA_CSV
+## record some basic info
+engine.logDictionary('SESSION', dict(
+    participant_index=pidx,
+    date_str=dt_str))
+engine.logDictionary('PLATFORM', platform.uname()._asdict())
+engine.logDictionary('SITE_CONFIG', config)
+performance = engine.measureHardwarePerformance()
+engine.logDictionary('PERFORMANCE', performance)
+fr_conf = config['monitor']['refresh_rate']
+fr_meas = 1000/performance['windowRefreshTimeAvg_ms']
+msg = f'Configured ({fr_conf}) and measured ({fr_meas}) refresh rate differ by more than 1Hz'
+assert isclose(fr_conf, fr_meas, abs_tol=2), msg
+
+## setup serial port or other trigger port
+engine.connectTriggerInterface(config['triggers'])
+
+## stimuli
+engine.loadStimuli(
+    squareSize=const.square_size,
+    squareOffset=const.target2_square_offset,
+    fixSize=const.fix_cross_arm_len,
 )
 
 # Welcome the participant
-showMessage(welcome_message, LARGE_FONT)
-showMessage(instructions)
+engine.showMessage(const.welcome_message, const.LARGE_FONT)
+engine.showMessage(const.instructions)
+engine.showMessage(const.task_vis_instruct)
 
 
-for phase in ['train', 'test']:
-    if phase == 'train':
-        showMessage(training_instructions)
-        showMessage('TRAINING STARTS', LARGE_FONT, wait=False)
-    else:
-        showMessage('MAIN EXPERIMENT STARTS', LARGE_FONT, wait=False)
 
-    # compute the list of all different trial conditions and store it in two lists,
-    # one for the single task and one for the dual task condition
-    [stim_single, stim_dual] = computeStimulusList(False, n_trials_single,
-        n_trials_dual_critical, n_trials_dual_easy)
-    trials_dual = TrialHandlerExt(stim_dual, 1, method='fullRandom', name=f'{phase}_dual')
-    trials_single = TrialHandlerExt(stim_single, 1, method='fullRandom', name=f'{phase}_single')
+## counterbalance task type based on the participant index being odd or even
+blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
 
-    # add the trial handlers to our experiment handler and show the instructions
-    exp.addLoop(trials_dual)
-    exp.addLoop(trials_single)
+timer = Timer()
+timer.optimizeFlips(fr_conf, const)
+trials = TrialGenerator(timer, const)
 
-    # we loop over two training blocks (dual taks, single task)
-    blocks = [trials_dual, trials_single]
-    random.shuffle(blocks)
+## before experiment
+engine.showMessage(const.training_instructions)
+for phase in ('train', 'test'):
+
     for block in blocks:
-        if 'dual' in block.name:
-            showMessage(dual_block_start)
-        else:
-            showMessage(single_block_start)
+        block_trials = trials.generate(phase, block)
 
-        for currentTrial in block:
-            # 50% chance that T1 is presented quick or slow after trial start
-            T1_start = start_T1_slow if random.random() > .5 else start_T1_quick
-            print('Current trial: ', currentTrial['Name'])
-            ratingT2, ratingT1, stimulusT2, stimulusT1 = start_trial(
-                dualTask=currentTrial['task']=='dual',
-                timing_T1_start=T1_start,
-                t2Present=currentTrial['T2_presence']=='present',
-                longSOA=currentTrial['SOA']=='long',
-                port=port
-            )
-            #save information in the csv-file
-            block.addData('ratingT2', ratingT2[0])
-            block.addData('RTtaskT2', ratingT2[1])
-            block.addData('ratingT1', ratingT1[0])
-            block.addData('RTtaskT1', ratingT1[1])
-            block.addData('ACCtaskT1', ratingT1[2])
-            block.addData('startingT1', T1_start)
-            block.addData('stimulusT1', stimulusT1)
-            block.addData('stimulusT2', stimulusT2)
-            exp.nextEntry()
+        engine.showMessage(
+            const.dual_block_start if block == 'dual' else const.single_block_start
+        )
+
+        for trial in block_trials:
+            trial.run(engine, timer)
 
     if phase == 'train':
-        showMessage(finished_training)
-        
-print(f'dropped frames: {SCREEN.nDroppedFrames}')
-df = exp.saveAsWideText(FPATH_DATA_TXT)
+        engine.showMessage(const.finished_training)
 
-showMessage(thank_you, wait=False)
-print('Saved experiment file!')
+## Create table from trials and save to csv file
+df = DataFrame([t.todict() for t in trials.all])
+df.to_csv(trials_fpath, float_format='%.4f')
+
+engine.showMessage(const.thank_you, confirm=False)
+engine.stop()

@@ -1,2 +1,2 @@
-psychopy==2021.1.4
-pyglet<1.5
+PsychoPy==2023.1.2
+psychopy-labjack

@@ -1,5 +1,9 @@
-# project
-behavioral_data/
+# project-specific
+lab.toml
+
+# OSX
+.DS_Store
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
