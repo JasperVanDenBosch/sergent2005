@@ -1,6 +1,5 @@
-'''
-- #21 instructions 
-'''
+"""This is the main script to run the experiment
+"""
 from os.path import expanduser, join
 from datetime import datetime
 from os import makedirs
@@ -64,9 +63,9 @@ engine.loadStimuli(
 # Welcome the participant
 engine.showMessage(const.welcome_message, const.LARGE_FONT)
 engine.showMessage(const.instructions)
+engine.showMessage(const.task_vis_instruct)
 
-## before experiment
-engine.showMessage(const.training_instructions)
+
 
 ## counterbalance task type based on the participant index being odd or even
 blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
@@ -74,16 +73,17 @@ blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
 timer = Timer()
 timer.optimizeFlips(fr_conf, const)
 trials = TrialGenerator(timer, const)
+
+## before experiment
+engine.showMessage(const.training_instructions)
 for phase in ('train', 'test'):
-    # engine.showMessage('TRAINING STARTS', LARGE_FONT, wait=False) # TODO
 
     for block in blocks:
         block_trials = trials.generate(phase, block)
 
-        if block == 'dual':
-            engine.showMessage(const.dual_block_start)
-        else:
-            engine.showMessage(const.single_block_start)
+        engine.showMessage(
+            const.dual_block_start if block == 'dual' else const.single_block_start
+        )
 
         for trial in block_trials:
             trial.run(engine, timer)

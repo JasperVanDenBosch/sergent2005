@@ -66,6 +66,20 @@ class Constants(object):
                 'Task 1: You will have to rate the visibility of the number word on a rating scale.\n' \
                 'Task 2: You will be asked to answer if Target 1 (\'OXXO\' or \'XOOX\') contained the string \'XX\' or \'OO\'.\n\n' \
                 'Please press \'space\' to go to the training instructions.'
+    task_vis_instruct = """
+Visibility Task
+
+Use the scale to rate the visibility of the number word
+as finely as possible. You can take your time.
+The far left end of the scale should be used only when 
+you're sure that you've not seen it. 
+If you have any feeling of having seen it, even if you're not sure, 
+shift the cursor away from the left extremity. 
+Use the right extremity only for crisply visible T2s, 
+and the rest of the scale relative to these extremes.
+
+Please press 'space' to continue
+"""
     training_instructions = 'Before we start the experiment, you will have the chance to train ' \
                             'the tasks.\n\n Remember: First you will see target 1 (\'OXXO\' or \'XOOX\') followed by a consonant-string.\n\n' \
                             'Before the trials start you will be informed if you only have to perform the visibility rating of target 2, or '\
@@ -77,7 +91,6 @@ class Constants(object):
     single_block_start = 'In the following trials you will have to perform only one task! \n\nYou will only have to rate the visibility of the number word. \n\n' \
                         'There won\'t  be a question on target 1 (\'OXXO\' or \'XOOX\').' \
                         ' \n\n Please press \'space\' if you are ready to start.'
-    start_trial_text = 'Press \'space\' to start the trial.'
     thank_you = 'Great! You completed all trials. Thank you for your participation.'
     task_vis_text = 'Please indicate the visibility of the number word \n by choosing a rating on the scale below.\n' \
                  'Press \'space\' to confirm.\n\n'
