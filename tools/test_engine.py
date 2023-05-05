@@ -7,6 +7,7 @@ engine = PsychopyEngine()
 
 
 # engine.connectTriggerInterface(port_type: str, port_address: str, port_baudrate: int)
+engine.askForString('HELLO WORLD')
 engine.configureLog('')
 engine.configureWindow(dict(
     mon_dist=50,

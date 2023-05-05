@@ -19,6 +19,7 @@ from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 from psychopy.info import RunTimeInfo
+from psychopy.gui import Dlg
 import numpy
 from experiment.dummy import DummyStim
 from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
@@ -48,6 +49,15 @@ class PsychopyEngine(object):
 
     def __init__(self) -> None:
         self.port = FakeTriggerPort()
+
+    def askForString(self, question: str) -> str:
+        myDlg = Dlg()
+        myDlg.addText('Subject info')
+        myDlg.addField(question)
+        ok_data = myDlg.show()
+        if not myDlg.OK:
+            raise ValueError('Dialog was cancelled')
+        return ok_data[question]
 
     def configureLog(self, fpath: str):
         logging.console.setLevel(logging.WARN)

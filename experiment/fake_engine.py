@@ -22,6 +22,10 @@ class FakeEngine(object):
     def __init__(self) -> None:
         self.port = FakeTriggerPort()
 
+    def askForString(self, question: str) -> str:
+        print(f'[ENGINE] askForString: {question}')
+        return '999'
+
     def configureLog(self, fpath: str):
         pass
 
