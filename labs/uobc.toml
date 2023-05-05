@@ -5,8 +5,8 @@ abbreviation = 'UOBC' # 4-letter abbreviation, no digits, to be used in the BIDS
 long = 'University of Birmingham, Cruse lab' # longer format to identify lab
 
 [monitor]
-width = 62.23 # width of the screen in centimeters (without the frame)
-distance = 50 # distance of the participants eyes to the screen in centimeters
+width = 60.00 # width of the screen in centimeters (without the frame)
+distance = 60 # distance of the participants eyes to the screen in centimeters
 resolution = [1920, 1080] # width, height pixels of the monitor 
 refresh_rate = 120 # refresh rate (as reported by OS or from hardware specs)
 
