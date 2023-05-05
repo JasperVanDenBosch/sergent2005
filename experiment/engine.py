@@ -52,12 +52,11 @@ class PsychopyEngine(object):
 
     def askForString(self, question: str) -> str:
         myDlg = Dlg()
-        myDlg.addText('Subject info')
         myDlg.addField(question)
         ok_data = myDlg.show()
         if not myDlg.OK:
             raise ValueError('Dialog was cancelled')
-        return ok_data[question]
+        return ok_data[0]
 
     def configureLog(self, fpath: str):
         logging.console.setLevel(logging.WARN)

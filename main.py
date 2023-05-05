@@ -13,10 +13,14 @@ from experiment.engine import PsychopyEngine
 from experiment.labs import getLabConfiguration
 const = Constants()  # load fixed parameters wrt timing, sizing etc
 
+
+## this object represents drawing and interactions via psychopy
+engine = PsychopyEngine()
+
 ## user input
 config = getLabConfiguration()
 SITE = config['site']['abbreviation']
-pidx = int(input('Type in participant ID number: '))
+pidx = int(engine.askForString('Participant ID number: '))
 sub = f'{SITE}{pidx:03}' # the subject ID is a combination of lab ID + subject index
 
 ## data directory and file paths
@@ -28,8 +32,6 @@ dt_str = datetime.now().strftime(f'%Y%m%d%H%M%S')
 trials_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_trials.csv')
 log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
-## this object represents drawing and interactions via psychopy
-engine = PsychopyEngine()
 
 ## set log levels and log file location
 engine.configureLog(log_fpath)
