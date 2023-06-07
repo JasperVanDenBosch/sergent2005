@@ -15,6 +15,11 @@ we compared the ERPs evoked by T2 during the attentional blink (short SOA, dual 
 when T2 was seen and when it was not seen (empirically defined as visibility Z or o50%). 
 Because T1 and the masks also evoked ERPs, we extracted the potentials specifically 
 evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a blank screen 
+
+
+ The remaining trials were averaged in synchrony with T2 onset (or T1 onset for T1-evoked ERPs),
+   digitally transformed to an average reference, band-pass filtered (0.5-20 Hz)
+   and corrected for baseline over a 250-ms window during fixation at the beginning of the trial.
 """
 
 from os.path import join, expanduser
