@@ -40,7 +40,7 @@ class Constants(object):
     target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 
     task_vis_labels = ('nothing', 'maximal visibility')
-    task_identity_options = ('OO', 'XX')
+    task_identity_options = ('XOOX', 'OXXO')
 
     target2_square1_pos=(-5,-5)
     target2_square2_pos=(5,-5)
