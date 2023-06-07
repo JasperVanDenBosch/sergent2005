@@ -58,6 +58,7 @@ raw.set_eeg_reference(ref_channels=mastoid_channels)
 
 ## find triggers
 events = mne.find_events(raw)
+# events = mne.find_events(raw, mask=65280, mask_type='not_and')
 events[:, 2] = events[:, 2]-65280
 
 # trigger definition (only epoch the T1 and T2 triggers)
