@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, Dict, List, Union, Any
 import json
 from psychopy.monitors import Monitor
-from psychopy.event import waitKeys
+from psychopy.event import waitKeys, getKeys
 from psychopy.core import wait
 from psychopy import logging
 from psychopy.visual import Window, TextStim
@@ -38,6 +38,7 @@ class PsychopyEngine(object):
 
     win: Window
     port: TriggerInterface
+    _exitNow: bool
 
     ## stimuli
     target1: TextStim
@@ -49,6 +50,7 @@ class PsychopyEngine(object):
 
     def __init__(self) -> None:
         self.port = FakeTriggerPort()
+        self._exitNow = False
 
     def askForString(self, question: str) -> str:
         myDlg = Dlg()
@@ -246,7 +248,12 @@ class PsychopyEngine(object):
             self.win.flip()
             while scale.noResponse:
                 scale.draw()
+                if self.exitRequested():
+                    break
                 self.win.flip()
+            if self.exitRequested():
+                break
+
             ## in case we have to restart the prompt, store RT
             total_rt += round((scale.getRT() or -999)*1000)
             if scale.getRating() != '':
@@ -284,11 +291,23 @@ class PsychopyEngine(object):
         # Show scale and instruction und confirmation of rating is done
         while scale.noResponse:
             scale.draw()
+            if self.exitRequested():
+                break
             self.win.flip()
 
         choice_index = int(scale.getRating() or -999) # index of response wrt scale
         rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
         return choice_index, record.get('flipTime', -99.99), rt
+    
+    def exitRequested(self) -> bool:
+        if self._exitNow:
+            return True
+        new_keys = getKeys(keyList=['q', 'delete'])
+        if 'q' in new_keys and 'delete' in new_keys:
+            self._exitNow = True
+            logging.warn('EXIT REQUESTED')
+            return True
+        return False
     
     def stop(self) -> None:
         self.win.close()
