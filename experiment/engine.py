@@ -305,7 +305,7 @@ class PsychopyEngine(object):
         new_keys = getKeys(keyList=['q', 'delete'])
         if 'q' in new_keys and 'delete' in new_keys:
             self._exitNow = True
-            logging.warn('EXIT REQUESTED')
+            logging.warn('EXIT REQUESTED (Q and DEL pressed)')
             return True
         return False
     
