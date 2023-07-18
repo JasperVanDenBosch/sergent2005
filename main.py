@@ -63,8 +63,6 @@ engine.loadStimuli(
 
 # Welcome the participant
 engine.showMessage(const.welcome_message, const.LARGE_FONT)
-engine.showMessage(const.instructions)
-engine.showMessage(const.task_vis_instruct)
 
 ## counterbalance task type based on the participant index being odd or even
 blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
