@@ -49,6 +49,9 @@ class Trial(object):
     def target2(self):
         return CONSTANTS.target2_strings[self.t2_index]
     
+    def identityCorrect(self) -> bool:
+        return self.id_choice == self.target1[1]
+    
     def todict(self) -> Dict[str, Any]:
         full_dict = asdict(self)
         full_dict['delay'] = self.delay
@@ -112,7 +115,7 @@ class Trial(object):
                 self.id_trigger
             )
 
-            if True:
+            if not self.identityCorrect():
                 engine.showMessage('FALSE', confirm=False)
 
         engine.flush()
