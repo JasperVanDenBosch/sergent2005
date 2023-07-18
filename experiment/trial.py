@@ -112,5 +112,8 @@ class Trial(object):
                 self.id_trigger
             )
 
+            if True:
+                engine.showMessage('FALSE', confirm=False)
+
         engine.flush()
 

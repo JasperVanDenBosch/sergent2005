@@ -233,11 +233,11 @@ class PsychopyEngine(object):
             ## we simply create a new RatingScale
             scale = RatingScale(
                 self.win,
-                #noMouse=True,
+                noMouse=True,
                 choices=choices,
                 markerStart=1,
                 scale=prompt,
-                #acceptKeys='space',
+                acceptKeys='space',
                 singleClick=True,
                 lineColor='DarkGrey',
                 markerColor='DarkGrey',
@@ -271,11 +271,11 @@ class PsychopyEngine(object):
         scale = RatingScale(
             self.win, low=0,
             high=scale_length-1,
-            labels=['nothing', 'maximal visibility'],
-            #acceptKeys='space',
+            labels=labels,
+            acceptKeys='space',
             singleClick=True,
             scale=prompt,
-            #noMouse=True,
+            noMouse=True,
             lineColor='DarkGrey',
             markerColor='LightGrey',
             pos=(0.0, 0.0),
