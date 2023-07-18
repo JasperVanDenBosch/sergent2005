@@ -50,7 +50,8 @@ class Trial(object):
         return CONSTANTS.target2_strings[self.t2_index]
     
     def identityCorrect(self) -> bool:
-        return self.id_choice == self.target1[1]
+        assert self.id_choice is not None
+        return CONSTANTS.task_identity_options[self.id_choice] == self.target1[1]
     
     def todict(self) -> Dict[str, Any]:
         full_dict = asdict(self)
