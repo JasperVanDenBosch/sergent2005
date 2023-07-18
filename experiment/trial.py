@@ -49,6 +49,10 @@ class Trial(object):
     def target2(self):
         return CONSTANTS.target2_strings[self.t2_index]
     
+    def identityCorrect(self) -> bool:
+        assert self.id_choice is not None
+        return CONSTANTS.task_identity_options[self.id_choice] == self.target1[1]
+    
     def todict(self) -> Dict[str, Any]:
         full_dict = asdict(self)
         full_dict['delay'] = self.delay
@@ -111,6 +115,9 @@ class Trial(object):
                 CONSTANTS.task_identity_options,
                 self.id_trigger
             )
+
+            if not self.identityCorrect():
+                engine.showMessage('FALSE', confirm=False)
 
         engine.flush()
 

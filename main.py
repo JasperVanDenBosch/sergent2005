@@ -32,7 +32,6 @@ dt_str = datetime.now().strftime(f'%Y%m%d%H%M%S')
 trials_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_trials.csv')
 log_fpath = join(data_dir, f'sub-{sub}_run-{dt_str}_log.txt')
 
-
 ## set log levels and log file location
 engine.configureLog(log_fpath)
 
@@ -64,10 +63,6 @@ engine.loadStimuli(
 
 # Welcome the participant
 engine.showMessage(const.welcome_message, const.LARGE_FONT)
-engine.showMessage(const.instructions)
-engine.showMessage(const.task_vis_instruct)
-
-
 
 ## counterbalance task type based on the participant index being odd or even
 blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
@@ -78,17 +73,22 @@ trials = TrialGenerator(timer, const)
 
 ## before experiment
 engine.showMessage(const.training_instructions)
-for phase in ('train', 'test'):
 
-    for block in blocks:
-        block_trials = trials.generate(phase, block)
+for phase, block in zip(('train', 'test'), blocks):
 
-        engine.showMessage(
-            const.dual_block_start if block == 'dual' else const.single_block_start
-        )
+    block_trials = trials.generate(phase, block)
 
-        for trial in block_trials:
-            trial.run(engine, timer)
+    engine.showMessage(
+        const.dual_block_start if block == 'dual' else const.single_block_start
+    )
+
+    for trial in block_trials:
+        trial.run(engine, timer)
+        if engine.exitRequested():
+            break ## exit trial loop
+
+    if engine.exitRequested():
+        break ## exit phase/block loop
 
     if phase == 'train':
         engine.showMessage(const.finished_training)
@@ -97,5 +97,6 @@ for phase in ('train', 'test'):
 df = DataFrame([t.todict() for t in trials.all])
 df.to_csv(trials_fpath, float_format='%.4f')
 
-engine.showMessage(const.thank_you, confirm=False)
+if not engine.exitRequested():
+    engine.showMessage(const.thank_you, confirm=False)
 engine.stop()
