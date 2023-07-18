@@ -39,8 +39,8 @@ class Constants(object):
     target1_strings = ['XOOX', 'OXXO']
     target2_strings = ['ZERO', 'FOUR', 'FIVE', 'NINE']
 
-    task_vis_labels = ('nothing', 'maximal visibility')
-    task_identity_options = ('XOOX', 'OXXO')
+    task_vis_labels = ("didn't see", 'maximum visibility')
+    task_identity_options = ('O', 'X')
 
     target2_square1_pos=(-5,-5)
     target2_square2_pos=(5,-5)
