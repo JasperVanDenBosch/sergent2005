@@ -6,7 +6,15 @@
 
 ## TODO
 
-- 
+- vis rating 0 becomes -999
+- plot actual and designed duration of T1 / T2 / SOA
+- visibility plots as figure 1B
+- performance on ID by condition
+- performance on ID by visibility
+- discard incorrect trials (how many)
+- discard false positive trials (how many)
+- baseline 250ms
+
 
 
 trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjfQn3yfuNDqvA0M7qz-dA0L19HOADiRs/edit#gid=0
@@ -19,6 +27,12 @@ EX5: left VEOG
 EX6: right VEOG
 
 
+Trials with an incorrect response to T1 (11 ± 5%) were discarded from subsequent behavioral 
+and ERP analysis. ‘False positive trials’ (that is, ‘T2 absent’ trials 
+in which subjective visibility was above 50%) were discarded from the ERP analysis 
+(fewer than 2% of the ‘T2 absent’ trials in each condition).
+
+
 In order to analyze the brain events underlying this bimodal distribu- tion, 
 we compared the ERPs evoked by T2 during the attentional blink (short SOA, dual task) 
 when T2 was seen and when it was not seen (empirically defined as visibility Z or o50%). 
@@ -26,12 +40,12 @@ Because T1 and the masks also evoked ERPs, we extracted the potentials specifica
 evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a blank screen 
 
 
- The remaining trials were averaged in synchrony with T2 onset (or T1 onset for T1-evoked ERPs),
-   digitally transformed to an average reference, band-pass filtered (0.5-20 Hz)
-   and corrected for baseline over a 250-ms window during fixation at the beginning of the trial.
+The remaining trials were averaged in synchrony with T2 onset (or T1 onset for T1-evoked ERPs),
+digitally transformed to an average reference, band-pass filtered (0.5-20 Hz)
+and corrected for baseline over a 250-ms window during fixation at the beginning of the trial.
 
 
-   """
+"""
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from os.path import join, expanduser
