@@ -4,7 +4,7 @@ from os.path import expanduser, join
 from datetime import datetime
 from os import makedirs
 from math import isclose
-import platform
+import platform, itertools
 from pandas import DataFrame
 from experiment.constants import Constants
 from experiment.timer import Timer
@@ -74,7 +74,7 @@ trials = TrialGenerator(timer, const)
 ## before experiment
 engine.showMessage(const.training_instructions)
 
-for phase, block in zip(('train', 'test'), blocks):
+for phase, block in itertools.product(('train', 'test'), blocks):
 
     block_trials = trials.generate(phase, block)
 
