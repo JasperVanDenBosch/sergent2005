@@ -17,6 +17,18 @@
 
 
 
+Issue A baseline
+
+We can sample baseline before -SOA from T2. 
+Now if we want to sample the same baseline regardless of SOA,
+the baseline would start before the "T1 delay"  /fixation cross comes on, 
+if the T1 delay is short and SOA is too. (since delay-short < (SOA-diff+baseline))
+If we sample the baseline differently based on SOA, 
+we may pick up on a different readiness phase.
+(I will pick this solution for now.)
+
+
+
 trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjfQn3yfuNDqvA0M7qz-dA0L19HOADiRs/edit#gid=0
 
 EX1: left mastoid
@@ -54,8 +66,20 @@ from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
 import mne
 from experiment.triggers import Triggers
+from experiment.timer import Timer
+from experiment.constants import Constants
 if TYPE_CHECKING:
     from mne.io.edf.edf import RawEDF
+
+
+BASELINE = 0.250 ## duration of baseline
+BUFFER = 0.05 ## take into account timing inprecision
+fr_conf  = 114 ## TODO double check
+REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
+TMAX = 0.700
+
+timer = Timer()
+timer.optimizeFlips(fr_conf, Constants())
 
 data_dir = expanduser('~/data/EMLsergent2005/')
 sub = 'sub-UOBC001'
@@ -63,13 +87,10 @@ eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
 
-
 os.makedirs(deriv_dir, exist_ok=True)
-
 
 ## load raw data 
 raw = read_raw_bdf(raw_fpath)
-#raise ValueError
 
 ## get rid of empty channels and mark channel types
 raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
@@ -84,36 +105,55 @@ raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 ## reference to average of mastoids
 mastoid_channels = ['EXG1', 'EXG2'] # best for biosemi, but methods plans to use average
 raw.set_eeg_reference(ref_channels=mastoid_channels)
+raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
+
+## determine electrode head locations
+montage = make_standard_montage('biosemi128', head_size='auto')
+raw.set_montage(montage, on_missing='warn')
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True)
 
-
-# trigger definition (only epoch the T1 and T2 triggers)
-event_ids = dict([(k, v) for (k, v) in Triggers().asdict().items() if v > 12])
-
-## epoching
-reject_criteria = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
-epochs = mne.Epochs(
-    raw,
-    events,
-    event_id=event_ids, ## selected triggers for epochs
-    tmin=-0.250,
-    tmax=0.750,
-    decim=4, ## downsample x4
-    reject=reject_criteria,
-    on_missing='warn',
-)
-epochs.save(join(deriv_dir, f'{sub}_epo.fif'), overwrite=True)
+## T2 epoching
+all_T2_epochs = dict()
+for soaName, longSOA in [('short', False), ('long', True)]:
+    if longSOA:
+        soa = timer.flipsToSecs(timer.long_SOA)
+    else:
+        soa = timer.flipsToSecs(timer.short_SOA)
+    tmin = - (soa + BASELINE + BUFFER)
+    event_ids = dict()
+    for presenceName, presence in [('absent', False), ('present', True)]:
+        event_ids[f'{soaName}SOA_{presenceName}'] = Triggers().get_number(
+            training=False,
+            forT2=True,
+            dualTask=True,
+            longSOA=longSOA,
+            t2Present=presence,
+        )
+    epochs = mne.Epochs(
+        raw,
+        events,
+        event_id=event_ids, ## selected triggers for epochs
+        tmin=tmin,
+        tmax=TMAX,
+        baseline=(tmin, tmin+BASELINE),
+        decim=4, ## downsample x4
+        #reject=REJECT_CRIT,
+        on_missing='warn',
+    )
+    epo_name = f'T2-{soaName}SOA'
+    all_T2_epochs[epo_name] = epochs
+    epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
 
 
 # ## plot power spectrum from 10mins to 30mins after start
 # raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
 
+
+
 # ## plot evoked response
 # evoked = epochs.average()
 # evoked.plot_joint(picks='eeg')
 
-# ## determine electrode head locations
-# montage = make_standard_montage('biosemi128', head_size='auto')
-# raw.set_montage(montage)
+

@@ -29,3 +29,6 @@ class Timer:
 
     def secsToFlips(self, secs: float) -> int:
         return round(secs*self.flipRate)
+    
+    def flipsToSecs(self, flips: int) -> float:
+        return flips * (1/self.flipRate)
