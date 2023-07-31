@@ -1,21 +1,25 @@
 """Analysis of pilot data
 
 ## Pilot idiosyncrasies
+
 - [('train', 'single'), ('test', 'dual')] 
 - no bad channels
 
 ## TODO
 
-- vis rating 0 becomes -999
-- plot actual and designed duration of T1 / T2 / SOA
-- visibility plots as figure 1B
-- performance on ID by condition
-- performance on ID by visibility
-- discard incorrect trials (how many)
-- discard false positive trials (how many)
-- baseline 250ms
+- [x] use colorama to distinguish output from mne verbosity
+- [ ] sanity check reference
+- [ ] sanity check filter
+- [ ] sanity check timing
+- [ ] artifact rejection
 
+## behaviour
 
+- [x] vis rating 0 becomes -999
+- [ ] plot actual and designed duration of T1 / T2 / SOA (from log and/or from eeg triggers)
+- [ ] visibility plots as figure 1B
+- [x] discard incorrect trials (how many)
+- [ ] discard false positive trials (how many)
 
 Issue A baseline
 
@@ -61,15 +65,20 @@ and corrected for baseline over a 250-ms window during fixation at the beginning
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from os.path import join, expanduser
-import glob, os
+import os
+from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
-import mne
+import mne, pandas, seaborn
+import matplotlib.pyplot as plt
 from experiment.triggers import Triggers
 from experiment.timer import Timer
 from experiment.constants import Constants
 if TYPE_CHECKING:
     from mne.io.edf.edf import RawEDF
+colorama_init()
+def print_info(msg: str):
+    print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
 
 
 BASELINE = 0.250 ## duration of baseline
@@ -77,17 +86,57 @@ BUFFER = 0.05 ## take into account timing inprecision
 fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.700
-
-timer = Timer()
-timer.optimizeFlips(fr_conf, Constants())
+sub = 'sub-UOBC001'
 
 data_dir = expanduser('~/data/EMLsergent2005/')
-sub = 'sub-UOBC001'
+
 eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
 
+timer = Timer()
+timer.optimizeFlips(fr_conf, Constants())
+
 os.makedirs(deriv_dir, exist_ok=True)
+
+df = pandas.read_csv(join(eeg_dir, f'{sub}_trials.csv'), index_col=0)
+## get rid of training trials
+df = df[df['phase'] == 'test']
+## pilot: -999 is 0 vis
+df['vis_rating'] = df['vis_rating'].replace(-999, 0)
+## subjective visibility as a percentage 0-100%
+df['vis_perc'] = (df['vis_rating'] / 0.20).astype(int)
+"""
+Trials with an incorrect response to T1 (11 ± 5%) were discarded 
+from subsequent behavioral and ERP analysis. 
+‘False positive trials’ (that is, ‘T2 absent’ trials in which 
+subjective visibility was above 50%) were discarded 
+from the ERP analysis (fewer than 2% of the ‘T2 absent’ trials in each condition).
+"""
+
+## turn float response into chosen target string 
+df['id_choice'] = df['id_choice'].replace({0.0: 'XOOX', 1.0: 'OXXO'})
+## mark correctness of T1 responses (to discard incorrect trials)
+df['correct'] = df['id_choice'] == df['target1']
+incorrect_perc = (df.correct == False).mean()*100
+print_info(f'Incorrect trials: {incorrect_perc:.1f}%')
+## mark false positives (to be discarded for EEG)
+df['false_alarm'] = (df['vis_perc'] >= 50) & (~df['t2presence'])
+
+
+## T2 present during the AB (Dual task, short SOA)
+plt.figure()
+ab_trials_mask = (df['task'] == 'dual') & (df['soa_long'] == False) & (df['t2presence'] == True)
+ax = seaborn.histplot(data=df[ab_trials_mask], x='vis_perc', stat='percent', bins=20)
+ax.set(
+    title='Fig 1B: T2 present during the AB',
+    xlabel='Subjective visibility',
+    ylabel='Percent of trials'
+)
+ax.get_figure().savefig('blink_visibility.png')
+plt.close()
+## dual, short: absent & present
+raise ValueError
 
 ## load raw data 
 raw = read_raw_bdf(raw_fpath)
