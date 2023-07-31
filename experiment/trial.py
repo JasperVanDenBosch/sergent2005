@@ -47,7 +47,10 @@ class Trial(object):
 
     @property   
     def target2(self):
-        return CONSTANTS.target2_strings[self.t2_index]
+        if self.t2presence:
+            return CONSTANTS.target2_strings[self.t2_index]
+        else:
+            return ''
     
     def identityCorrect(self) -> bool:
         assert self.id_choice is not None

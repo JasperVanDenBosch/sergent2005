@@ -105,6 +105,15 @@ class TrialGenerationTests(TestCase):
         self.assertMaxConsecReps(5, sample1)
         self.assertNotEqual(sample1, sample2)
 
+    def test_t2_absence(self):
+        from experiment.trials import TrialGenerator
+        generator = TrialGenerator(self.timer, self.consts)
+        trials = generator.generate('test', 'dual')
+        target2s = [t.target2 for t in trials if (not t.t2presence)]
+        self.assertEqual(len(target2s), 96)
+        for t2 in target2s:
+            self.assertEqual(t2, '')
+
     def test_init_vis_sampling(self):
         sample1 = [t.vis_init for t in self.sampleTrials()]
         sample2 = [t.vis_init for t in self.sampleTrials()]
@@ -163,7 +172,6 @@ class TrialGenerationTests(TestCase):
     def test_iti_sampling(self):
         self.timer.secsToFlips.side_effect = lambda s: int(s*100)
         itis = [t.iti for t in self.sampleTrials()]
-        print(itis)
         ## iti range
         min_flips = self.consts.iti_min_sec * 100
         max_flips = self.consts.iti_max_sec * 100
