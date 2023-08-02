@@ -12,14 +12,17 @@
 - [ ] sanity check filter
 - [ ] sanity check timing
 - [ ] artifact rejection
+- [ ] match vis ratings with epochs
+- [ ] timing changes
 
 ## behaviour
 
 - [x] vis rating 0 becomes -999
-- [ ] plot actual and designed duration of T1 / T2 / SOA (from log and/or from eeg triggers)
-- [ ] visibility plots as figure 1B
+- [x] plot actual and designed duration of T1 / T2 / SOA (from log and/or from eeg triggers)
+- [x] visibility plots as figure 1B
 - [x] discard incorrect trials (how many)
-- [ ] discard false positive trials (how many)
+- [x] discard false positive trials (how many)
+
 
 Issue A baseline
 
@@ -102,6 +105,41 @@ os.makedirs(deriv_dir, exist_ok=True)
 df = pandas.read_csv(join(eeg_dir, f'{sub}_trials.csv'), index_col=0)
 ## get rid of training trials
 df = df[df['phase'] == 'test']
+
+
+""" TIMING TO IMPROVE
+Each trial begins with a fixation cross, presented for either 
+514ms or 857ms (36-frames and 60-frames respectively; 
+reported as 516ms and 860ms in the manuscript), 
+selected at random per trial. 
+Six items are then presented in the following order: T1, mask, fixation cross, 
+T2 (present or absent), mask, mask. In the original study, each of T1, T2, 
+and the masks were presented for 43ms (3-frames), 
+separated by a blank screen of 43ms (3-frames). 
+To create the short and long TOA conditions, the fixation cross between T1 and T2 was presented 
+for either 43ms (3-frames) or 471ms (33-frames), 
+followed by a blank screen of 43ms (3-frames), 
+thus creating T1->T2 TOAs of 257ms and 686ms (18-frames and 48-frames, respectively; 
+reported as 258ms and 688ms in the manuscript), respectively.
+"""
+
+## timing analysis
+#raise ValueError
+soa_df = df[df.soa_long == False].copy()
+observed_series = (soa_df.t2_onset - soa_df.t1_onset)*1000
+observed_soas = observed_series.values - observed_series.values.mean()
+planned_flips = soa_df.soa.iloc[0]
+planned_ms = timer.flipsToSecs(planned_flips)*1000
+plt.figure()
+ax = seaborn.histplot(observed_soas, bins=41)
+ax.set(
+    title='Timing: Short SOA (ms) based on reported flip time',
+    xlabel='+/- ms from mean',
+    ylabel='Percent of trials'
+)
+ax.get_figure().savefig('plots/soa_variability.png')
+plt.close()
+
 ## pilot: -999 is 0 vis
 df['vis_rating'] = df['vis_rating'].replace(-999, 0)
 ## subjective visibility as a percentage 0-100%
@@ -133,10 +171,9 @@ ax.set(
     xlabel='Subjective visibility',
     ylabel='Percent of trials'
 )
-ax.get_figure().savefig('blink_visibility.png')
+ax.get_figure().savefig('plots/blink_visibility.png')
 plt.close()
 ## dual, short: absent & present
-raise ValueError
 
 ## load raw data 
 raw = read_raw_bdf(raw_fpath)
