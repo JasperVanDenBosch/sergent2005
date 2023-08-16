@@ -34,6 +34,9 @@ If we sample the baseline differently based on SOA,
 we may pick up on a different readiness phase.
 (I will pick this solution for now.)
 
+Solution:
+Sample same baseline wrt to T0 ie (-250 - 0)
+
 
 
 trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjfQn3yfuNDqvA0M7qz-dA0L19HOADiRs/edit#gid=0
@@ -124,7 +127,6 @@ reported as 258ms and 688ms in the manuscript), respectively.
 """
 
 ## timing analysis
-#raise ValueError
 soa_df = df[df.soa_long == False].copy()
 observed_series = (soa_df.t2_onset - soa_df.t1_onset)*1000
 observed_soas = observed_series.values - observed_series.values.mean()
@@ -158,8 +160,12 @@ df['id_choice'] = df['id_choice'].replace({0.0: 'XOOX', 1.0: 'OXXO'})
 df['correct'] = df['id_choice'] == df['target1']
 incorrect_perc = (df.correct == False).mean()*100
 print_info(f'Incorrect trials: {incorrect_perc:.1f}%')
+## visibility Z or o50%). 
+df['seen'] = df['vis_perc'] > 50
 ## mark false positives (to be discarded for EEG)
-df['false_alarm'] = (df['vis_perc'] >= 50) & (~df['t2presence'])
+df['false_alarm'] = df['seen'] & (~df['t2presence'])
+
+
 
 
 ## T2 present during the AB (Dual task, short SOA)
@@ -187,6 +193,9 @@ raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
 raw.load_data()
 raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
+
+# ## plot power spectrum from 10mins to 30mins after start
+# raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
 
 ## reference to average of mastoids
 mastoid_channels = ['EXG1', 'EXG2'] # best for biosemi, but methods plans to use average
@@ -232,9 +241,32 @@ for soaName, longSOA in [('short', False), ('long', True)]:
     all_T2_epochs[epo_name] = epochs
     epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
 
+## match epochs with behavioral selection
+# can use epochs.selection to find rejected epochs
+# can index resulting epochs using getitem
 
-# ## plot power spectrum from 10mins to 30mins after start
-# raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
+""" 
+(short SOA, dual task, seen) and  df['correct']
+(short SOA, dual task, not seen) and df['correct']
+"""
+#fpath = join(deriv_dir, f'{sub}_{epo_name}_epo.fif')
+# first check that before selection, the numbers are the same between epochs and df
+## index dict -> index epo object
+epo = all_T2_epochs['T2-shortSOA']['shortSOA_present']
+blink_df = df[(df.task == 'dual') & (df.soa_long == False) & (df.t2presence == True)]
+
+
+assert len(epo_blink) == len(trials_blink)
+
+blink_seen = blink_df[blink_df.seen == True]
+blink_unseen = blink_df[blink_df.seen == False]
+## filter epos by correct/incorrect
+## filter epos by seen/unseen
+
+
+
+
+
 
 
 
