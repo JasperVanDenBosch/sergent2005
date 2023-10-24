@@ -263,11 +263,12 @@ blink_unseen = blink_df[blink_df.seen == False]
 ## filter epos by correct/incorrect
 ## filter epos by seen/unseen
 
-
-
-
-
-
+"""
+epochs.selection is relative to all events 1008
+whereas the trials file has one entry per trial; T1 & T2, + two tasks
+how to align them?
+can pre-filter events for T1/T2 i.e. epochs for T1 -> one event per trial
+"""
 
 
 # ## plot evoked response
