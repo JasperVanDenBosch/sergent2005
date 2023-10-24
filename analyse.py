@@ -208,6 +208,8 @@ raw.set_montage(montage, on_missing='warn')
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True)
+t1_triggers = [16,17,18,19,20,21,22,23,32,33,34,35,36,37,38,39]
+mask =[e[2] in t1_triggers for e in events ]
 
 ## T2 epoching
 all_T2_epochs = dict()
@@ -228,8 +230,8 @@ for soaName, longSOA in [('short', False), ('long', True)]:
         )
     epochs = mne.Epochs(
         raw,
-        events,
-        event_id=event_ids, ## selected triggers for epochs
+        events[mask],
+        #event_id=event_ids, ## selected triggers for epochs
         tmin=tmin,
         tmax=TMAX,
         baseline=(tmin, tmin+BASELINE),
@@ -241,9 +243,7 @@ for soaName, longSOA in [('short', False), ('long', True)]:
     all_T2_epochs[epo_name] = epochs
     epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
 
-## match epochs with behavioral selection
-# can use epochs.selection to find rejected epochs
-# can index resulting epochs using getitem
+
 
 """ 
 (short SOA, dual task, seen) and  df['correct']
@@ -264,10 +264,27 @@ blink_unseen = blink_df[blink_df.seen == False]
 ## filter epos by seen/unseen
 
 """
+## match epochs with behavioral selection
+# can use epochs.selection to find rejected epochs
+# can index resulting epochs using getitem
+
 epochs.selection is relative to all events 1008
 whereas the trials file has one entry per trial; T1 & T2, + two tasks
 how to align them?
 can pre-filter events for T1/T2 i.e. epochs for T1 -> one event per trial
+
+--> this not how .Epochs is intended
+
+
+In [4]: x = [e for e in events if e[2] in [16,17,18,19,20,21,22,23,32,33,34,35,36,37,38,39]]
+
+In [5]: len(x)
+Out[5]: 256
+
+but it works
+
+turn indices into mask to add as column to dataframe.
+then do the selections only on arrays with this
 """
 
 
