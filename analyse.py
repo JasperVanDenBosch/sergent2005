@@ -75,7 +75,7 @@ import os
 from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
-import mne, pandas, seaborn
+import mne, pandas, seaborn, numpy
 import matplotlib.pyplot as plt
 from experiment.triggers import Triggers
 from experiment.timer import Timer
@@ -106,8 +106,13 @@ timer.optimizeFlips(fr_conf, Constants())
 os.makedirs(deriv_dir, exist_ok=True)
 
 df = pandas.read_csv(join(eeg_dir, f'{sub}_trials.csv'), index_col=0)
+
 ## get rid of training trials
 df = df[df['phase'] == 'test']
+
+## lose columns that we dont need
+df = df.drop(['id_trigger', 'vis_trigger', 'delay_index', 'delay', 't1_trigger', 
+              't2_trigger', 'iti', 't1_index', 't2_index', 'masks', 'id_onset', 'vis_onset', 'vis_init'], axis=1)
 
 
 """ TIMING TO IMPROVE
@@ -167,7 +172,6 @@ df['false_alarm'] = df['seen'] & (~df['t2presence'])
 
 
 
-
 ## T2 present during the AB (Dual task, short SOA)
 plt.figure()
 ab_trials_mask = (df['task'] == 'dual') & (df['soa_long'] == False) & (df['t2presence'] == True)
@@ -179,7 +183,12 @@ ax.set(
 )
 ax.get_figure().savefig('plots/blink_visibility.png')
 plt.close()
-## dual, short: absent & present
+
+
+## done with behavior, we can now drop more columns
+df = df.drop(['vis_perc', 'target1', 'id_choice', 'id_rt', 'vis_rating', 'soa',
+    'vis_rt', 't1_onset', 't1_offset', 't2_onset', 't2_offset', 'target1', 'target2'], axis=1)
+
 
 ## load raw data 
 raw = read_raw_bdf(raw_fpath)
@@ -208,47 +217,58 @@ raw.set_montage(montage, on_missing='warn')
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True)
-t1_triggers = [16,17,18,19,20,21,22,23,32,33,34,35,36,37,38,39]
-mask =[e[2] in t1_triggers for e in events ]
+
+## triggers for T2
+t2_triggers = list(range(24, 31+1))
+
+## index for full events array where event is T2
+events_mask =[e[2] in t2_triggers for e in events ]
+
+## only keep the T2 events. This way there are as many events as trials
+## this helps with indexing later
+events = events[events_mask]
 
 ## T2 epoching
-all_T2_epochs = dict()
-for soaName, longSOA in [('short', False), ('long', True)]:
-    if longSOA:
-        soa = timer.flipsToSecs(timer.long_SOA)
-    else:
-        soa = timer.flipsToSecs(timer.short_SOA)
-    tmin = - (soa + BASELINE + BUFFER)
-    event_ids = dict()
-    for presenceName, presence in [('absent', False), ('present', True)]:
-        event_ids[f'{soaName}SOA_{presenceName}'] = Triggers().get_number(
-            training=False,
-            forT2=True,
-            dualTask=True,
-            longSOA=longSOA,
-            t2Present=presence,
-        )
-    epochs = mne.Epochs(
-        raw,
-        events[mask],
-        #event_id=event_ids, ## selected triggers for epochs
-        tmin=tmin,
-        tmax=TMAX,
-        baseline=(tmin, tmin+BASELINE),
-        decim=4, ## downsample x4
-        #reject=REJECT_CRIT,
-        on_missing='warn',
-    )
-    epo_name = f'T2-{soaName}SOA'
-    all_T2_epochs[epo_name] = epochs
-    epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
+soa = timer.flipsToSecs(timer.short_SOA)
+tmin = - (soa + BASELINE + BUFFER)
 
+event_ids = dict()
+for presenceName, presence in [('absent', False), ('present', True)]:
+    event_ids[f'{presenceName}'] = Triggers().get_number(
+        training=False,
+        forT2=True,
+        dualTask=True,
+        longSOA=False,
+        t2Present=presence,
+    )
+
+epochs = mne.Epochs(
+    raw,
+    events,
+    event_id=event_ids, ## selected triggers for epochs
+    tmin=tmin,
+    tmax=TMAX,
+    baseline=(tmin, tmin+BASELINE),
+    decim=4, ## downsample x4
+    #reject=REJECT_CRIT,
+    on_missing='warn',
+)
+epo_name = f'T2-shortSOA'
+epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
+
+## create a column where we indicate for which trials we have data
+## since come may have been discarded as artifacts
+data_mask = numpy.zeros(events.shape[0], dtype=bool)
+data_mask[epochs.selection] = True
+df['valid_data'] = data_mask
 
 
 """ 
 (short SOA, dual task, seen) and  df['correct']
 (short SOA, dual task, not seen) and df['correct']
 """
+raise ValueError
+
 #fpath = join(deriv_dir, f'{sub}_{epo_name}_epo.fif')
 # first check that before selection, the numbers are the same between epochs and df
 ## index dict -> index epo object
@@ -263,33 +283,22 @@ blink_unseen = blink_df[blink_df.seen == False]
 ## filter epos by correct/incorrect
 ## filter epos by seen/unseen
 
-"""
-## match epochs with behavioral selection
-# can use epochs.selection to find rejected epochs
-# can index resulting epochs using getitem
-
-epochs.selection is relative to all events 1008
-whereas the trials file has one entry per trial; T1 & T2, + two tasks
-how to align them?
-can pre-filter events for T1/T2 i.e. epochs for T1 -> one event per trial
-
---> this not how .Epochs is intended
-
-
-In [4]: x = [e for e in events if e[2] in [16,17,18,19,20,21,22,23,32,33,34,35,36,37,38,39]]
-
-In [5]: len(x)
-Out[5]: 256
-
-but it works
-
-turn indices into mask to add as column to dataframe.
-then do the selections only on arrays with this
-"""
 
 
 # ## plot evoked response
 # evoked = epochs.average()
 # evoked.plot_joint(picks='eeg')
+
+"""
+In order to analyze the brain events underlying this bimodal distribu- tion, 
+we compared the ERPs evoked by T2 during the attentional blink (short SOA, dual task) 
+when T2 was seen and when it was not seen (empirically defined as visibility Z or o50%). 
+Because T1 and the masks also evoked ERPs, we extracted the potentials specifically 
+evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a blank screen 
+"""
+
+# blink_seen
+# blink_unseen
+# T2 absent
 
 
