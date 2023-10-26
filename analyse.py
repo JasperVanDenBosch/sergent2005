@@ -262,32 +262,11 @@ data_mask = numpy.zeros(events.shape[0], dtype=bool)
 data_mask[epochs.selection] = True
 df['valid_data'] = data_mask
 
+## restrict the df to the epochs we currently have, short-SOA with valid data
+epo_df = df[(df.soa_long == False) & (df.valid_data == True)]
 
-""" 
-(short SOA, dual task, seen) and  df['correct']
-(short SOA, dual task, not seen) and df['correct']
-"""
-raise ValueError
-
-#fpath = join(deriv_dir, f'{sub}_{epo_name}_epo.fif')
-# first check that before selection, the numbers are the same between epochs and df
-## index dict -> index epo object
-epo = all_T2_epochs['T2-shortSOA']['shortSOA_present']
-blink_df = df[(df.task == 'dual') & (df.soa_long == False) & (df.t2presence == True)]
-
-
-assert len(epo_blink) == len(trials_blink)
-
-blink_seen = blink_df[blink_df.seen == True]
-blink_unseen = blink_df[blink_df.seen == False]
-## filter epos by correct/incorrect
-## filter epos by seen/unseen
-
-
-
-# ## plot evoked response
-# evoked = epochs.average()
-# evoked.plot_joint(picks='eeg')
+## they should now have the same number of entries
+assert len(epo_df) == len(epochs)
 
 """
 In order to analyze the brain events underlying this bimodal distribu- tion, 
@@ -297,8 +276,22 @@ Because T1 and the masks also evoked ERPs, we extracted the potentials specifica
 evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a blank screen 
 """
 
-# blink_seen
-# blink_unseen
-# T2 absent
+## ERP for T2 absent trials
+erp_absent = epochs[~epo_df.t2presence].average()
+fig = erp_absent.plot_joint(picks='eeg')
+fig.savefig('plots/T2_absent.png')
+plt.close()
 
+## ERP for seen trials
+erp_seen = epochs[(epo_df.t2presence) & (epo_df.seen)].average()
+diff = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
+fig = diff.plot_joint(picks='eeg')
+fig.savefig('plots/seen.png')
+plt.close()
 
+## ERP for unseen trials
+erp_unseen = epochs[(epo_df.t2presence) & (~epo_df.seen)].average()
+diff = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
+fig = diff.plot_joint(picks='eeg')
+fig.savefig('plots/unseen.png')
+plt.close()
