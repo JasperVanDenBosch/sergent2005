@@ -295,7 +295,10 @@ class PsychopyEngine(object):
                 break
             self.win.flip()
 
-        choice_index = int(scale.getRating() or -999) # index of response wrt scale
+        rating = scale.getRating()
+        if rating is None:
+            rating = -999
+        choice_index = int(rating) # index of response wrt scale
         rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
         return choice_index, record.get('flipTime', -99.99), rt
     
