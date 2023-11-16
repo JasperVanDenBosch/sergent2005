@@ -85,6 +85,8 @@ if TYPE_CHECKING:
 colorama_init()
 def print_info(msg: str):
     print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
+def print_warn(msg: str):
+    print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
 
 
 BASELINE = 0.250 ## duration of baseline
@@ -93,6 +95,14 @@ fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.700
 sub = 'sub-UOBC001'
+"""
+We rejected voltage exceeding ±200 uV,
+transients exceeding ±100 uV, 
+or electrooculogram activity exceeding ±70 mV.
+"""
+THRESH_TRANS = 100
+THRESH_PEAK = 200
+THRESH_EOG = 70
 
 data_dir = expanduser('~/data/EMLsergent2005/')
 
@@ -203,9 +213,6 @@ filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
 raw.load_data()
 raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
-# ## plot power spectrum from 10mins to 30mins after start
-# raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
-
 ## reference to average of mastoids
 mastoid_channels = ['EXG1', 'EXG2'] # best for biosemi, but methods plans to use average
 raw.set_eeg_reference(ref_channels=mastoid_channels)
@@ -214,6 +221,12 @@ raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
 ## determine electrode head locations
 montage = make_standard_montage('biosemi128', head_size='auto')
 raw.set_montage(montage, on_missing='warn')
+
+## plot power spectrum from 10mins to 30mins after start
+psd = raw.compute_psd(picks='eeg', fmax=30, tmin=60*10, tmax=60*30)
+fig = psd.plot()
+fig.savefig('plots/PSD.png')
+plt.close()
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True)
@@ -248,9 +261,8 @@ epochs = mne.Epochs(
     event_id=event_ids, ## selected triggers for epochs
     tmin=tmin,
     tmax=TMAX,
-    baseline=(tmin, tmin+BASELINE),
-    decim=4, ## downsample x4
-    #reject=REJECT_CRIT,
+    baseline=(tmin, tmin+BASELINE), ## only valid for short SOA
+    decim=8, ## downsample x8 to 256Hz
     on_missing='warn',
 )
 epo_name = f'T2-shortSOA'
@@ -295,3 +307,44 @@ diff = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
 fig = diff.plot_joint(picks='eeg')
 fig.savefig('plots/unseen.png')
 plt.close()
+
+## ERP for diff between seen and unseen
+diff = mne.combine_evoked([erp_seen, erp_unseen], [1, -1])
+fig = diff.plot_joint(picks='eeg')
+fig.savefig('plots/diff.png')
+plt.close()
+
+## trial rejection
+eeg = epochs.get_data('eeg', units='uV') # trials x channels x time
+eog = epochs.get_data('eog', units='uV') # trials x channels x time
+n_epochs = eeg.shape[0]
+n_eog_rejects = 0
+for e in range(n_epochs):
+    transients = numpy.diff(eeg[e, :, :])
+    if numpy.any(transients > THRESH_TRANS):
+        print_warn('Found transient exceeding threshold')
+
+    eeg_epoch = eeg[e, :, :].T
+    eeg_peaks = eeg_epoch - eeg_epoch.mean(axis=0)
+    if numpy.any(numpy.abs(eeg_peaks) > THRESH_PEAK):
+        print_warn('Found EEG peak exceeding threshold')
+
+    eog_epoch = eog[e, :, :].T
+    eog_peaks = eog_epoch - eog_epoch.mean(axis=0)
+    if numpy.any(numpy.abs(eog_peaks) > THRESH_EOG):
+        n_eog_rejects += 1
+print_warn(f'Found {n_eog_rejects} EOG peaks exceeding threshold')
+
+## comvert the above to annotations
+eog_events = mne.preprocessing.find_eog_events(raw)
+onsets = eog_events[:, 0] / raw.info["sfreq"] - 0.25
+durations = [0.5] * len(eog_events)
+descriptions = ["bad blink"] * len(eog_events)
+blink_annot = mne.Annotations(
+    onsets, durations, descriptions, orig_time=raw.info["meas_date"]
+)
+raw.set_annotations(blink_annot)
+
+## maybe do epoching twice
+# 1. to get bads
+# 2. to get data
