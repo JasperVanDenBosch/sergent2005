@@ -1,9 +1,5 @@
 """Analysis of pilot data
 
-## Pilot idiosyncrasies
-
-- [('train', 'single'), ('test', 'dual')] 
-- no bad channels
 
 ## TODO
 
@@ -92,7 +88,7 @@ BUFFER = 0.05 ## take into account timing inprecision
 fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.700
-sub = 'sub-UOBC001'
+sub = 'sub-UOBC002'
 
 data_dir = expanduser('~/data/EMLsergent2005/')
 
@@ -194,7 +190,7 @@ df = df.drop(['vis_perc', 'target1', 'id_choice', 'id_rt', 'vis_rating', 'soa',
 raw = read_raw_bdf(raw_fpath)
 
 ## get rid of empty channels and mark channel types
-raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
+raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8', 'GSR1', 'GSR2', 'Erg1', 'Erg2', 'Resp', 'Plet', 'Temp']) # type: ignore
 eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
 raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
@@ -202,6 +198,10 @@ raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
 raw.load_data()
 raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
+
+## bad channels
+bad_chans = ['B27', 'D5', 'D8', 'D17']
+raw.info['bads'].extend(bad_chans)
 
 # ## plot power spectrum from 10mins to 30mins after start
 # raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
@@ -216,8 +216,8 @@ montage = make_standard_montage('biosemi128', head_size='auto')
 raw.set_montage(montage, on_missing='warn')
 
 ## find triggers
-events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True)
-
+events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
+#raise ValueError
 ## triggers for T2
 t2_triggers = list(range(24, 31+1))
 
@@ -249,7 +249,7 @@ epochs = mne.Epochs(
     tmin=tmin,
     tmax=TMAX,
     baseline=(tmin, tmin+BASELINE),
-    decim=4, ## downsample x4
+    #decim=4, ## downsample x4
     #reject=REJECT_CRIT,
     on_missing='warn',
 )
