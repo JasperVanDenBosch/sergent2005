@@ -98,10 +98,9 @@ def print_info(msg: str):
 
 
 BASELINE = 0.250 ## duration of baseline
-BUFFER = 0.05 ## take into account timing inprecision
 fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
-TMAX = 0.700
+TMAX = 0.715
 sub = 'sub-UOBC002'
 data_dir = expanduser('~/data/EMLsergent2005/')
 
@@ -226,7 +225,8 @@ events = events[events_mask]
 
 ## T2 epoching
 soa = timer.flipsToSecs(timer.short_SOA)
-tmin = - (soa + BASELINE + BUFFER)
+buffer = timer.flipsToSecs(timer.target_dur)
+tmin = - (soa + BASELINE + buffer)
 
 event_ids = dict()
 for presenceName, presence in [('absent', False), ('present', True)]:
@@ -245,8 +245,6 @@ epochs = mne.Epochs(
     tmin=tmin,
     tmax=TMAX,
     baseline=(tmin, tmin+BASELINE),
-    #decim=4, ## downsample x4
-    #reject=REJECT_CRIT,
     on_missing='warn',
 )
 epo_name = f'T2-shortSOA'
