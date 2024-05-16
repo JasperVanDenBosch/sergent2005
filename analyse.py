@@ -95,6 +95,8 @@ if TYPE_CHECKING:
 colorama_init()
 def print_info(msg: str):
     print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
+def print_warn(msg: str):
+    print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
 
 
 BASELINE = 0.250 ## duration of baseline
@@ -210,6 +212,9 @@ raw = raw.set_eeg_reference(ref_channels='average')
 montage = make_standard_montage('biosemi128', head_size='auto')
 raw.set_montage(montage, on_missing='warn')
 
+annots = mne.read_annotations(join(deriv_dir, f'{sub}_annotations.txt'))
+raw.set_annotations(annots)
+
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
 
@@ -289,3 +294,69 @@ diff = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
 fig = diff.plot_joint(picks='eeg')
 fig.savefig('plots/unseen.png')
 plt.close()
+
+
+raise ValueError
+## trial rejection
+"""
+We rejected voltage exceeding ±200 uV,
+transients exceeding ±100 uV, 
+or electrooculogram activity exceeding ±70 mV.
+
+EX3: bottom HEOG
+EX4: top HEOG
+EX5: left VEOG
+EX6: right VEOG
+"""
+## maybe do epoching twice
+# 1. to get bads
+# 2. to get data
+THRESH_TRANS = 100
+THRESH_PEAK = 200
+THRESH_EOG = 70
+
+eeg = epochs.get_data('eeg', units='uV') # trials x channels x time
+eog_dual = epochs.get_data('eog', units='uV') # trials x channels x time
+direction_mask = numpy.array([True, False, True, False])
+eog = eog_dual[:, direction_mask, :] - eog_dual[:, ~direction_mask, :]
+n_epochs = eeg.shape[0]
+n_eog_rejects = 0
+bad_epochs = []
+counts = dict(trans=0, peak=0, eog=0)
+for e in range(n_epochs):
+    transients = numpy.diff(eeg[e, :, :])
+    if numpy.any(transients > THRESH_TRANS):
+        bad_epochs.append(e)
+        counts['trans'] += 1
+        continue
+
+    eeg_epoch = eeg[e, :, :].T
+    eeg_peaks = eeg_epoch - eeg_epoch.mean(axis=0)
+    if numpy.any(numpy.abs(eeg_peaks) > THRESH_PEAK):
+        bad_epochs.append(e)
+        counts['peak'] += 1
+        continue
+
+    eog_epoch = eog[e, :, :].T
+    eog_peaks = eog_epoch - eog_epoch.mean(axis=0)
+    if numpy.any(numpy.abs(eog_peaks) > THRESH_EOG):
+        bad_epochs.append(e)
+        counts['eog'] += 1
+        continue
+
+print_warn('bla todo')
+
+
+## comvert the above to annotations
+event_onsets = events[bad_epochs, 0] / raw.info["sfreq"]
+onsets = event_onsets - 0.100
+durations = [0.5] * len(event_onsets)
+descriptions = ["bad"] * len(event_onsets)
+annots = mne.Annotations(
+    onsets, durations, descriptions, orig_time=raw.info["meas_date"]
+)
+annots.save(join(deriv_dir, f'{sub}_annotations.txt'))
+
+
+
+
