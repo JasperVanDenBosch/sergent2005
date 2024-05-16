@@ -62,6 +62,20 @@ The remaining trials were averaged in synchrony with T2 onset (or T1 onset for T
 digitally transformed to an average reference, band-pass filtered (0.5-20 Hz)
 and corrected for baseline over a 250-ms window during fixation at the beginning of the trial.
 
+TIMING TO IMPROVE
+Each trial begins with a fixation cross, presented for either 
+514ms or 857ms (36-frames and 60-frames respectively; 
+reported as 516ms and 860ms in the manuscript), 
+selected at random per trial. 
+Six items are then presented in the following order: T1, mask, fixation cross, 
+T2 (present or absent), mask, mask. In the original study, each of T1, T2, 
+and the masks were presented for 43ms (3-frames), 
+separated by a blank screen of 43ms (3-frames). 
+To create the short and long TOA conditions, the fixation cross between T1 and T2 was presented 
+for either 43ms (3-frames) or 471ms (33-frames), 
+followed by a blank screen of 43ms (3-frames), 
+thus creating T1->T2 TOAs of 257ms and 686ms (18-frames and 48-frames, respectively; 
+reported as 258ms and 688ms in the manuscript), respectively.
 
 """
 from __future__ import annotations
@@ -89,17 +103,15 @@ fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.700
 sub = 'sub-UOBC002'
-
 data_dir = expanduser('~/data/EMLsergent2005/')
 
 eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
+os.makedirs(deriv_dir, exist_ok=True)
 
 timer = Timer()
 timer.optimizeFlips(fr_conf, Constants())
-
-os.makedirs(deriv_dir, exist_ok=True)
 
 df = pandas.read_csv(join(eeg_dir, f'{sub}_trials.csv'), index_col=0)
 
@@ -109,23 +121,6 @@ df = df[df['phase'] == 'test']
 ## lose columns that we dont need
 df = df.drop(['id_trigger', 'vis_trigger', 'delay_index', 'delay', 't1_trigger', 
               't2_trigger', 'iti', 't1_index', 't2_index', 'masks', 'id_onset', 'vis_onset', 'vis_init'], axis=1)
-
-
-""" TIMING TO IMPROVE
-Each trial begins with a fixation cross, presented for either 
-514ms or 857ms (36-frames and 60-frames respectively; 
-reported as 516ms and 860ms in the manuscript), 
-selected at random per trial. 
-Six items are then presented in the following order: T1, mask, fixation cross, 
-T2 (present or absent), mask, mask. In the original study, each of T1, T2, 
-and the masks were presented for 43ms (3-frames), 
-separated by a blank screen of 43ms (3-frames). 
-To create the short and long TOA conditions, the fixation cross between T1 and T2 was presented 
-for either 43ms (3-frames) or 471ms (33-frames), 
-followed by a blank screen of 43ms (3-frames), 
-thus creating T1->T2 TOAs of 257ms and 686ms (18-frames and 48-frames, respectively; 
-reported as 258ms and 688ms in the manuscript), respectively.
-"""
 
 ## timing analysis
 soa_df = df[df.soa_long == False].copy()
@@ -197,19 +192,20 @@ raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 ## pick channels to be filtered
 filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
 raw.load_data()
-raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
+raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
 
 ## bad channels
-bad_chans = ['B27', 'D5', 'D8', 'D17']
+bad_chans = ['D5', 'D8', 'D16', 'D17']
 raw.info['bads'].extend(bad_chans)
 
-# ## plot power spectrum from 10mins to 30mins after start
-# raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
+# ## reference to average of mastoids: best for biosemi, but methods plans to use average
+# mastoid_channels = ['EXG1', 'EXG2'] 
+# raw.set_eeg_reference(ref_channels=mastoid_channels)
+# raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
 
-## reference to average of mastoids
-mastoid_channels = ['EXG1', 'EXG2'] # best for biosemi, but methods plans to use average
-raw.set_eeg_reference(ref_channels=mastoid_channels)
-raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
+## apply average reference
+raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
+raw = raw.set_eeg_reference(ref_channels='average')
 
 ## determine electrode head locations
 montage = make_standard_montage('biosemi128', head_size='auto')
@@ -217,7 +213,7 @@ raw.set_montage(montage, on_missing='warn')
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
-#raise ValueError
+
 ## triggers for T2
 t2_triggers = list(range(24, 31+1))
 
