@@ -75,6 +75,8 @@ class Trial(object):
         # it starts with the fixation cross
         engine.displayFixCross(self.delay)
 
+        engine.displayEmptyScreen(timer.target_dur)
+
         self.t1_onset = engine.displayT1(self.target1, self.t1_trigger, timer.target_dur)
 
         # display black screen between stimuli and masks
@@ -82,10 +84,14 @@ class Trial(object):
 
         engine.displayMask(self.masks[0], timer.target_dur)
 
+        engine.displayEmptyScreen(timer.target_dur)
+
         # display the fixation cross either short_SOA - 129ms or long_SOA - 129ms,
         # since the target, the mask and the black screen was displayed for 43ms each
-        fix_dur = self.soa - timer.target_dur*3
+        fix_dur = self.soa - timer.target_dur*5 # ( one blank screen following )
         engine.displayFixCross(fix_dur)
+
+        engine.displayEmptyScreen(timer.target_dur)
 
         self.t2_onset = engine.displayT2(self.target2, self.t2_trigger, timer.target_dur)
 

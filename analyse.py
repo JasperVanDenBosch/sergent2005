@@ -1,9 +1,5 @@
 """Analysis of pilot data
 
-## Pilot idiosyncrasies
-
-- [('train', 'single'), ('test', 'dual')] 
-- no bad channels
 
 ## TODO
 
@@ -66,6 +62,20 @@ The remaining trials were averaged in synchrony with T2 onset (or T1 onset for T
 digitally transformed to an average reference, band-pass filtered (0.5-20 Hz)
 and corrected for baseline over a 250-ms window during fixation at the beginning of the trial.
 
+TIMING TO IMPROVE
+Each trial begins with a fixation cross, presented for either 
+514ms or 857ms (36-frames and 60-frames respectively; 
+reported as 516ms and 860ms in the manuscript), 
+selected at random per trial. 
+Six items are then presented in the following order: T1, mask, fixation cross, 
+T2 (present or absent), mask, mask. In the original study, each of T1, T2, 
+and the masks were presented for 43ms (3-frames), 
+separated by a blank screen of 43ms (3-frames). 
+To create the short and long TOA conditions, the fixation cross between T1 and T2 was presented 
+for either 43ms (3-frames) or 471ms (33-frames), 
+followed by a blank screen of 43ms (3-frames), 
+thus creating T1->T2 TOAs of 257ms and 686ms (18-frames and 48-frames, respectively; 
+reported as 258ms and 688ms in the manuscript), respectively.
 
 """
 from __future__ import annotations
@@ -85,25 +95,24 @@ if TYPE_CHECKING:
 colorama_init()
 def print_info(msg: str):
     print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
+def print_warn(msg: str):
+    print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
 
 
 BASELINE = 0.250 ## duration of baseline
-BUFFER = 0.05 ## take into account timing inprecision
 fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
-TMAX = 0.700
-sub = 'sub-UOBC001'
-
+TMAX = 0.715
+sub = 'sub-UOBC002'
 data_dir = expanduser('~/data/EMLsergent2005/')
 
 eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
+os.makedirs(deriv_dir, exist_ok=True)
 
 timer = Timer()
 timer.optimizeFlips(fr_conf, Constants())
-
-os.makedirs(deriv_dir, exist_ok=True)
 
 df = pandas.read_csv(join(eeg_dir, f'{sub}_trials.csv'), index_col=0)
 
@@ -113,23 +122,6 @@ df = df[df['phase'] == 'test']
 ## lose columns that we dont need
 df = df.drop(['id_trigger', 'vis_trigger', 'delay_index', 'delay', 't1_trigger', 
               't2_trigger', 'iti', 't1_index', 't2_index', 'masks', 'id_onset', 'vis_onset', 'vis_init'], axis=1)
-
-
-""" TIMING TO IMPROVE
-Each trial begins with a fixation cross, presented for either 
-514ms or 857ms (36-frames and 60-frames respectively; 
-reported as 516ms and 860ms in the manuscript), 
-selected at random per trial. 
-Six items are then presented in the following order: T1, mask, fixation cross, 
-T2 (present or absent), mask, mask. In the original study, each of T1, T2, 
-and the masks were presented for 43ms (3-frames), 
-separated by a blank screen of 43ms (3-frames). 
-To create the short and long TOA conditions, the fixation cross between T1 and T2 was presented 
-for either 43ms (3-frames) or 471ms (33-frames), 
-followed by a blank screen of 43ms (3-frames), 
-thus creating T1->T2 TOAs of 257ms and 686ms (18-frames and 48-frames, respectively; 
-reported as 258ms and 688ms in the manuscript), respectively.
-"""
 
 ## timing analysis
 soa_df = df[df.soa_long == False].copy()
@@ -194,29 +186,37 @@ df = df.drop(['vis_perc', 'target1', 'id_choice', 'id_rt', 'vis_rating', 'soa',
 raw = read_raw_bdf(raw_fpath)
 
 ## get rid of empty channels and mark channel types
-raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
+raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8', 'GSR1', 'GSR2', 'Erg1', 'Erg2', 'Resp', 'Plet', 'Temp']) # type: ignore
 eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
 raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
 ## pick channels to be filtered
 filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
 raw.load_data()
-raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
+raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
 
-# ## plot power spectrum from 10mins to 30mins after start
-# raw.plot_psd(picks=filter_picks, fmax=30, tmin=60*10, tmax=60*30)
+## bad channels
+bad_chans = ['D5', 'D8', 'D16', 'D17']
+raw.info['bads'].extend(bad_chans)
 
-## reference to average of mastoids
-mastoid_channels = ['EXG1', 'EXG2'] # best for biosemi, but methods plans to use average
-raw.set_eeg_reference(ref_channels=mastoid_channels)
-raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
+# ## reference to average of mastoids: best for biosemi, but methods plans to use average
+# mastoid_channels = ['EXG1', 'EXG2'] 
+# raw.set_eeg_reference(ref_channels=mastoid_channels)
+# raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
+
+## apply average reference
+raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
+raw = raw.set_eeg_reference(ref_channels='average')
 
 ## determine electrode head locations
 montage = make_standard_montage('biosemi128', head_size='auto')
 raw.set_montage(montage, on_missing='warn')
 
+annots = mne.read_annotations(join(deriv_dir, f'{sub}_annotations.txt'))
+raw.set_annotations(annots)
+
 ## find triggers
-events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True)
+events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
 
 ## triggers for T2
 t2_triggers = list(range(24, 31+1))
@@ -230,7 +230,8 @@ events = events[events_mask]
 
 ## T2 epoching
 soa = timer.flipsToSecs(timer.short_SOA)
-tmin = - (soa + BASELINE + BUFFER)
+buffer = timer.flipsToSecs(timer.target_dur)
+tmin = - (soa + BASELINE + buffer)
 
 event_ids = dict()
 for presenceName, presence in [('absent', False), ('present', True)]:
@@ -249,8 +250,6 @@ epochs = mne.Epochs(
     tmin=tmin,
     tmax=TMAX,
     baseline=(tmin, tmin+BASELINE),
-    decim=4, ## downsample x4
-    #reject=REJECT_CRIT,
     on_missing='warn',
 )
 epo_name = f'T2-shortSOA'
@@ -295,3 +294,68 @@ diff = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
 fig = diff.plot_joint(picks='eeg')
 fig.savefig('plots/unseen.png')
 plt.close()
+
+
+## trial rejection
+"""
+We rejected voltage exceeding ±200 uV,
+transients exceeding ±100 uV, 
+or electrooculogram activity exceeding ±70 mV.
+
+EX3: bottom HEOG
+EX4: top HEOG
+EX5: left VEOG
+EX6: right VEOG
+"""
+## maybe do epoching twice
+# 1. to get bads
+# 2. to get data
+THRESH_TRANS = 100
+THRESH_PEAK = 200
+THRESH_EOG = 70
+
+eeg = epochs.get_data('eeg', units='uV') # trials x channels x time
+eog_dual = epochs.get_data('eog', units='uV') # trials x channels x time
+direction_mask = numpy.array([True, False, True, False])
+eog = eog_dual[:, direction_mask, :] - eog_dual[:, ~direction_mask, :]
+n_epochs = eeg.shape[0]
+n_eog_rejects = 0
+bad_epochs = []
+counts = dict(trans=0, peak=0, eog=0)
+for e in range(n_epochs):
+    transients = numpy.diff(eeg[e, :, :]) ## absolute
+    if numpy.any(transients > THRESH_TRANS):
+        bad_epochs.append(e)
+        counts['trans'] += 1
+        continue
+
+    eeg_epoch = eeg[e, :, :].T
+    eeg_peaks = eeg_epoch - eeg_epoch.mean(axis=0)
+    if numpy.any(numpy.abs(eeg_peaks) > THRESH_PEAK):
+        bad_epochs.append(e)
+        counts['peak'] += 1
+        continue
+
+    eog_epoch = eog[e, :, :].T
+    eog_peaks = eog_epoch - eog_epoch.mean(axis=0)
+    if numpy.any(numpy.abs(eog_peaks) > THRESH_EOG):
+        bad_epochs.append(e)
+        counts['eog'] += 1
+        continue
+
+print_warn('bla todo')
+
+
+## comvert the above to annotations
+event_onsets = events[bad_epochs, 0] / raw.info["sfreq"]
+onsets = event_onsets - 0.100
+durations = [0.5] * len(event_onsets)
+descriptions = ["bad"] * len(event_onsets)
+annots = mne.Annotations(
+    onsets, durations, descriptions, orig_time=raw.info["meas_date"]
+)
+annots.save(join(deriv_dir, f'{sub}_annotations.txt'))
+
+
+
+
