@@ -296,7 +296,6 @@ fig.savefig('plots/unseen.png')
 plt.close()
 
 
-raise ValueError
 ## trial rejection
 """
 We rejected voltage exceeding ±200 uV,
@@ -324,7 +323,7 @@ n_eog_rejects = 0
 bad_epochs = []
 counts = dict(trans=0, peak=0, eog=0)
 for e in range(n_epochs):
-    transients = numpy.diff(eeg[e, :, :])
+    transients = numpy.diff(eeg[e, :, :]) ## absolute
     if numpy.any(transients > THRESH_TRANS):
         bad_epochs.append(e)
         counts['trans'] += 1
