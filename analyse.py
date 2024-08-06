@@ -80,7 +80,7 @@ reported as 258ms and 688ms in the manuscript), respectively.
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from os.path import join, expanduser
+from os.path import join, expanduser, isfile
 import os
 from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
@@ -103,7 +103,7 @@ BASELINE = 0.250 ## duration of baseline
 fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.715
-sub = 'sub-UOBC002'
+sub = 'sub-UOBC003'
 data_dir = expanduser('~/data/EMLsergent2005/')
 
 eeg_dir = join(data_dir, sub)
@@ -196,7 +196,7 @@ raw.load_data()
 raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
 
 ## bad channels
-bad_chans = ['D5', 'D8', 'D16', 'D17']
+bad_chans = ['A32','C12', 'C14', 'B23', 'B29'] #'D5', 'D8', 'D16', 'D17']
 raw.info['bads'].extend(bad_chans)
 
 # ## reference to average of mastoids: best for biosemi, but methods plans to use average
@@ -212,8 +212,10 @@ raw = raw.set_eeg_reference(ref_channels='average')
 montage = make_standard_montage('biosemi128', head_size='auto')
 raw.set_montage(montage, on_missing='warn')
 
-annots = mne.read_annotations(join(deriv_dir, f'{sub}_annotations.txt'))
-raw.set_annotations(annots)
+annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
+if isfile(annots_fpath):
+    annots = mne.read_annotations(annots_fpath)
+    raw.set_annotations(annots)
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)

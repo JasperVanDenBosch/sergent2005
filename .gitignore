@@ -1,6 +1,6 @@
 # project-specific
 lab.toml
-plots/*.png
+plots/**/*.png
 
 # OSX
 .DS_Store
