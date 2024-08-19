@@ -5,9 +5,12 @@ from psychopy.event import getKeys
 from psychopy.visual import Window
 from psychopy.visual.rect import Rect
 from psychopy.hardware.labjacks import U3
+import time
 
 port = U3()
-port.setData(val, address='FIO') # val: int
+
+def send_trigger(val: int):
+    port.setData(val, address='FIO') # val: int
 
 
 my_monitor = Monitor(
@@ -22,31 +25,35 @@ win = Window(
     monitor=my_monitor,
     color='black',
     fullscr=True,
-    units='deg'
+    units='pix'
 )
 win.mouseVisible = False 
 
 stimulus = Rect(
     win=win,
-    size=(100, 100),
-    #units='deg',
-    pos=(0, 0),
+    size=(250, 250),
+    units='pix',
+    pos=(250, 250),
     lineColor=(1, 1, 1),
     fillColor=(1, 1, 1),
     name='stimulus'
 )
 
-for _ in range(4):
-    trigger = 8
 
-    new_keys = getKeys(keyList=['q', 'delete', 'esc'])
-    if 'q' in new_keys and 'delete' in new_keys:
+for i in range(140):
+    trigger = 1+i
+    
+    new_keys = getKeys(keyList=['q', 'esc'])
+    if 'q' in new_keys or 'esc' in new_keys:
         break
+        
+
+    time.sleep(2)
 
     stimulus.draw()
-    win.callOnFlip(port.trigger, trigger)
+    win.callOnFlip(send_trigger, trigger)
     win.flip()
-    ## sleep for stim dur
+    time.sleep(0.2)
     win.flip()
 
 
