@@ -349,6 +349,15 @@ print_warn('bla todo')
 
 
 ## comvert the above to annotations
+"""This lines up with timing of events. 
+But why are all bad events in the first half?
+Is because of the conditions?
+
+Should:
+- [ ] do annotations on all events regardless of condition (separate script)
+
+
+"""
 event_onsets = events[bad_epochs, 0] / raw.info["sfreq"]
 onsets = event_onsets - 0.100
 durations = [0.5] * len(event_onsets)
@@ -356,7 +365,7 @@ descriptions = ["bad"] * len(event_onsets)
 annots = mne.Annotations(
     onsets, durations, descriptions, orig_time=raw.info["meas_date"]
 )
-annots.save(join(deriv_dir, f'{sub}_annotations.txt'))
+annots.save(join(deriv_dir, f'{sub}_annotations.txt'), overwrite=True)
 
 
 
