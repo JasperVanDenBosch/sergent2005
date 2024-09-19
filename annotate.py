@@ -8,6 +8,7 @@ Should:
 - [ ] do annotations on all events regardless of condition (separate script)
 - [ ] make sure bad channels not used during rejection
 - [ ] does subtraction EOG make sense without baseline correction?
+- [ ] annotation timing still seems off!
 
 """
 from __future__ import annotations
