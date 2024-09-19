@@ -1,6 +1,13 @@
 """Artifect rejection implemented as MNE annotations
 
-- [ ] ignore condition
+This lines up with timing of events. 
+But why are all bad events in the first half?
+Is because of the conditions?
+
+Should:
+- [ ] do annotations on all events regardless of condition (separate script)
+- [ ] make sure bad channels not used during rejection
+- [ ] does subtraction EOG make sense without baseline correction?
 
 """
 from __future__ import annotations
@@ -34,10 +41,10 @@ eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
 os.makedirs(deriv_dir, exist_ok=True)
+annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
 
 timer = Timer()
 timer.optimizeFlips(fr_conf, Constants())
-
 
 ## load raw data 
 raw = read_raw_bdf(raw_fpath)
@@ -47,68 +54,45 @@ raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8', 'GSR1', 'GSR2', 'Erg1', 'Erg2',
 eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
 raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
-## pick channels to be filtered
-filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
-raw.load_data()
-raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
-
 ## bad channels
 bad_chans = ['A32','C12', 'C14', 'B23', 'B29'] #'D5', 'D8', 'D16', 'D17']
 raw.info['bads'].extend(bad_chans)
 
-# ## reference to average of mastoids: best for biosemi, but methods plans to use average
-# mastoid_channels = ['EXG1', 'EXG2'] 
-# raw.set_eeg_reference(ref_channels=mastoid_channels)
-# raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
-
-## apply average reference
+## remove the mastoids
 raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
-raw = raw.set_eeg_reference(ref_channels='average')
-
-## determine electrode head locations
-montage = make_standard_montage('biosemi128', head_size='auto')
-raw.set_montage(montage, on_missing='warn')
-
-annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
 
 
+#raise ValueError
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
 
-## triggers for T2
-t2_triggers = list(range(24, 31+1))
+## triggers for T2 (experiment + training)
+t2_triggers = list(range(24, 31+1)) + list(range(40, 47+1))
 
 ## index for full events array where event is T2
-events_mask =[e[2] in t2_triggers for e in events ]
+#events_mask =[e[2] in t2_triggers for e in events ]
 
 ## only keep the T2 events. This way there are as many events as trials
 ## this helps with indexing later
-events = events[events_mask]
+#events = events[events_mask]
 
 ## T2 epoching
 soa = timer.flipsToSecs(timer.short_SOA)
 buffer = timer.flipsToSecs(timer.target_dur)
 tmin = - (soa + BASELINE + buffer)
 
-event_ids = dict()
-for presenceName, presence in [('absent', False), ('present', True)]:
-    event_ids[f'{presenceName}'] = Triggers().get_number(
-        training=False,
-        forT2=True,
-        dualTask=True,
-        longSOA=False,
-        t2Present=presence,
-    )
 
 epochs = mne.Epochs(
     raw,
     events,
-    event_id=event_ids, ## selected triggers for epochs
+    event_id=t2_triggers, ## selected triggers for epochs
     tmin=tmin,
     tmax=TMAX,
     baseline=(tmin, tmin+BASELINE),
     on_missing='warn',
 )
+
+
 
 
 
@@ -139,7 +123,7 @@ n_eog_rejects = 0
 bad_epochs = []
 counts = dict(trans=0, peak=0, eog=0)
 for e in range(n_epochs):
-    transients = numpy.diff(eeg[e, :, :]) ## absolute
+    transients = numpy.abs(numpy.diff(eeg[e, :, :])) ## absolute
     if numpy.any(transients > THRESH_TRANS):
         bad_epochs.append(e)
         counts['trans'] += 1
@@ -159,19 +143,7 @@ for e in range(n_epochs):
         counts['eog'] += 1
         continue
 
-print_warn('bla todo')
-
-
 ## comvert the above to annotations
-"""This lines up with timing of events. 
-But why are all bad events in the first half?
-Is because of the conditions?
-
-Should:
-- [ ] do annotations on all events regardless of condition (separate script)
-
-
-"""
 event_onsets = events[bad_epochs, 0] / raw.info["sfreq"]
 onsets = event_onsets - 0.100
 durations = [0.5] * len(event_onsets)
@@ -179,7 +151,8 @@ descriptions = ["bad"] * len(event_onsets)
 annots = mne.Annotations(
     onsets, durations, descriptions, orig_time=raw.info["meas_date"]
 )
-annots.save(join(deriv_dir, f'{sub}_annotations.txt'), overwrite=True)
+annots.save(annots_fpath, overwrite=True)
+print_warn(f'Stored annotations at {annots_fpath}')
 
 
 
