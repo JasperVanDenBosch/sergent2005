@@ -36,7 +36,7 @@ BASELINE = 0.250 ## duration of baseline
 fr_conf  = 114 ## TODO double check
 TMAX = 0.715
 sub = 'sub-UOBC003'
-data_dir = expanduser('~/data/EMLsergent2005/')
+data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
@@ -71,11 +71,11 @@ events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=
 t2_triggers = list(range(24, 31+1)) + list(range(40, 47+1))
 
 ## index for full events array where event is T2
-#events_mask =[e[2] in t2_triggers for e in events ]
+events_mask =[e[2] in t2_triggers for e in events ]
 
 ## only keep the T2 events. This way there are as many events as trials
 ## this helps with indexing later
-#events = events[events_mask]
+events_selected = events[events_mask]
 
 ## T2 epoching
 soa = timer.flipsToSecs(timer.short_SOA)
@@ -92,9 +92,6 @@ epochs = mne.Epochs(
     baseline=(tmin, tmin+BASELINE),
     on_missing='warn',
 )
-
-
-
 
 
 ## trial rejection
@@ -145,7 +142,7 @@ for e in range(n_epochs):
         continue
 
 ## comvert the above to annotations
-event_onsets = events[bad_epochs, 0] / raw.info["sfreq"]
+event_onsets = events_selected[bad_epochs, 0] / raw.info["sfreq"]
 onsets = event_onsets - 0.100
 durations = [0.5] * len(event_onsets)
 descriptions = ["bad"] * len(event_onsets)
@@ -154,6 +151,53 @@ annots = mne.Annotations(
 )
 annots.save(annots_fpath, overwrite=True)
 print_warn(f'Stored annotations at {annots_fpath}')
+
+"""
+    
+In [5]: annots[-1]
+Out[5]:
+OrderedDict([('onset', 1404.87265625),
+             ('duration', 0.5),
+             ('description', 'bad'),
+             ('orig_time',
+              datetime.datetime(2024, 6, 12, 14, 46, 59, tzinfo=datetime.timezone.utc))])
+
+In [6]: raw.info
+Out[6]:
+<Info | 9 non-empty values
+ bads: 5 items (A32, C12, C14, B23, B29)
+ ch_names: A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, ...
+ chs: 128 EEG, 4 EOG, 1 Stimulus
+ custom_ref_applied: False
+ highpass: 0.0 Hz
+ lowpass: 52.0 Hz
+ meas_date: 2024-06-12 14:46:59 UTC
+ nchan: 133
+ projs: []
+ sfreq: 256.0 Hz
+ subject_info: 1 item (dict)
+>
+
+In [38]: epochs[-1].events
+Out[38]: array([[1089098,      18,      26]])
+
+In [41]: bad_epochs[-5:]
+Out[41]: [401, 402, 405, 406, 411] ## some of the later epochs rejected
+
+In [7]: raw.get_data().shape
+Out[7]: (133, 1096448)
+
+In [8]: 1096448/256
+Out[8]: 4283.0
+
+ lowpass: 52.0 Hz
+
+
+ - annotations stop at 1404s, but recording is ~4000s. last event is at 4259.08203125
+ - is there no T2's after 1400?
+ - lowpass filter 52Hz? from activescan??
+
+"""
 
 
 
