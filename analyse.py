@@ -104,7 +104,7 @@ fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.715
 sub = 'sub-UOBC003'
-data_dir = expanduser('~/data/EMLsergent2005/')
+data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
@@ -196,7 +196,7 @@ raw.load_data()
 raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
 
 ## bad channels
-bad_chans = ['A32','C12', 'C14', 'B23', 'B29'] #'D5', 'D8', 'D16', 'D17']
+bad_chans = ['A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
 raw.info['bads'].extend(bad_chans)
 
 annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
@@ -211,8 +211,6 @@ raw = raw.set_eeg_reference(ref_channels='average')
 ## determine electrode head locations
 montage = make_standard_montage('biosemi128', head_size='auto')
 raw.set_montage(montage, on_missing='warn')
-
-raise ValueError
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)

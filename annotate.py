@@ -56,7 +56,7 @@ eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
 raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
 ## bad channels
-bad_chans = ['A32','C12', 'C14', 'B23', 'B29'] #'D5', 'D8', 'D16', 'D17']
+bad_chans = ['A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
 raw.info['bads'].extend(bad_chans)
 
 ## remove the mastoids
@@ -120,10 +120,12 @@ n_epochs = eeg.shape[0]
 n_eog_rejects = 0
 bad_epochs = []
 counts = dict(trans=0, peak=0, eog=0)
+descriptions = []
 for e in range(n_epochs):
     transients = numpy.abs(numpy.diff(eeg[e, :, :])) ## absolute
     if numpy.any(transients > THRESH_TRANS):
         bad_epochs.append(e)
+        descriptions.append('bad transient')
         counts['trans'] += 1
         continue
 
@@ -131,6 +133,7 @@ for e in range(n_epochs):
     eeg_peaks = eeg_epoch - eeg_epoch.mean(axis=0)
     if numpy.any(numpy.abs(eeg_peaks) > THRESH_PEAK):
         bad_epochs.append(e)
+        descriptions.append('bad peak')
         counts['peak'] += 1
         continue
 
@@ -138,14 +141,14 @@ for e in range(n_epochs):
     eog_peaks = eog_epoch - eog_epoch.mean(axis=0)
     if numpy.any(numpy.abs(eog_peaks) > THRESH_EOG):
         bad_epochs.append(e)
+        descriptions.append('bad blink')
         counts['eog'] += 1
         continue
 
 ## comvert the above to annotations
 event_onsets = events_selected[bad_epochs, 0] / raw.info["sfreq"]
-onsets = event_onsets - 0.100
-durations = [0.5] * len(event_onsets)
-descriptions = ["bad"] * len(event_onsets)
+onsets = event_onsets + tmin # tmin is negative
+durations = [-tmin+TMAX] * len(event_onsets)
 annots = mne.Annotations(
     onsets, durations, descriptions, orig_time=raw.info["meas_date"]
 )
