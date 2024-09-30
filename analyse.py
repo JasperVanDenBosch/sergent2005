@@ -210,6 +210,8 @@ raw = raw.set_eeg_reference(ref_channels='average')
 
 ## determine electrode head locations
 montage = make_standard_montage('biosemi128', head_size='auto')
+fig = montage.plot(show=False)
+fig.savefig('plots/montage.png')
 raw.set_montage(montage, on_missing='warn')
 
 ## find triggers
@@ -274,20 +276,37 @@ evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a
 
 ## ERP for T2 absent trials
 erp_absent = epochs[~epo_df.t2presence].average()
-fig = erp_absent.plot_joint(picks='eeg')
+fig = erp_absent.plot_joint(picks='eeg', show=False)
 fig.savefig('plots/T2_absent.png')
 plt.close()
 
 ## ERP for seen trials
 erp_seen = epochs[(epo_df.t2presence) & (epo_df.seen)].average()
 diff = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
-fig = diff.plot_joint(picks='eeg')
+fig = diff.plot_joint(picks='eeg', show=False)
 fig.savefig('plots/seen.png')
 plt.close()
 
 ## ERP for unseen trials
 erp_unseen = epochs[(epo_df.t2presence) & (~epo_df.seen)].average()
 diff = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
-fig = diff.plot_joint(picks='eeg')
+fig = diff.plot_joint(picks='eeg', show=False)
 fig.savefig('plots/unseen.png')
 plt.close()
+
+
+""" 
+We use both O1 and O2 as the foci for the bilaterally-distributed N1 component 
+(i.e., an ROI covering the 5 closest electrodes to O1 and 5 closest electrodes to O2;
+  see Figure 2 of the original manuscript) 
+
+and Pz as the P3b component focus (see Figure 5 of original study).  """
+
+## See momtage_marked.png
+
+central_N1 = ['A1', 'A2', 'A3', 'B1', 'B2', 'C1', 'C23', 'D1', 'D15', 'D16']
+occipital_P3B = ['A13', 'A14', 'A15', 'A22', 'A23', 'A24', 'A25', 'A26', 'A27', 'A28']
+
+# idx = mne.pick_channels(ch_names, include, exclude=())
+# groups=dict(Left=[1, 2, 3, 4], Right=[5, 6, 7, 8])
+# mne.channels.combine_channels(inst, groups, method='mean')
