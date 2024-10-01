@@ -276,23 +276,23 @@ evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a
 
 ## ERP for T2 absent trials
 erp_absent = epochs[~epo_df.t2presence].average()
-fig = erp_absent.plot_joint(picks='eeg', show=False)
-fig.savefig('plots/T2_absent.png')
-plt.close()
+# fig = erp_absent.plot_joint(picks='eeg', show=False)
+# fig.savefig('plots/T2_absent.png')
+# plt.close()
 
 ## ERP for seen trials
 erp_seen = epochs[(epo_df.t2presence) & (epo_df.seen)].average()
-diff = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
-fig = diff.plot_joint(picks='eeg', show=False)
-fig.savefig('plots/seen.png')
-plt.close()
+erp_seen_min_absent = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
+# fig = diff.plot_joint(picks='eeg', show=False)
+# fig.savefig('plots/seen.png')
+# plt.close()
 
 ## ERP for unseen trials
 erp_unseen = epochs[(epo_df.t2presence) & (~epo_df.seen)].average()
-diff = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
-fig = diff.plot_joint(picks='eeg', show=False)
-fig.savefig('plots/unseen.png')
-plt.close()
+erp_unseen_min_absent = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
+# fig = diff.plot_joint(picks='eeg', show=False)
+# fig.savefig('plots/unseen.png')
+# plt.close()
 
 
 """ 
@@ -302,11 +302,32 @@ We use both O1 and O2 as the foci for the bilaterally-distributed N1 component
 
 and Pz as the P3b component focus (see Figure 5 of original study).  """
 
-## See momtage_marked.png
+## See montage_marked.png
+rois = dict(
+    Central = ['A4', 'A5', 'A3', 'A17', 'A19', 'A20', 'A21', 'A30', 'A31', 'A32'],
+    OccLeft = ['A10', 'A14', 'A15', 'A16', 'A23'],
+    OccRight = ['A23', 'A27', 'A28', 'A29', 'B7'],
+)
+for roi_name, roi_ch_names in rois.items():
+    ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
-central_N1 = ['A1', 'A2', 'A3', 'B1', 'B2', 'C1', 'C23', 'D1', 'D15', 'D16']
-occipital_P3B = ['A13', 'A14', 'A15', 'A22', 'A23', 'A24', 'A25', 'A26', 'A27', 'A28']
 
-# idx = mne.pick_channels(ch_names, include, exclude=())
-# groups=dict(Left=[1, 2, 3, 4], Right=[5, 6, 7, 8])
-# mne.channels.combine_channels(inst, groups, method='mean')
+    erp_seen_min_absent_roi = mne.channels.combine_channels(erp_seen_min_absent, dict(roi=ch_idx), method='mean')
+    fig = erp_seen_min_absent_roi.plot(show=False)
+    fig.savefig(f'plots/seen_{roi_name}.png')
+    plt.close()
+
+    erp_unseen_min_absent_roi = mne.channels.combine_channels(erp_unseen_min_absent, dict(roi=ch_idx), method='mean')
+    fig = erp_unseen_min_absent_roi.plot(show=False)
+    fig.savefig(f'plots/unseen_{roi_name}.png')
+    plt.close()
+
+    figs = mne.viz.plot_compare_evokeds(
+        dict(
+            seen=erp_seen_min_absent_roi,
+            unseen=erp_unseen_min_absent_roi
+        ),
+        show=False
+    )
+    figs[0].savefig(f'plots/together_{roi_name}.png')
+    plt.close()
