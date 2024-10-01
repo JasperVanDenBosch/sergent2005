@@ -276,23 +276,14 @@ evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a
 
 ## ERP for T2 absent trials
 erp_absent = epochs[~epo_df.t2presence].average()
-# fig = erp_absent.plot_joint(picks='eeg', show=False)
-# fig.savefig('plots/T2_absent.png')
-# plt.close()
 
 ## ERP for seen trials
 erp_seen = epochs[(epo_df.t2presence) & (epo_df.seen)].average()
 erp_seen_min_absent = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
-# fig = diff.plot_joint(picks='eeg', show=False)
-# fig.savefig('plots/seen.png')
-# plt.close()
 
 ## ERP for unseen trials
 erp_unseen = epochs[(epo_df.t2presence) & (~epo_df.seen)].average()
 erp_unseen_min_absent = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
-# fig = diff.plot_joint(picks='eeg', show=False)
-# fig.savefig('plots/unseen.png')
-# plt.close()
 
 
 """ 
@@ -302,27 +293,45 @@ We use both O1 and O2 as the foci for the bilaterally-distributed N1 component
 
 and Pz as the P3b component focus (see Figure 5 of original study).  """
 
+"""Our temporal ROI bounds are 
+160ms-200ms for N1
+528ms-624ms for P3b 
+"""
+
 ## See montage_marked.png
 rois = dict(
     Central = ['A4', 'A5', 'A3', 'A17', 'A19', 'A20', 'A21', 'A30', 'A31', 'A32'],
     OccLeft = ['A10', 'A14', 'A15', 'A16', 'A23'],
     OccRight = ['A23', 'A27', 'A28', 'A29', 'B7'],
 )
+time_windows = dict(
+    Central = (0.160, 0.200),
+    OccLeft = (0.528, 0.624),
+    OccRight = (0.528, 0.624),
+)
 for roi_name, roi_ch_names in rois.items():
     ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
 
     erp_seen_min_absent_roi = mne.channels.combine_channels(erp_seen_min_absent, dict(roi=ch_idx), method='mean')
-    fig = erp_seen_min_absent_roi.plot(show=False)
+    fig = erp_seen_min_absent_roi.plot(
+        highlight=time_windows[roi_name],
+        show=False
+    )
     fig.savefig(f'plots/seen_{roi_name}.png')
     plt.close()
 
+    ## TODO: Could plot both on same axes. May have to set vmin/vmax or sth
+
     erp_unseen_min_absent_roi = mne.channels.combine_channels(erp_unseen_min_absent, dict(roi=ch_idx), method='mean')
-    fig = erp_unseen_min_absent_roi.plot(show=False)
+    fig = erp_unseen_min_absent_roi.plot(
+        highlight=time_windows[roi_name],
+        show=False
+    )
     fig.savefig(f'plots/unseen_{roi_name}.png')
     plt.close()
 
-    figs = mne.viz.plot_compare_evokeds(
+    figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
         dict(
             seen=erp_seen_min_absent_roi,
             unseen=erp_unseen_min_absent_roi
