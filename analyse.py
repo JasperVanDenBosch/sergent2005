@@ -314,29 +314,24 @@ for roi_name, roi_ch_names in rois.items():
 
 
     erp_seen_min_absent_roi = mne.channels.combine_channels(erp_seen_min_absent, dict(roi=ch_idx), method='mean')
-    fig = erp_seen_min_absent_roi.plot(
-        highlight=time_windows[roi_name],
-        show=False
-    )
-    fig.savefig(f'plots/seen_{roi_name}.png')
-    plt.close()
-
-    ## TODO: Could plot both on same axes. May have to set vmin/vmax or sth
 
     erp_unseen_min_absent_roi = mne.channels.combine_channels(erp_unseen_min_absent, dict(roi=ch_idx), method='mean')
-    fig = erp_unseen_min_absent_roi.plot(
-        highlight=time_windows[roi_name],
-        show=False
-    )
-    fig.savefig(f'plots/unseen_{roi_name}.png')
-    plt.close()
+
 
     figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
         dict(
             seen=erp_seen_min_absent_roi,
             unseen=erp_unseen_min_absent_roi
         ),
+        colors=('#1b9e77', '#7570b3'),
+        linestyles=('solid', 'dotted'),
         show=False
+    )
+    plt.axvspan(
+        xmin=time_windows[roi_name][0],
+        xmax=time_windows[roi_name][1],
+        color='gray',
+        alpha=0.2
     )
     figs[0].savefig(f'plots/together_{roi_name}.png')
     plt.close()
