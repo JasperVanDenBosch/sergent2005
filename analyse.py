@@ -312,11 +312,20 @@ time_windows = dict(
 for roi_name, roi_ch_names in rois.items():
     ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
-
     erp_seen_min_absent_roi = mne.channels.combine_channels(erp_seen_min_absent, dict(roi=ch_idx), method='mean')
 
     erp_unseen_min_absent_roi = mne.channels.combine_channels(erp_unseen_min_absent, dict(roi=ch_idx), method='mean')
 
+    """
+    In [2]: tmin
+    Out[2]: -0.5043859649122807
+
+    In [3]: BASELINE
+    Out[3]: 0.25
+
+    In [4]: TMAX
+    Out[4]: 0.715
+    """
 
     figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
         dict(
@@ -325,6 +334,7 @@ for roi_name, roi_ch_names in rois.items():
         ),
         colors=('#1b9e77', '#7570b3'),
         linestyles=('solid', 'dotted'),
+        ylim=dict(eeg=[-5, 5]),
         show=False
     )
     plt.axvspan(
