@@ -285,6 +285,15 @@ erp_seen_min_absent = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
 erp_unseen = epochs[(epo_df.t2presence) & (~epo_df.seen)].average()
 erp_unseen_min_absent = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
 
+erps = dict(
+    absent=erp_absent,
+    seen=erp_seen,
+    unseen=erp_unseen,
+)
+print_info('\n\nNumber of epochs:')
+for name, evoked in erps.items():
+    print_info(f'{name}: {evoked.nave}')
+print('\n\n')
 
 """ 
 We use both O1 and O2 as the foci for the bilaterally-distributed N1 component 
@@ -312,20 +321,17 @@ time_windows = dict(
 for roi_name, roi_ch_names in rois.items():
     ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
-    erp_seen_min_absent_roi = mne.channels.combine_channels(erp_seen_min_absent, dict(roi=ch_idx), method='mean')
+    erp_seen_min_absent_roi = mne.channels.combine_channels(
+        erp_seen_min_absent,
+        dict(roi=ch_idx),
+        method='mean'
+    )
 
-    erp_unseen_min_absent_roi = mne.channels.combine_channels(erp_unseen_min_absent, dict(roi=ch_idx), method='mean')
-
-    """
-    In [2]: tmin
-    Out[2]: -0.5043859649122807
-
-    In [3]: BASELINE
-    Out[3]: 0.25
-
-    In [4]: TMAX
-    Out[4]: 0.715
-    """
+    erp_unseen_min_absent_roi = mne.channels.combine_channels(
+        erp_unseen_min_absent,
+        dict(roi=ch_idx),
+        method='mean'
+    )
 
     figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
         dict(
@@ -345,3 +351,11 @@ for roi_name, roi_ch_names in rois.items():
     )
     figs[0].savefig(f'plots/together_{roi_name}.png')
     plt.close()
+
+
+    fig = montage.plot(
+        scale_factor=6,
+        show_names=roi_ch_names,
+        show=False
+    )
+    fig.savefig(f'plots/montage_{roi_name}.png')
