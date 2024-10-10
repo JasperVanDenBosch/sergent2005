@@ -35,6 +35,7 @@ def print_warn(msg: str):
 BASELINE = 0.250 ## duration of baseline
 fr_conf  = 114 ## TODO double check
 TMAX = 0.715
+LATENCY = 0.016 ## based on latrec recording
 sub = 'sub-UOBC003'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
@@ -80,7 +81,7 @@ events_selected = events[events_mask]
 ## T2 epoching
 soa = timer.flipsToSecs(timer.short_SOA)
 buffer = timer.flipsToSecs(timer.target_dur)
-tmin = - (soa + BASELINE + buffer)
+tmin = - (soa + BASELINE + buffer) + LATENCY
 
 
 epochs = mne.Epochs(
@@ -88,7 +89,7 @@ epochs = mne.Epochs(
     events,
     event_id=t2_triggers, ## selected triggers for epochs
     tmin=tmin,
-    tmax=TMAX,
+    tmax=TMAX+LATENCY,
     baseline=(tmin, tmin+BASELINE),
     on_missing='warn',
 )
@@ -154,54 +155,3 @@ annots = mne.Annotations(
 )
 annots.save(annots_fpath, overwrite=True)
 print_warn(f'Stored annotations at {annots_fpath}')
-
-"""
-    
-In [5]: annots[-1]
-Out[5]:
-OrderedDict([('onset', 1404.87265625),
-             ('duration', 0.5),
-             ('description', 'bad'),
-             ('orig_time',
-              datetime.datetime(2024, 6, 12, 14, 46, 59, tzinfo=datetime.timezone.utc))])
-
-In [6]: raw.info
-Out[6]:
-<Info | 9 non-empty values
- bads: 5 items (A32, C12, C14, B23, B29)
- ch_names: A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, ...
- chs: 128 EEG, 4 EOG, 1 Stimulus
- custom_ref_applied: False
- highpass: 0.0 Hz
- lowpass: 52.0 Hz
- meas_date: 2024-06-12 14:46:59 UTC
- nchan: 133
- projs: []
- sfreq: 256.0 Hz
- subject_info: 1 item (dict)
->
-
-In [38]: epochs[-1].events
-Out[38]: array([[1089098,      18,      26]])
-
-In [41]: bad_epochs[-5:]
-Out[41]: [401, 402, 405, 406, 411] ## some of the later epochs rejected
-
-In [7]: raw.get_data().shape
-Out[7]: (133, 1096448)
-
-In [8]: 1096448/256
-Out[8]: 4283.0
-
- lowpass: 52.0 Hz
-
-
- - annotations stop at 1404s, but recording is ~4000s. last event is at 4259.08203125
- - is there no T2's after 1400?
- - lowpass filter 52Hz? from activescan??
-
-"""
-
-
-
-

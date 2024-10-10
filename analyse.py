@@ -103,6 +103,7 @@ BASELINE = 0.250 ## duration of baseline
 fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.715
+LATENCY = 0.016
 sub = 'sub-UOBC003'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
@@ -230,7 +231,7 @@ events = events[events_mask]
 ## T2 epoching
 soa = timer.flipsToSecs(timer.short_SOA)
 buffer = timer.flipsToSecs(timer.target_dur)
-tmin = - (soa + BASELINE + buffer)
+tmin = - (soa + BASELINE + buffer) + LATENCY
 
 event_ids = dict()
 for presenceName, presence in [('absent', False), ('present', True)]:
@@ -247,7 +248,7 @@ epochs = mne.Epochs(
     events,
     event_id=event_ids, ## selected triggers for epochs
     tmin=tmin,
-    tmax=TMAX,
+    tmax=TMAX+LATENCY,
     baseline=(tmin, tmin+BASELINE),
     on_missing='warn',
 )
@@ -303,20 +304,18 @@ We use both O1 and O2 as the foci for the bilaterally-distributed N1 component
 and Pz as the P3b component focus (see Figure 5 of original study).  """
 
 """Our temporal ROI bounds are 
-160ms-200ms for N1
-528ms-624ms for P3b 
+528ms-624ms for N1
+160ms-200ms for P3b 
 """
 
 ## See montage_marked.png
 rois = dict(
     Central = ['A4', 'A5', 'A3', 'A17', 'A19', 'A20', 'A21', 'A30', 'A31', 'A32'],
-    OccLeft = ['A10', 'A14', 'A15', 'A16', 'A23'],
-    OccRight = ['A23', 'A27', 'A28', 'A29', 'B7'],
+    Occipital = ['A10', 'A14', 'A15', 'A16', 'A23', 'A24', 'A27', 'A28', 'A29', 'B7'],
 )
 time_windows = dict(
-    Central = (0.160, 0.200),
-    OccLeft = (0.528, 0.624),
-    OccRight = (0.528, 0.624),
+    Central = (0.528, 0.624),
+    Occipital = (0.160, 0.200),
 )
 for roi_name, roi_ch_names in rois.items():
     ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
