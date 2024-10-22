@@ -1,16 +1,5 @@
 """Analysis of pilot data
 
-
-## TODO
-
-- [x] use colorama to distinguish output from mne verbosity
-- [ ] sanity check reference
-- [ ] sanity check filter
-- [ ] sanity check timing
-- [ ] artifact rejection
-- [ ] match vis ratings with epochs
-- [ ] timing changes
-
 ## behaviour
 
 - [x] vis rating 0 becomes -999
@@ -85,11 +74,12 @@ import os
 from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
-import mne, pandas, seaborn, numpy
+import mne, numpy
 import matplotlib.pyplot as plt
 from experiment.triggers import Triggers
 from experiment.timer import Timer
 from experiment.constants import Constants
+from analyse_behavior import trials_df
 if TYPE_CHECKING:
     from mne.io.edf.edf import RawEDF
 colorama_init()
@@ -114,73 +104,6 @@ os.makedirs(deriv_dir, exist_ok=True)
 
 timer = Timer()
 timer.optimizeFlips(fr_conf, Constants())
-
-df = pandas.read_csv(join(eeg_dir, f'{sub}_trials.csv'), index_col=0)
-
-## get rid of training trials
-df = df[df['phase'] == 'test']
-
-## lose columns that we dont need
-df = df.drop(['id_trigger', 'vis_trigger', 'delay_index', 'delay', 't1_trigger', 
-              't2_trigger', 'iti', 't1_index', 't2_index', 'masks', 'id_onset', 'vis_onset', 'vis_init'], axis=1)
-
-## timing analysis
-soa_df = df[df.soa_long == False].copy()
-observed_series = (soa_df.t2_onset - soa_df.t1_onset)*1000
-observed_soas = observed_series.values - observed_series.values.mean()
-planned_flips = soa_df.soa.iloc[0]
-planned_ms = timer.flipsToSecs(planned_flips)*1000
-plt.figure()
-ax = seaborn.histplot(observed_soas, bins=41)
-ax.set(
-    title='Timing: Short SOA (ms) based on reported flip time',
-    xlabel='+/- ms from mean',
-    ylabel='Percent of trials'
-)
-ax.get_figure().savefig('plots/soa_variability.png')
-plt.close()
-
-## pilot: -999 is 0 vis
-df['vis_rating'] = df['vis_rating'].replace(-999, 0)
-## subjective visibility as a percentage 0-100%
-df['vis_perc'] = (df['vis_rating'] / 0.20).astype(int)
-"""
-Trials with an incorrect response to T1 (11 ± 5%) were discarded 
-from subsequent behavioral and ERP analysis. 
-‘False positive trials’ (that is, ‘T2 absent’ trials in which 
-subjective visibility was above 50%) were discarded 
-from the ERP analysis (fewer than 2% of the ‘T2 absent’ trials in each condition).
-"""
-
-## turn float response into chosen target string 
-df['id_choice'] = df['id_choice'].replace({0.0: 'XOOX', 1.0: 'OXXO'})
-## mark correctness of T1 responses (to discard incorrect trials)
-df['correct'] = df['id_choice'] == df['target1']
-incorrect_perc = (df.correct == False).mean()*100
-print_info(f'Incorrect trials: {incorrect_perc:.1f}%')
-## visibility Z or o50%). 
-df['seen'] = df['vis_perc'] > 50
-## mark false positives (to be discarded for EEG)
-df['false_alarm'] = df['seen'] & (~df['t2presence'])
-
-
-
-## T2 present during the AB (Dual task, short SOA)
-plt.figure()
-ab_trials_mask = (df['task'] == 'dual') & (df['soa_long'] == False) & (df['t2presence'] == True)
-ax = seaborn.histplot(data=df[ab_trials_mask], x='vis_perc', stat='percent', bins=20)
-ax.set(
-    title='Fig 1B: T2 present during the AB',
-    xlabel='Subjective visibility',
-    ylabel='Percent of trials'
-)
-ax.get_figure().savefig('plots/blink_visibility.png')
-plt.close()
-
-
-## done with behavior, we can now drop more columns
-df = df.drop(['vis_perc', 'target1', 'id_choice', 'id_rt', 'vis_rating', 'soa',
-    'vis_rt', 't1_onset', 't1_offset', 't2_onset', 't2_offset', 'target1', 'target2'], axis=1)
 
 
 ## load raw data 
@@ -259,10 +182,10 @@ epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
 ## since come may have been discarded as artifacts
 data_mask = numpy.zeros(events.shape[0], dtype=bool)
 data_mask[epochs.selection] = True
-df['valid_data'] = data_mask
+trials_df['valid_data'] = data_mask
 
 ## restrict the df to the epochs we currently have, short-SOA with valid data
-epo_df = df[(df.soa_long == False) & (df.valid_data == True)]
+epo_df = trials_df[(trials_df.soa_long == False) & (trials_df.valid_data == True)]
 
 ## they should now have the same number of entries
 assert len(epo_df) == len(epochs)
