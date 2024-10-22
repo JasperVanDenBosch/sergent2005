@@ -80,7 +80,7 @@ reported as 258ms and 688ms in the manuscript), respectively.
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from os.path import join, expanduser
+from os.path import join, expanduser, isfile
 import os
 from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
@@ -103,8 +103,9 @@ BASELINE = 0.250 ## duration of baseline
 fr_conf  = 114 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.715
-sub = 'sub-UOBC002'
-data_dir = expanduser('~/data/EMLsergent2005/')
+LATENCY = 0.016
+sub = 'sub-UOBC003'
+data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
 deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
@@ -196,13 +197,13 @@ raw.load_data()
 raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
 
 ## bad channels
-bad_chans = ['D5', 'D8', 'D16', 'D17']
+bad_chans = ['A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
 raw.info['bads'].extend(bad_chans)
 
-# ## reference to average of mastoids: best for biosemi, but methods plans to use average
-# mastoid_channels = ['EXG1', 'EXG2'] 
-# raw.set_eeg_reference(ref_channels=mastoid_channels)
-# raw: RawEDF = raw.drop_channels(mastoid_channels) # type: ignore
+annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
+assert isfile(annots_fpath), 'missing annotations file'
+annots = mne.read_annotations(annots_fpath)
+raw.set_annotations(annots)
 
 ## apply average reference
 raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
@@ -210,10 +211,9 @@ raw = raw.set_eeg_reference(ref_channels='average')
 
 ## determine electrode head locations
 montage = make_standard_montage('biosemi128', head_size='auto')
+fig = montage.plot(show=False)
+fig.savefig('plots/montage.png')
 raw.set_montage(montage, on_missing='warn')
-
-annots = mne.read_annotations(join(deriv_dir, f'{sub}_annotations.txt'))
-raw.set_annotations(annots)
 
 ## find triggers
 events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
@@ -231,7 +231,7 @@ events = events[events_mask]
 ## T2 epoching
 soa = timer.flipsToSecs(timer.short_SOA)
 buffer = timer.flipsToSecs(timer.target_dur)
-tmin = - (soa + BASELINE + buffer)
+tmin = - (soa + BASELINE + buffer) + LATENCY
 
 event_ids = dict()
 for presenceName, presence in [('absent', False), ('present', True)]:
@@ -248,7 +248,7 @@ epochs = mne.Epochs(
     events,
     event_id=event_ids, ## selected triggers for epochs
     tmin=tmin,
-    tmax=TMAX,
+    tmax=TMAX+LATENCY,
     baseline=(tmin, tmin+BASELINE),
     on_missing='warn',
 )
@@ -277,85 +277,84 @@ evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a
 
 ## ERP for T2 absent trials
 erp_absent = epochs[~epo_df.t2presence].average()
-fig = erp_absent.plot_joint(picks='eeg')
-fig.savefig('plots/T2_absent.png')
-plt.close()
 
 ## ERP for seen trials
 erp_seen = epochs[(epo_df.t2presence) & (epo_df.seen)].average()
-diff = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
-fig = diff.plot_joint(picks='eeg')
-fig.savefig('plots/seen.png')
-plt.close()
+erp_seen_min_absent = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
 
 ## ERP for unseen trials
 erp_unseen = epochs[(epo_df.t2presence) & (~epo_df.seen)].average()
-diff = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
-fig = diff.plot_joint(picks='eeg')
-fig.savefig('plots/unseen.png')
-plt.close()
+erp_unseen_min_absent = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
 
-
-## trial rejection
-"""
-We rejected voltage exceeding ±200 uV,
-transients exceeding ±100 uV, 
-or electrooculogram activity exceeding ±70 mV.
-
-EX3: bottom HEOG
-EX4: top HEOG
-EX5: left VEOG
-EX6: right VEOG
-"""
-## maybe do epoching twice
-# 1. to get bads
-# 2. to get data
-THRESH_TRANS = 100
-THRESH_PEAK = 200
-THRESH_EOG = 70
-
-eeg = epochs.get_data('eeg', units='uV') # trials x channels x time
-eog_dual = epochs.get_data('eog', units='uV') # trials x channels x time
-direction_mask = numpy.array([True, False, True, False])
-eog = eog_dual[:, direction_mask, :] - eog_dual[:, ~direction_mask, :]
-n_epochs = eeg.shape[0]
-n_eog_rejects = 0
-bad_epochs = []
-counts = dict(trans=0, peak=0, eog=0)
-for e in range(n_epochs):
-    transients = numpy.diff(eeg[e, :, :]) ## absolute
-    if numpy.any(transients > THRESH_TRANS):
-        bad_epochs.append(e)
-        counts['trans'] += 1
-        continue
-
-    eeg_epoch = eeg[e, :, :].T
-    eeg_peaks = eeg_epoch - eeg_epoch.mean(axis=0)
-    if numpy.any(numpy.abs(eeg_peaks) > THRESH_PEAK):
-        bad_epochs.append(e)
-        counts['peak'] += 1
-        continue
-
-    eog_epoch = eog[e, :, :].T
-    eog_peaks = eog_epoch - eog_epoch.mean(axis=0)
-    if numpy.any(numpy.abs(eog_peaks) > THRESH_EOG):
-        bad_epochs.append(e)
-        counts['eog'] += 1
-        continue
-
-print_warn('bla todo')
-
-
-## comvert the above to annotations
-event_onsets = events[bad_epochs, 0] / raw.info["sfreq"]
-onsets = event_onsets - 0.100
-durations = [0.5] * len(event_onsets)
-descriptions = ["bad"] * len(event_onsets)
-annots = mne.Annotations(
-    onsets, durations, descriptions, orig_time=raw.info["meas_date"]
+erps = dict(
+    absent=erp_absent,
+    seen=erp_seen,
+    unseen=erp_unseen,
 )
-annots.save(join(deriv_dir, f'{sub}_annotations.txt'))
+print_info('\n\nNumber of epochs:')
+for name, evoked in erps.items():
+    print_info(f'{name}: {evoked.nave}')
+print('\n\n')
+
+""" 
+We use both O1 and O2 as the foci for the bilaterally-distributed N1 component 
+(i.e., an ROI covering the 5 closest electrodes to O1 and 5 closest electrodes to O2;
+  see Figure 2 of the original manuscript) 
+
+and Pz as the P3b component focus (see Figure 5 of original study).  """
+
+"""Our temporal ROI bounds are 
+528ms-624ms for N1
+160ms-200ms for P3b 
+"""
+
+## See montage_marked.png
+rois = dict(
+    Central = ['A4', 'A5', 'A3', 'A17', 'A19', 'A20', 'A21', 'A30', 'A31', 'A32'],
+    Occipital = ['A10', 'A14', 'A15', 'A16', 'A23', 'A24', 'A27', 'A28', 'A29', 'B7'],
+)
+time_windows = dict(
+    Central = (0.528, 0.624),
+    Occipital = (0.160, 0.200),
+)
+for roi_name, roi_ch_names in rois.items():
+    ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
+
+    erp_seen_min_absent_roi = mne.channels.combine_channels(
+        erp_seen_min_absent,
+        dict(roi=ch_idx),
+        method='mean'
+    )
+
+    erp_unseen_min_absent_roi = mne.channels.combine_channels(
+        erp_unseen_min_absent,
+        dict(roi=ch_idx),
+        method='mean'
+    )
+
+    figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
+        dict(
+            seen=erp_seen_min_absent_roi,
+            unseen=erp_unseen_min_absent_roi
+        ),
+        colors=('#1b9e77', '#7570b3'),
+        linestyles=('solid', 'dotted'),
+        ylim=dict(eeg=[-5, 5]),
+        show=False
+    )
+    plt.axvspan(
+        xmin=time_windows[roi_name][0],
+        xmax=time_windows[roi_name][1],
+        color='gray',
+        alpha=0.2
+    )
+    figs[0].savefig(f'plots/together_{roi_name}.png')
+    plt.close()
 
 
-
-
+    fig = montage.plot(
+        scale_factor=6,
+        show_names=roi_ch_names,
+        show=False
+    )
+    fig.savefig(f'plots/montage_{roi_name}.png')
