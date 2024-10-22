@@ -1,3 +1,5 @@
 PsychoPy==2023.1.2
 psychopy-labjack
 colorama
+mne~=1.8
+autoreject~=0.4
