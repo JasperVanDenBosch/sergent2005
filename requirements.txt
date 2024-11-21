@@ -3,3 +3,4 @@ psychopy-labjack
 colorama
 mne~=1.8
 autoreject~=0.4
+mne-icalabel~=0.7
