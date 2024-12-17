@@ -13,13 +13,15 @@ import os
 from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
-from mne.preprocessing import ICA
-import mne
-from autoreject import AutoReject
+
 import matplotlib.pyplot as plt
 from experiment.triggers import Triggers
 from experiment.timer import Timer
 from experiment.constants import Constants
+from mne.preprocessing import ICA
+import mne
+from autoreject import AutoReject
+from mne_icalabel import label_components
 if TYPE_CHECKING:
     from mne.io.edf.edf import RawEDF
 colorama_init()
@@ -40,7 +42,7 @@ sub = 'sub-UOBC003'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
-deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
+deriv_dir = join(data_dir, 'derivatives', 'modern', sub)
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
 os.makedirs(deriv_dir, exist_ok=True)
 
@@ -58,7 +60,7 @@ raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 ## pick channels to be filtered
 filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
 raw.load_data()
-raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
+raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
 ## apply average reference
 raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
@@ -100,6 +102,7 @@ epochs = mne.Epochs(
 ar = AutoReject(n_interpolate=N_INTERPOLATE, n_jobs=N_JOBS, verbose=True)
 ar.fit(epochs[:20])  # fit on the first 20 epochs to save time
 _, reject_log = ar.transform(epochs, return_log=True)
+reject_log.save(join(deriv_dir, 'reject_log_pre-ica.npz'), overwrite=True)
 
 ## plot initial fit
 #epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
@@ -119,13 +122,21 @@ print(f'comps {ica.n_components_}')
 # exclude = [0,  # blinks
 #            2  # saccades
 #            ]
-ica.plot_components() # ica.plot_components(exclude)
-raise ValueError
-ica.exclude = exclude
+
+
+#ica.plot_components() # ica.plot_components(exclude)
+
+
+#ica.plot_properties(raw, picks=[1, 6])
+
+ic_labels = label_components(raw, ica, method='iclabel')
+
+blink_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label == 'eye blink']
+#ica.exclude = blink_ic_idx
 
 
 # plot with and without eyeblink component
-ica.plot_overlay(epochs.average(), exclude=ica.exclude)
+ica.plot_overlay(epochs.average(), exclude=blink_ic_idx)
 ica.apply(epochs, exclude=ica.exclude)
 
 
