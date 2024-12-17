@@ -117,7 +117,7 @@ raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 ## pick channels to be filtered
 filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
 raw.load_data()
-raw = raw.filter(l_freq=0.5, h_freq=35, picks=filter_picks)
+raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
 ## bad channels
 bad_chans = ['A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
