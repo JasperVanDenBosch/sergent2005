@@ -52,17 +52,19 @@ for mode, settings in modes.items():
     data_mask[epochs.selection] = True
     trials_df['valid_data'] = data_mask
 
-    ## TODO: epochs vary here between modes, classic has only short soa, modern has both
-
     ## restrict the df to the epochs we currently have, short-SOA with valid data
     if mode == 'classic':
         epo_df = trials_df[(trials_df.soa_long == False) & (trials_df.valid_data == True)]
     else: 
         epo_df = trials_df[(trials_df.valid_data == True)]
-
+        epochs = epochs[~epo_df.soa_long]
+        epo_df = epo_df[~epo_df.soa_long]
+    
+    
+    assert len(epo_df) == len(epochs)
 
     ## they should now have the same number of entries
-    assert len(epo_df) == len(epochs)
+    
 
     """
     In order to analyze the brain events underlying this bimodal distribu- tion, 
