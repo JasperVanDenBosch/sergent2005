@@ -2,9 +2,6 @@
 
 bad_chans = ['A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
 
-- ICA
-- autoreject
-
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING
@@ -13,7 +10,6 @@ import os
 from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
-
 import matplotlib.pyplot as plt
 from experiment.triggers import Triggers
 from experiment.timer import Timer
@@ -36,8 +32,8 @@ BASELINE = 0.250 ## duration of baseline
 fr_conf  = 114 ## TODO double check
 TMAX = 0.715
 LATENCY = 0.016
-N_INTERPOLATE = list(range(16))
-N_JOBS = 4
+N_INTERPOLATE = [4, 6, 8, 10, 12]
+N_JOBS = 6
 sub = 'sub-UOBC003'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
@@ -92,7 +88,8 @@ epochs = mne.Epochs(
     events,
     tmin=tmin,
     tmax=TMAX+LATENCY,
-    baseline=None,
+    ## ICA advises not to do baseline beforehand
+    baseline=None, #baseline=(tmin, tmin+BASELINE),
     on_missing='warn',
     preload=True
 )
@@ -100,84 +97,52 @@ epochs = mne.Epochs(
 
 ## step 1 find bad epochs to exclude from ICA
 ar = AutoReject(n_interpolate=N_INTERPOLATE, n_jobs=N_JOBS, verbose=True)
-ar.fit(epochs[:20])  # fit on the first 20 epochs to save time
+ar.fit(epochs)
 _, reject_log = ar.transform(epochs, return_log=True)
 reject_log.save(join(deriv_dir, 'reject_log_pre-ica.npz'), overwrite=True)
 
+fig = reject_log.plot('horizontal', show=False)
+fig.savefig('plots/reject_log_pre-ica.png')
+plt.close()
 ## plot initial fit
 #epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
-#reject_log.plot('horizontal')
 
 
 ## step 2 ICA without bad epochs
 ica = ICA(20) # n_components can leave away for 0.99 variance
 ica.fit(epochs[~reject_log.bad_epochs])
-print(f'comps {ica.n_components_}')
-
-
-# We can see in the plots below that ICA effectively removed eyeblink
-# artifact.
-#
-# plot source components to see which is made up of blinks
-# exclude = [0,  # blinks
-#            2  # saccades
-#            ]
 
 
 #ica.plot_components() # ica.plot_components(exclude)
 
 
-#ica.plot_properties(raw, picks=[1, 6])
-
 ic_labels = label_components(raw, ica, method='iclabel')
 
 blink_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label == 'eye blink']
-#ica.exclude = blink_ic_idx
-
+ica.exclude = blink_ic_idx
+figs = ica.plot_properties(raw, picks=blink_ic_idx, show=False)
+for f, fig in enumerate(figs):
+    fig.savefig(f'plots/ic_props_{f}.png')
+    plt.close()
 
 # plot with and without eyeblink component
-ica.plot_overlay(epochs.average(), exclude=blink_ic_idx)
+fig = ica.plot_overlay(epochs.average(), exclude=blink_ic_idx, show=False) ## todo save this plot
+fig.savefig('plots/ica_overlay.png')
+plt.close()
+
 ica.apply(epochs, exclude=ica.exclude)
 
 
 ## step 3 apply autoreject
 ar = AutoReject(n_interpolate=N_INTERPOLATE, n_jobs=N_JOBS, verbose=True)
-ar.fit(epochs[:20])  # fit on the first 20 epochs to save time
+ar.fit(epochs)
 epochs_ar, reject_log = ar.transform(epochs, return_log=True)
-epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
 
+epochs_clean = epochs_ar.apply_baseline(baseline=(tmin, tmin+BASELINE))
 
-# We will do a few more visualizations to see that removing the bad epochs
-# found by ``autoreject`` is still important even with preprocessing first.
-# This is especially important if your analyses include trial-level statistics
-# such as looking for bursting activity. We'll visualize why autoreject
-# excluded these epochs and the effect that including these bad epochs would
-# have on the data.
-#
-# First, we will visualize the reject log
-reject_log.plot('horizontal')
+epochs_clean.save(join(deriv_dir, f'{sub}_clean_epo.fif'), overwrite=True)
+reject_log.save(join(deriv_dir, 'reject_log_post-ica.npz'), overwrite=True)
 
-
-# Next, we will visualize the cleaned average data and compare it against
-# the bad segments.
-evoked_bad = epochs[reject_log.bad_epochs].average()
-plt.figure()
-plt.plot(evoked_bad.times, evoked_bad.data.T * 1e6, 'r', zorder=-1)
-epochs_ar.average().plot(axes=plt.gca())
-
-raise ValueError
-
-# As a last optional step, we can do inspect the reject_log and make manual
-# corrections to the reject_log. For instance, if data is limited, we may
-# not want to drop epochs but retain the list of bad epochs for quality
-# assurance metrics.
-
-reject_log = ar.get_reject_log(epochs)
-bad_epochs = reject_log.bad_epochs.copy()
-reject_log.bad_epochs[:] = False  # no bad epochs
-
-
-# The modified reject log can be applied to the data as follows.
-epochs_ar = ar.transform(epochs, reject_log=reject_log)
-print(f'Number of epochs originally: {len(epochs)}, '
-      f'after autoreject: {len(epochs_ar)}')
+fig = reject_log.plot('horizontal', show=False)
+fig.savefig('plots/reject_log_post-ica.png')
+plt.close()
