@@ -30,6 +30,10 @@ montage = make_standard_montage('biosemi128', head_size='auto')
 
 
 modes = dict(
+    dirty=dict(
+        deriv_name='mne',
+        epo_fname=f'{sub}_dirty_epo.fif',
+    ),
     classic=dict(
         deriv_name='mne',
         epo_fname=f'{sub}_T2-shortSOA_epo.fif',
@@ -75,6 +79,8 @@ for mode, settings in modes.items():
     """
 
     ## ERP for T2 regardless of trial type, all T2-present without difference
+    ## TODO: watch out! the classic + dirty pipelines do not include LONG SOA
+    ## so either select SHORT SOA only (easiest) or adapt both pipelines and select later
     erp_absent = epochs[~epo_df.t2presence].average()
 
     erps = dict(
