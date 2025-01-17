@@ -31,11 +31,11 @@ montage = make_standard_montage('biosemi128', head_size='auto')
 
 modes = dict(
     dirty=dict(
-        deriv_name='mne',
+        deriv_name='dirty',
         epo_fname=f'{sub}_dirty_epo.fif',
     ),
     classic=dict(
-        deriv_name='mne',
+        deriv_name='classic',
         epo_fname=f'{sub}_T2-shortSOA_epo.fif',
     ),
     automated=dict(
@@ -59,49 +59,45 @@ for mode, settings in modes.items():
     ## restrict the df to the epochs we currently have, short-SOA with valid data
     if mode == 'classic':
         epo_df = trials_df[(trials_df.soa_long == False) & (trials_df.valid_data == True)]
-    else: 
+    elif mode == 'dirty':
         epo_df = trials_df[(trials_df.valid_data == True)]
         epochs = epochs[~epo_df.soa_long]
         epo_df = epo_df[~epo_df.soa_long]
+    elif mode == 'automated': 
+        epo_df = trials_df[(trials_df.valid_data == True)]
+        epochs = epochs[(epo_df.soa_long == False) & (epo_df.task == "dual")]
+        epo_df = epo_df[(epo_df.soa_long == False) & (epo_df.task == "dual")]
     
-    
+    ## they should now have the same number of entries
     assert len(epo_df) == len(epochs)
 
-    ## they should now have the same number of entries
+    print_info(mode)
+    print_info(f'all: {len(epo_df)}')
+    print_info(f't2 present: {epo_df.t2presence.sum()}')
+    print_info(f'SOA long: {epo_df.soa_long.sum()}')
+    print_info(f'training: {(epo_df.phase == "training").sum()}')
+    print_info(f'single task: {(epo_df.task == "single").sum()}')
+    ## automated still has more trials than dirty! T2 presence?
     
-
-    """
-    In order to analyze the brain events underlying this bimodal distribu- tion, 
-    we compared the ERPs evoked by T2 during the attentional blink (short SOA, dual task) 
-    when T2 was seen and when it was not seen (empirically defined as visibility Z or o50%). 
-    Because T1 and the masks also evoked ERPs, we extracted the potentials specifically 
-    evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a blank screen 
-    """
-
-    ## ERP for T2 regardless of trial type, all T2-present without difference
-    ## TODO: watch out! the classic + dirty pipelines do not include LONG SOA
-    ## so either select SHORT SOA only (easiest) or adapt both pipelines and select later
-    erp_absent = epochs[~epo_df.t2presence].average()
-
-    erps = dict(
-        absent=erp_absent,
-        seen=erp_seen,
-        unseen=erp_unseen,
-    )
-    print_info('\n\nNumber of epochs:')
-    for name, evoked in erps.items():
-        print_info(f'{name}: {evoked.nave}')
-    print('\n\n')
+    evoked = epochs.average()
 
 
     ## butterfly (line per channel)
-    evks["aud/left"].plot(picks="mag", spatial_colors=True, gfp=True)
+    fig = evoked.plot(
+        picks='eeg',
+        titles=dict(eeg=mode),
+        spatial_colors=True,
+        ylim=dict(eeg=[-15, 5]),
+        show=False
+    )
+    fig.savefig(f'plots/butterfly_{mode}.png')
+    plt.close()
 
     # PSD
-    epochs["auditory"].compute_psd().plot(picks="eeg", exclude="bads", amplitude=False)
+    #epochs["auditory"].compute_psd().plot(picks='eeg', exclude='bads', amplitude=False)
 
     # row per channel
-    epochs.plot_image
+    #epochs.plot_image
 
     # compare evokeds for CI: If a [dict/list] of lists, the unweighted mean 
     # is plotted as a time series and the parametric confidence interval 

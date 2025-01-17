@@ -31,7 +31,7 @@ sub = 'sub-UOBC003'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
-deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
+deriv_dir = join(data_dir, 'derivatives', 'dirty', sub)
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
 os.makedirs(deriv_dir, exist_ok=True)
 
