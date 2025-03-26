@@ -113,8 +113,8 @@ for mode, settings in modes.items():
         Occipital = ['A10', 'A14', 'A15', 'A16', 'A23', 'A24', 'A27', 'A28', 'A29', 'B7'],
     )
     time_windows = dict(
-        Central = (0.528, 0.624),
-        Occipital = (0.160, 0.200),
+        Central = (0.160, 0.200),
+        Occipital = (0.528, 0.624),
     )
     for roi_name, roi_ch_names in rois.items():
         ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
