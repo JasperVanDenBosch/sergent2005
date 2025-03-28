@@ -1,26 +1,13 @@
 """Artifect rejection implemented as MNE annotations
 
-This lines up with timing of events. 
-But why are all bad events in the first half?
-Is because of the conditions?
-
-Should:
-- [ ] do annotations on all events regardless of condition (separate script)
-- [ ] make sure bad channels not used during rejection
-- [ ] does subtraction EOG make sense without baseline correction?
-- [ ] annotation timing still seems off!
-
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from os.path import join, expanduser, isfile
+from os.path import join, expanduser
 import os
 from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
-from mne.channels import make_standard_montage
-import mne, pandas, seaborn, numpy
-import matplotlib.pyplot as plt
-from experiment.triggers import Triggers
+import mne, numpy
 from experiment.timer import Timer
 from experiment.constants import Constants
 if TYPE_CHECKING:
