@@ -1,0 +1,18 @@
+## Site / lab specific configuration.
+
+[site]
+abbreviation = 'UOLM' # 4-letter abbreviation, no digits, to be used in the BIDS subject identifiers
+long = 'University of Leeds ICON / Mushtaq lab' # longer format to identify lab
+directory = '~/data/eegmanylabs/HajcakFoti2008'
+
+[monitor]
+width = 55.00 # width of the screen in centimeters (without the frame)
+distance = 45 # distance of the participants eyes to the screen in centimeters
+resolution = [1920, 1080] # width, height pixels of the monitor 
+refresh_rate = 60 # refresh rate (as reported by OS or from hardware specs)
+screen = 0
+
+[triggers]
+type = 'parallel' # serial, parallel, labjack or viewpixx
+address = '0xE020' # address = hex2dec('E020'); hardware address of the trigger port (not all types require this)
+baudrate = 0 # speed of the trigger port (only applies to serial port)
