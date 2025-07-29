@@ -85,5 +85,7 @@ def createTriggerPort(typ: str, engine: PsychopyEngine, scale: float, address: s
         return ViewPixxTriggerPort(engine, scale, viewPixBulbSize)
     elif typ == 'labjack':
         return LabJackPort()
+    elif typ == 'parallel':
+        return ParallelPort(address)
     else:
         raise ValueError('Unknown port type in lab settings.')
