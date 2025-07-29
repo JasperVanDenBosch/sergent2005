@@ -176,6 +176,7 @@ class PsychopyEngine(object):
             for stim in stims:
                 stim.draw()
             self.win.flip()
+            self.port.reset()
         return record.get('flipTime', -99.99)
 
     def displayEmptyScreen(self, duration: int) -> float:
@@ -246,11 +247,13 @@ class PsychopyEngine(object):
             )
             scale.draw()
             self.win.flip()
+            
             while scale.noResponse:
                 scale.draw()
                 if self.exitRequested():
                     break
                 self.win.flip()
+                self.port.reset()
             if self.exitRequested():
                 break
 
@@ -259,6 +262,7 @@ class PsychopyEngine(object):
             if scale.getRating() != '':
                 ## valid choice; continue
                 break
+        self.port.reset()
         choice_index = options.index(scale.getRating()) # index of response wrt labels
         return choice_index, record.get('flipTime', -99.99), total_rt
     
@@ -287,6 +291,7 @@ class PsychopyEngine(object):
         self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         self.win.flip()
+        
 
         # Show scale and instruction und confirmation of rating is done
         while scale.noResponse:
@@ -294,10 +299,12 @@ class PsychopyEngine(object):
             if self.exitRequested():
                 break
             self.win.flip()
+            self.port.reset()
 
         rating = scale.getRating()
         if rating is None:
             rating = -999
+        self.port.reset()
         choice_index = int(rating) # index of response wrt scale
         rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
         return choice_index, record.get('flipTime', -99.99), rt
