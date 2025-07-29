@@ -56,8 +56,8 @@ class PsychopyEngine(object):
         self._exitNow = False
 
     def askForString(self, question: str) -> str:
-        N = 4
-        chars = ascii_uppercase + digits
+        N = 6
+        chars = digits
         default = ''.join(choice(chars) for _ in range(N))
         string_id = askstring(question, question, initialvalue=str(default))
         if string_id is None:

@@ -20,7 +20,7 @@ engine = PsychopyEngine()
 ## user input
 config = getLabConfiguration()
 SITE = config['site']['abbreviation']
-pid = engine.askForString('Participant ID: ')
+pid = int(engine.askForString('Participant ID: '))
 sub = f'{SITE}{pid}' # the subject ID is a combination of lab ID + subject index
 
 ## data directory and file paths
@@ -40,7 +40,7 @@ engine.configureWindow(config)
 
 ## record some basic info
 engine.logDictionary('SESSION', dict(
-    participant_index=pidx,
+    participant_index=pid,
     date_str=dt_str))
 engine.logDictionary('PLATFORM', platform.uname()._asdict())
 engine.logDictionary('SITE_CONFIG', config)
@@ -65,7 +65,7 @@ engine.loadStimuli(
 engine.showMessage(const.welcome_message, const.LARGE_FONT)
 
 ## counterbalance task type based on the participant index being odd or even
-blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
+blocks = ('dual', 'single') if (pid % 2) == 0 else ('single', 'dual')
 
 timer = Timer()
 timer.optimizeFlips(fr_conf, const)
