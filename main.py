@@ -20,11 +20,11 @@ engine = PsychopyEngine()
 ## user input
 config = getLabConfiguration()
 SITE = config['site']['abbreviation']
-pidx = int(engine.askForString('Participant ID number: '))
-sub = f'{SITE}{pidx:03}' # the subject ID is a combination of lab ID + subject index
+pid = engine.askForString('Participant ID: ')
+sub = f'{SITE}{pid}' # the subject ID is a combination of lab ID + subject index
 
 ## data directory and file paths
-data_dir = expanduser(f'~/data/EMLsergent2005/sub-{sub}')
+data_dir = expanduser(config['site']['directory'])
 makedirs(data_dir, exist_ok=True) # ensure data directory exists
 # current date+time to seconds, helps to generate unique files, prevent overwriting
 dt_str = datetime.now().strftime(f'%Y%m%d%H%M%S')

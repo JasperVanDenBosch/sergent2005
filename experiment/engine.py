@@ -19,7 +19,10 @@ from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 from psychopy.info import RunTimeInfo
-from psychopy.gui import Dlg
+#from psychopy.gui import Dlg
+from tkinter.simpledialog import askstring
+from random import choice
+from string import ascii_uppercase, digits
 import numpy
 from experiment.dummy import DummyStim
 from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
@@ -53,12 +56,13 @@ class PsychopyEngine(object):
         self._exitNow = False
 
     def askForString(self, question: str) -> str:
-        myDlg = Dlg()
-        myDlg.addField(question)
-        ok_data = myDlg.show()
-        if not myDlg.OK:
-            raise ValueError('Dialog was cancelled')
-        return ok_data[0]
+        N = 4
+        chars = ascii_uppercase + digits
+        default = ''.join(choice(chars) for _ in range(N))
+        string_id = askstring(question, question, initialvalue=str(default))
+        if string_id is None:
+            raise ValueError('No participant ID given')
+        return string_id
 
     def configureLog(self, fpath: str):
         logging.console.setLevel(logging.WARN)
