@@ -14,7 +14,7 @@ from psychopy.event import waitKeys, getKeys
 from psychopy.core import wait
 from psychopy import logging
 from psychopy.visual import Window, TextStim
-from psychopy.visual.ratingscale import RatingScale
+from psychopy.visual.slider import Slider
 from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
@@ -233,39 +233,60 @@ class PsychopyEngine(object):
         self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         total_rt = 0
+        scale = Slider(
+            win=self.win,
+            name='promptId',
+            size=(.8, .2),
+            pos=(0.0, 0.0),
+            labels=choices,
+            granularity=1,
+            #ticks=(0, 1), list(range(len(choices)+1))
+            style=['rating'],
+            lineColor='DarkGrey',
+            markerColor='DarkGrey',
+        )
+        key_resp = keyboard.Keyboard()
         while True:
             ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
             ## we simply create a new RatingScale
-            scale = RatingScale(
-                self.win,
-                noMouse=True,
-                choices=choices,
-                markerStart=1,
-                scale=prompt,
-                acceptKeys='space',
-                lineColor='DarkGrey',
-                markerColor='DarkGrey',
-                pos=(0.0, 0.0),
-                showAccept=False,
-                name='promptId'
-            )
             scale.draw()
             self.win.flip()
+
+            scale.draw()
+            quitText.draw()
+
+            # if 'left' in key_resp.keys:
+            #     current_rating = slider.getRating()
+            #     new_rating = max(0, current_rating - 1) # Decrement rating, ensure it doesn't go below 0
+            #     slider.setRating(new_rating)
+            #     key_resp.clearEvents()
+            # elif 'right' in key_resp.keys:
+            #     current_rating = slider.getRating()
+            #     new_rating = min(10, current_rating + 1) # Increment rating, ensure it doesn't go above 10
+            #     slider.setRating(new_rating)
+            #     key_resp.clearEvents()
             
-            while scale.noResponse:
-                scale.draw()
+            theseKeys = key_resp.getKeys(keyList=['escape'], waitRelease=False)
+            h = hueSlider.getRating() or 0
+            if len(theseKeys):
+                theseKeys = theseKeys[0]  # at least one key was pressed
+                
+                # check for quit:
                 if self.exitRequested():
                     break
-                self.win.flip()
-                self.port.reset()
-            if self.exitRequested():
-                break
+                if "enter" == theseKeys:
+                    break
+            
 
-            ## in case we have to restart the prompt, store RT
-            total_rt += round((scale.getRT() or -999)*1000)
-            if scale.getRating() != '':
-                ## valid choice; continue
-                break
+            self.win.flip()
+            self.port.reset()
+
+
+        ## in case we have to restart the prompt, store RT
+        total_rt += round((scale.getRT() or -999)*1000)
+        if scale.getRating() != '':
+            ## valid choice; continue
+            break
         self.port.reset()
         choice_index = options.index(scale.getRating()) # index of response wrt labels
         return choice_index, record.get('flipTime', -99.99), total_rt
