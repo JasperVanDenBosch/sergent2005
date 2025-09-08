@@ -3,14 +3,15 @@
 
 [site]
 abbreviation = 'WXYZ' # 4-letter abbreviation, no digits, to be used in the BIDS subject identifiers
+directory = '~/data/eegmanylabs/Sergent2005'
 
 [monitor]
 width = 62.23 # width of the screen in centimeters (without the frame)
-distance = 50 # distance of the participants eyes to the screen in centimeters
 resolution = [1920, 1080] # width, height pixels of the monitor 
 refresh_rate = 60 # refresh rate (as reported by OS or from hardware specs)
+distance = 40 # distance of the participants eyes to the screen in centimeters
 
 [triggers]
 type = 'dummy' # serial, parallel, labjack or viewpixx
-address = '0xC010' # hardware address of the trigger port (not all types require this)
+address = '' # hardware address of the trigger port (not all types require this)
 baudrate = 0 # speed of the trigger port (only applies to serial port)
