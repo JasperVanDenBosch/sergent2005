@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Tuple, Dict, List, Union, Any
 import json
 from psychopy.monitors import Monitor
 from psychopy.event import waitKeys, getKeys
+from psychopy.hardware.keyboard import Keyboard
 from psychopy.core import wait
 from psychopy import logging
 from psychopy.visual import Window, TextStim
@@ -20,7 +21,6 @@ from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 from psychopy.info import RunTimeInfo
 #from psychopy.gui import Dlg
-from tkinter.simpledialog import askstring
 from random import choice
 from string import ascii_uppercase, digits
 import numpy
@@ -55,13 +55,22 @@ class PsychopyEngine(object):
         self.port = FakeTriggerPort()
         self._exitNow = False
 
-    def askForString(self, question: str) -> str:
-        N = 6
-        chars = digits
-        default = ''.join(choice(chars) for _ in range(N))
-        string_id = askstring(question, question, initialvalue=str(default))
-        if string_id is None:
-            raise ValueError('No participant ID given')
+    def askForParticipantId(self) -> str:
+        DEFAULT = '9999'
+        LABEL = 'Participant ID'
+        try:
+            from psychopy.gui import Dlg
+            dlg = Dlg(title=LABEL)
+            dlg.addField(LABEL, DEFAULT)
+            data = dlg.show()
+            string_id = data[LABEL]
+            if not dlg.OK:
+                raise ValueError('No participant ID given')
+        except:
+            from tkinter.simpledialog import askstring
+            string_id = askstring(LABEL, LABEL, initialvalue=str(DEFAULT))
+            if string_id is None:
+                raise ValueError('No participant ID given')
         return string_id
 
     def configureLog(self, fpath: str):
@@ -228,68 +237,59 @@ class PsychopyEngine(object):
             self.win.flip()
 
     def promptIdentity(self, prompt: str, options: Tuple[str, str], triggerNr: int) -> Tuple[int, float, int]:
+        
         choices = [options[0], '', options[1]]
         record = dict()
         self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
         total_rt = 0
-        scale = Slider(
+        slider = Slider(
             win=self.win,
             name='promptId',
-            size=(.8, .2),
+            size=(16, 4),
+            units='deg',
             pos=(0.0, 0.0),
             labels=choices,
             granularity=1,
-            #ticks=(0, 1), list(range(len(choices)+1))
-            style=['rating'],
+            ticks=[0, 1, 2],
+            style=['rating'], # ['slider', 'rating', 'radio', 'scrollbar', 'choice']¶
             lineColor='DarkGrey',
             markerColor='DarkGrey',
         )
-        key_resp = keyboard.Keyboard()
+        keyboard = Keyboard()
         while True:
-            ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
-            ## we simply create a new RatingScale
-            scale.draw()
+            slider.draw()
             self.win.flip()
 
-            scale.draw()
-            quitText.draw()
 
-            # if 'left' in key_resp.keys:
-            #     current_rating = slider.getRating()
-            #     new_rating = max(0, current_rating - 1) # Decrement rating, ensure it doesn't go below 0
-            #     slider.setRating(new_rating)
-            #     key_resp.clearEvents()
-            # elif 'right' in key_resp.keys:
-            #     current_rating = slider.getRating()
-            #     new_rating = min(10, current_rating + 1) # Increment rating, ensure it doesn't go above 10
-            #     slider.setRating(new_rating)
-            #     key_resp.clearEvents()
-            
-            theseKeys = key_resp.getKeys(keyList=['escape'], waitRelease=False)
-            h = hueSlider.getRating() or 0
-            if len(theseKeys):
-                theseKeys = theseKeys[0]  # at least one key was pressed
-                
-                # check for quit:
-                if self.exitRequested():
+            keys = keyboard.getKeys()
+            if len(keys):
+                print(keys)
+                if 'left' in keys:
+                    slider.setRating(0)
+                elif 'right' in keys:
+                    slider.setRating(2)
+                elif 'escape' in keys:
                     break
-                if "enter" == theseKeys:
-                    break
-            
 
-            self.win.flip()
+            # rating = slider.getRating()
+            # if rating:
+            #     print(rating, slider.getRT())
+            #     break
+
+
+            # self.win.flip()
             self.port.reset()
 
 
-        ## in case we have to restart the prompt, store RT
-        total_rt += round((scale.getRT() or -999)*1000)
-        if scale.getRating() != '':
-            ## valid choice; continue
-            break
-        self.port.reset()
-        choice_index = options.index(scale.getRating()) # index of response wrt labels
-        return choice_index, record.get('flipTime', -99.99), total_rt
+        # ## in case we have to restart the prompt, store RT
+        # total_rt += round((scale.getRT() or -999)*1000)
+        # if scale.getRating() != '':
+        #     ## valid choice; continue
+        #     break
+        # self.port.reset()
+        # choice_index = options.index(scale.getRating()) # index of response wrt labels
+        # return choice_index, record.get('flipTime', -99.99), total_rt
     
     def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, triggerNr: int) -> Tuple[int, float, int]:
         # the rating scale has to be re-initialized in every function call, because
