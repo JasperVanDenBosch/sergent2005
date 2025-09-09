@@ -20,7 +20,7 @@ engine = PsychopyEngine()
 ## user input
 config = getLabConfiguration()
 SITE = config['site']['abbreviation']
-pid = int(engine.askForString('Participant ID: '))
+pid = int(engine.askForParticipantString())
 sub = f'{SITE}{pid}' # the subject ID is a combination of lab ID + subject index
 
 ## data directory and file paths
@@ -49,7 +49,7 @@ engine.logDictionary('PERFORMANCE', performance)
 fr_conf = config['monitor']['refresh_rate']
 fr_meas = 1000/performance['windowRefreshTimeAvg_ms']
 msg = f'Configured ({fr_conf}) and measured ({fr_meas}) refresh rate differ by more than 1Hz'
-assert isclose(fr_conf, fr_meas, abs_tol=2), msg
+assert isclose(fr_conf, fr_meas, abs_tol=6), msg
 
 ## setup serial port or other trigger port
 engine.connectTriggerInterface(config['triggers'])

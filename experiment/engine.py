@@ -55,7 +55,7 @@ class PsychopyEngine(object):
         self.port = FakeTriggerPort()
         self._exitNow = False
 
-    def askForParticipantId(self) -> str:
+    def askForParticipantString(self) -> str:
         DEFAULT = '9999'
         LABEL = 'Participant ID'
         try:
@@ -250,7 +250,7 @@ class PsychopyEngine(object):
         instruction = TextStim(
             self.win,
             text=prompt,
-            height=1.5,
+            height=0.8,
             pos=(0.0, 5.0),
             units='deg',
             name='promptIdentity instruction'
@@ -295,7 +295,7 @@ class PsychopyEngine(object):
                     break
             self.port.reset()
 
-        choice = choices[slider.getRating()]
+        choice = int(slider.getRating()/2)
         onset = record.get('flipTime', -99.99)
         rt = round((slider.getRT() or 9999)*1000)
         return choice, onset, rt
@@ -315,7 +315,7 @@ class PsychopyEngine(object):
             self.win,
             text=prompt,
             pos=(0.0, 5.0),
-            height=1.5,
+            height=0.8,
             units='deg',
             name='promptVisibility instruction'
         )
@@ -326,7 +326,7 @@ class PsychopyEngine(object):
         slider = Slider(
             win=self.win,
             name='promptVis',
-            size=(30.0, 1.0),
+            size=(28.0, 0.6),
             units='deg',
             startValue=init,
             pos=(0.0, -2.0),
