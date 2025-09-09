@@ -250,8 +250,8 @@ class PsychopyEngine(object):
         instruction = TextStim(
             self.win,
             text=prompt,
-            height=0.6,
-            pos=(0.0, -5.0),
+            height=1.5,
+            pos=(0.0, 5.0),
             units='deg',
             name='promptIdentity instruction'
         )
@@ -262,9 +262,9 @@ class PsychopyEngine(object):
         slider = Slider(
             win=self.win,
             name='promptId',
-            size=(16, 4),
+            size=(16.0, 2.0),
             units='deg',
-            pos=(0.0, 2.0),
+            pos=(0.0, -2.0),
             labels=choices,
             granularity=1,
             ticks=[0, 1, 2],
@@ -314,8 +314,8 @@ class PsychopyEngine(object):
         instruction = TextStim(
             self.win,
             text=prompt,
-            pos=(0, -5),
-            height=0.6,
+            pos=(0.0, 5.0),
+            height=1.5,
             units='deg',
             name='promptVisibility instruction'
         )
@@ -326,16 +326,17 @@ class PsychopyEngine(object):
         slider = Slider(
             win=self.win,
             name='promptVis',
-            size=(16, 4),
+            size=(30.0, 1.0),
             units='deg',
             startValue=init,
-            pos=(0.0, 2.0),
+            pos=(0.0, -2.0),
             labels=labels,
             granularity=1,
             ticks=values,
             style=['rating'], # ['slider', 'rating', 'radio', 'scrollbar', 'choice']¶
             lineColor='DarkGrey',
             markerColor='DarkGrey',
+            labelWrapWidth=None,
         )
         slider.setRating(init)
         keyboard = Keyboard()
