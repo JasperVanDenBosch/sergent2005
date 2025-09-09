@@ -43,4 +43,6 @@ engine.showMessage(const.welcome_message, const.LARGE_FONT)
 
 engine.promptIdentity('do soemthing', ('one', 'two'), 69)
 
+engine.promptVisibility('do soemthing', ('min', 'max'), 21, 3, 69)
+
 engine.stop()

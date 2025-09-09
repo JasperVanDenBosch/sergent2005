@@ -237,18 +237,34 @@ class PsychopyEngine(object):
             self.win.flip()
 
     def promptIdentity(self, prompt: str, options: Tuple[str, str], triggerNr: int) -> Tuple[int, float, int]:
-        
+        """Display a slider for the participant to identify the stimulus
+
+        Args:
+            prompt (str): instruction
+            options (Tuple[str, str]): tuple with the labels of the two options
+            triggerNr (int): integer number to send as trigger when slider first displayed
+
+        Returns:
+            Tuple[int, float, int]: rating, onset, rt (in milliseconds)
+        """
+        instruction = TextStim(
+            self.win,
+            text=prompt,
+            height=0.6,
+            pos=(0.0, -5.0),
+            units='deg',
+            name='promptIdentity instruction'
+        )
         choices = [options[0], '', options[1]]
         record = dict()
         self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
-        total_rt = 0
         slider = Slider(
             win=self.win,
             name='promptId',
             size=(16, 4),
             units='deg',
-            pos=(0.0, 0.0),
+            pos=(0.0, 2.0),
             labels=choices,
             granularity=1,
             ticks=[0, 1, 2],
@@ -256,91 +272,105 @@ class PsychopyEngine(object):
             lineColor='DarkGrey',
             markerColor='DarkGrey',
         )
+        slider.setRating(1)
         keyboard = Keyboard()
+        n_moves = 0
         while True:
             slider.draw()
+            instruction.draw()
             self.win.flip()
-
 
             keys = keyboard.getKeys()
             if len(keys):
-                print(keys)
                 if 'left' in keys:
+                    n_moves += 1
                     slider.setRating(0)
                 elif 'right' in keys:
+                    n_moves += 1
                     slider.setRating(2)
-                elif 'escape' in keys:
+                elif ('space' in keys) and (n_moves > 0):
                     break
-
-            # rating = slider.getRating()
-            # if rating:
-            #     print(rating, slider.getRT())
-            #     break
-
-
-            # self.win.flip()
+                elif 'escape' in keys:
+                    self._exitNow = True
+                    break
             self.port.reset()
 
-
-        # ## in case we have to restart the prompt, store RT
-        # total_rt += round((scale.getRT() or -999)*1000)
-        # if scale.getRating() != '':
-        #     ## valid choice; continue
-        #     break
-        # self.port.reset()
-        # choice_index = options.index(scale.getRating()) # index of response wrt labels
-        # return choice_index, record.get('flipTime', -99.99), total_rt
+        choice = choices[slider.getRating()]
+        onset = record.get('flipTime', -99.99)
+        rt = round((slider.getRT() or 9999)*1000)
+        return choice, onset, rt
     
     def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, triggerNr: int) -> Tuple[int, float, int]:
-        # the rating scale has to be re-initialized in every function call, because
-        # the marker start can't be randomized and updated when using the same rating
-        # scale object again and again.
-        # The marker start needs to be defined randomly beforehand
-        scale = RatingScale(
-            self.win, low=0,
-            high=scale_length-1,
-            labels=labels,
-            acceptKeys='space',
-            scale=prompt,
-            noMouse=True,
-            lineColor='DarkGrey',
-            markerColor='LightGrey',
-            pos=(0.0, 0.0),
-            showAccept=False,
-            markerStart=init,
-            name='promptVis'
-        )
+        """Display a slider for the participant to rate the visibility of the stimulus
 
-        scale.draw()
+        Args:
+            prompt (str): instruction
+            labels (Tuple[str, str]): tuple with the labels of the two extremes
+            triggerNr (int): integer number to send as trigger when slider first displayed
+
+        Returns:
+            Tuple[int, float, int]: rating, onset, rt (in milliseconds)
+        """
+        instruction = TextStim(
+            self.win,
+            text=prompt,
+            pos=(0, -5),
+            height=0.6,
+            units='deg',
+            name='promptVisibility instruction'
+        )
         record = dict()
         self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
-        self.win.flip()
-        
-
-        # Show scale and instruction und confirmation of rating is done
-        while scale.noResponse:
-            scale.draw()
-            if self.exitRequested():
-                break
+        values = list(range(scale_length))
+        slider = Slider(
+            win=self.win,
+            name='promptVis',
+            size=(16, 4),
+            units='deg',
+            startValue=init,
+            pos=(0.0, 2.0),
+            labels=labels,
+            granularity=1,
+            ticks=values,
+            style=['rating'], # ['slider', 'rating', 'radio', 'scrollbar', 'choice']¶
+            lineColor='DarkGrey',
+            markerColor='DarkGrey',
+        )
+        slider.setRating(init)
+        keyboard = Keyboard()
+        n_moves = 0
+        while True:
+            slider.draw()
+            instruction.draw()
             self.win.flip()
+
+            keys = keyboard.getKeys()
+            if len(keys):
+                if 'left' in keys:
+                    n_moves += 1
+                    slider.setRating(max(0, slider.getRating()-1)) ## todo
+                elif 'right' in keys:
+                    n_moves += 1
+                    slider.setRating(min(max(values), slider.getRating()+1))
+                elif ('space' in keys) and (n_moves > 0):
+                    break
+                elif 'escape' in keys:
+                    self._exitNow = True
+                    break
             self.port.reset()
 
-        rating = scale.getRating()
-        if rating is None:
-            rating = -999
-        self.port.reset()
-        choice_index = int(rating) # index of response wrt scale
-        rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
-        return choice_index, record.get('flipTime', -99.99), rt
+        choice = slider.getRating()
+        onset = record.get('flipTime', -99.99)
+        rt = round((slider.getRT() or 9999)*1000)
+        return choice, onset, rt
     
     def exitRequested(self) -> bool:
         if self._exitNow:
             return True
-        new_keys = getKeys(keyList=['q', 'delete'])
-        if 'q' in new_keys and 'delete' in new_keys:
+        if getKeys(keyList=['escape']):
             self._exitNow = True
-            logging.warn('EXIT REQUESTED (Q and DEL pressed)')
+            logging.warn('EXIT REQUESTED (ESC pressed)')
             return True
         return False
     
