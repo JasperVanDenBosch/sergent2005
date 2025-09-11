@@ -271,6 +271,7 @@ class PsychopyEngine(object):
             style=['rating'], # ['slider', 'rating', 'radio', 'scrollbar', 'choice']¶
             lineColor='DarkGrey',
             markerColor='DarkGrey',
+            font='Arial',
         )
         slider.setRating(1)
         keyboard = Keyboard()
@@ -337,6 +338,7 @@ class PsychopyEngine(object):
             lineColor='DarkGrey',
             markerColor='DarkGrey',
             labelWrapWidth=None,
+            font='Arial',
         )
         slider.setRating(init)
         keyboard = Keyboard()
