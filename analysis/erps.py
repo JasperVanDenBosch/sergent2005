@@ -19,7 +19,7 @@ def print_warn(msg: str):
     print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
 
 
-sub = 'sub-UOBC003'
+sub = 'sub-UOLM001'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 eeg_dir = join(data_dir, sub)
 

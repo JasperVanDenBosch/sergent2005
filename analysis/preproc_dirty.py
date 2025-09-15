@@ -24,10 +24,10 @@ def print_warn(msg: str):
 
 
 BASELINE = 0.250 ## duration of baseline
-fr_conf  = 114 ## TODO double check
+fr_conf  = 60 ## TODO double check
 TMAX = 0.715
 LATENCY = 0.016
-sub = 'sub-UOBC003'
+sub = 'sub-UOLM001'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
@@ -67,7 +67,13 @@ fig.savefig('plots/montage.png')
 raw.set_montage(montage, on_missing='warn')
 
 ## find triggers
-events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
+mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
+events = mne.find_events(
+    raw,
+    verbose=False,
+    mask=mask,
+    mask_type='not_and'
+)
 
 ## triggers for T2
 t2_triggers = list(range(24, 31+1))
