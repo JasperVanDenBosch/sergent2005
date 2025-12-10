@@ -12,6 +12,9 @@ class FakeTriggerPort:
     def trigger(self, val: int) -> None:
         print(f'[TRIGGER] {val}')
 
+    def reset(self) -> None:
+        print(f'[RESET TRIGGER]')
+
 
 class FakeEngine(object):
 
