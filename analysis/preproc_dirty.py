@@ -61,7 +61,7 @@ raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
 raw = raw.set_eeg_reference(ref_channels='average')
 
 ## determine electrode head locations
-montage = make_standard_montage('biosemi128', head_size='auto')
+montage = make_standard_montage('biosemi64', head_size='auto')
 fig = montage.plot(show=False)
 fig.savefig('plots/montage.png')
 raw.set_montage(montage, on_missing='warn')

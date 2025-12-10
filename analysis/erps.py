@@ -26,7 +26,7 @@ eeg_dir = join(data_dir, sub)
 ## for accessing channel indices
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
 raw = read_raw_bdf(raw_fpath)
-montage = make_standard_montage('biosemi128', head_size='auto')
+montage = make_standard_montage('biosemi64', head_size='auto')
 
 
 modes = dict(
