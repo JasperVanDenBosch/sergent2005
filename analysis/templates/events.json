@@ -1,0 +1,38 @@
+{
+  "onset": {
+    "LongName": "Event onset",
+    "Description": "Onset (in seconds) of the event measured from the beginning of the acquisition of the first volume in the corresponding task imaging data file.",
+    "Units": "Sampling Points"
+  },
+  "duration": {
+    "LongName": "Event duration",
+    "Description": "Duration of the event (measured from onset) in seconds",
+    "Units": "second"
+  },
+  "sample": {
+    "LongName": "Sample",
+    "Description": "Onset of the event according to the sampling scheme of the recorded modality (i.e., referring to the raw data file that the events.tsv file accompanies)."
+  },
+  "trial_type": {
+    "LongName": "Event categorization",
+    "Description": "Stimulus category."
+  },
+  "value": {
+    "LongName": "Event marker",
+    "Description": "Marker value associated with the event.",
+    "Levels": $trigger_lookup
+  },
+  "identity": {
+    "LongName": "Identity",
+    "Description": "Number of the stimulus in its category"
+  },
+  "stimulus": {
+    "LongName": "Stimulus",
+    "Description": "Unique name of the stimulus; combines trial_type and identity."
+  },
+  "rt": {
+    "LongName": "RT",
+    "Description": "Response time after Target.",
+    "Unit": "second"
+  }
+}

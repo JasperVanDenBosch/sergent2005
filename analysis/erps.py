@@ -19,14 +19,14 @@ def print_warn(msg: str):
     print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
 
 
-sub = 'sub-UOBC003'
+sub = 'sub-UOLM001'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 eeg_dir = join(data_dir, sub)
 
 ## for accessing channel indices
 raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
 raw = read_raw_bdf(raw_fpath)
-montage = make_standard_montage('biosemi128', head_size='auto')
+montage = make_standard_montage('biosemi64', head_size='auto')
 
 
 modes = dict(

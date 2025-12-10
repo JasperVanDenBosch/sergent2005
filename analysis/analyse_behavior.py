@@ -23,11 +23,11 @@ def print_warn(msg: str):
 
 
 BASELINE = 0.250 ## duration of baseline
-fr_conf  = 114 ## TODO double check
+fr_conf  = 60 ## TODO double check
 REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
 TMAX = 0.715
 LATENCY = 0.016
-sub = 'sub-UOBC003'
+sub = 'sub-UOLM001'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
