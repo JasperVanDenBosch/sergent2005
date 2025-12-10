@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union
 from serial import Serial
 from experiment.fake_engine import FakeTriggerPort
+from psychopy.parallel import ParallelPort as PsychopyParallelPort
+from psychopy.core import wait
 if TYPE_CHECKING:
     from experiment.engine import PsychopyEngine
 
@@ -16,6 +18,24 @@ class SerialTriggerPort:
     def trigger(self, val: int) -> None:
         self.sport.write(bytes([val]))
 
+    def reset(self) -> None:
+        pass
+
+
+class ParallelPort:
+
+    def __init__(self, address: str):
+        self.pport = PsychopyParallelPort(address=address)
+        self.active = False
+
+    def trigger(self, val: int) -> None:
+        self.pport.setData(val)
+        self.active = True
+
+    def reset(self) -> None:
+        if self.active:
+            self.pport.setData(0)
+            self.active = False
 
 class LabJackPort:
 
@@ -26,6 +46,8 @@ class LabJackPort:
     def trigger(self, val: int) -> None:
         self.inner.setData(val, address='FIO')
 
+    def reset(self) -> None:
+        self.inner.setData(0, address='FIO')
 
 class ViewPixxTriggerPort:
 
@@ -48,6 +70,8 @@ class ViewPixxTriggerPort:
         self.line.setLineColor((val, val, val))
         self.line.draw()
 
+    def reset(self) -> None:
+        pass
 
 TriggerInterface = Union[SerialTriggerPort, FakeTriggerPort,
     ViewPixxTriggerPort, LabJackPort]
@@ -61,5 +85,7 @@ def createTriggerPort(typ: str, engine: PsychopyEngine, scale: float, address: s
         return ViewPixxTriggerPort(engine, scale, viewPixBulbSize)
     elif typ == 'labjack':
         return LabJackPort()
+    elif typ == 'parallel':
+        return ParallelPort(address)
     else:
         raise ValueError('Unknown port type in lab settings.')

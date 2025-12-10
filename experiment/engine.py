@@ -11,15 +11,18 @@ from typing import TYPE_CHECKING, Tuple, Dict, List, Union, Any
 import json
 from psychopy.monitors import Monitor
 from psychopy.event import waitKeys, getKeys
+from psychopy.hardware.keyboard import Keyboard
 from psychopy.core import wait
 from psychopy import logging
 from psychopy.visual import Window, TextStim
-from psychopy.visual.ratingscale import RatingScale
+from psychopy.visual.slider import Slider
 from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 from psychopy.info import RunTimeInfo
-from psychopy.gui import Dlg
+#from psychopy.gui import Dlg
+from random import choice
+from string import ascii_uppercase, digits
 import numpy
 from experiment.dummy import DummyStim
 from experiment.ports import TriggerInterface, FakeTriggerPort, createTriggerPort
@@ -52,13 +55,23 @@ class PsychopyEngine(object):
         self.port = FakeTriggerPort()
         self._exitNow = False
 
-    def askForString(self, question: str) -> str:
-        myDlg = Dlg()
-        myDlg.addField(question)
-        ok_data = myDlg.show()
-        if not myDlg.OK:
-            raise ValueError('Dialog was cancelled')
-        return ok_data[0]
+    def askForParticipantString(self) -> str:
+        DEFAULT = '9999'
+        LABEL = 'Participant ID'
+        try:
+            from psychopy.gui import Dlg
+            dlg = Dlg(title=LABEL)
+            dlg.addField(LABEL, DEFAULT)
+            data = dlg.show()
+            string_id = data[LABEL]
+            if not dlg.OK:
+                raise ValueError('No participant ID given')
+        except:
+            from tkinter.simpledialog import askstring
+            string_id = askstring(LABEL, LABEL, initialvalue=str(DEFAULT))
+            if string_id is None:
+                raise ValueError('No participant ID given')
+        return string_id
 
     def configureLog(self, fpath: str):
         logging.console.setLevel(logging.WARN)
@@ -176,6 +189,7 @@ class PsychopyEngine(object):
             for stim in stims:
                 stim.draw()
             self.win.flip()
+            self.port.reset()
         return record.get('flipTime', -99.99)
 
     def displayEmptyScreen(self, duration: int) -> float:
@@ -223,92 +237,143 @@ class PsychopyEngine(object):
             self.win.flip()
 
     def promptIdentity(self, prompt: str, options: Tuple[str, str], triggerNr: int) -> Tuple[int, float, int]:
+        """Display a slider for the participant to identify the stimulus
+
+        Args:
+            prompt (str): instruction
+            options (Tuple[str, str]): tuple with the labels of the two options
+            triggerNr (int): integer number to send as trigger when slider first displayed
+
+        Returns:
+            Tuple[int, float, int]: rating, onset, rt (in milliseconds)
+        """
+        instruction = TextStim(
+            self.win,
+            text=prompt,
+            height=0.8,
+            pos=(0.0, 5.0),
+            units='deg',
+            name='promptIdentity instruction'
+        )
         choices = [options[0], '', options[1]]
         record = dict()
         self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
-        total_rt = 0
+        slider = Slider(
+            win=self.win,
+            name='promptId',
+            size=(16.0, 2.0),
+            units='deg',
+            pos=(0.0, -2.0),
+            labels=choices,
+            granularity=1,
+            ticks=[0, 1, 2],
+            style=['rating'], # ['slider', 'rating', 'radio', 'scrollbar', 'choice']¶
+            lineColor='DarkGrey',
+            markerColor='DarkGrey',
+            font='Arial',
+        )
+        slider.setRating(1)
+        keyboard = Keyboard()
+        n_moves = 0
         while True:
-            ## This loop is a trick to force a choice; if the dummy middle choice is chosen,
-            ## we simply create a new RatingScale
-            scale = RatingScale(
-                self.win,
-                noMouse=True,
-                choices=choices,
-                markerStart=1,
-                scale=prompt,
-                acceptKeys='space',
-                lineColor='DarkGrey',
-                markerColor='DarkGrey',
-                pos=(0.0, 0.0),
-                showAccept=False,
-                name='promptId'
-            )
-            scale.draw()
+            slider.draw()
+            instruction.draw()
             self.win.flip()
-            while scale.noResponse:
-                scale.draw()
-                if self.exitRequested():
-                    break
-                self.win.flip()
-            if self.exitRequested():
-                break
 
-            ## in case we have to restart the prompt, store RT
-            total_rt += round((scale.getRT() or -999)*1000)
-            if scale.getRating() != '':
-                ## valid choice; continue
-                break
-        choice_index = options.index(scale.getRating()) # index of response wrt labels
-        return choice_index, record.get('flipTime', -99.99), total_rt
+            keys = keyboard.getKeys()
+            if len(keys):
+                if 'left' in keys:
+                    n_moves += 1
+                    slider.setRating(0)
+                elif 'right' in keys:
+                    n_moves += 1
+                    slider.setRating(2)
+                elif ('space' in keys) and (n_moves > 0):
+                    break
+                elif 'escape' in keys:
+                    self._exitNow = True
+                    break
+            self.port.reset()
+
+        choice = int(slider.getRating()/2)
+        onset = record.get('flipTime', -99.99)
+        rt = round((slider.getRT() or 9999)*1000)
+        return choice, onset, rt
     
     def promptVisibility(self, prompt: str, labels: Tuple[str, str], scale_length: int, init: int, triggerNr: int) -> Tuple[int, float, int]:
-        # the rating scale has to be re-initialized in every function call, because
-        # the marker start can't be randomized and updated when using the same rating
-        # scale object again and again.
-        # The marker start needs to be defined randomly beforehand
-        scale = RatingScale(
-            self.win, low=0,
-            high=scale_length-1,
-            labels=labels,
-            acceptKeys='space',
-            scale=prompt,
-            noMouse=True,
-            lineColor='DarkGrey',
-            markerColor='LightGrey',
-            pos=(0.0, 0.0),
-            showAccept=False,
-            markerStart=init,
-            name='promptVis'
-        )
+        """Display a slider for the participant to rate the visibility of the stimulus
 
-        scale.draw()
+        Args:
+            prompt (str): instruction
+            labels (Tuple[str, str]): tuple with the labels of the two extremes
+            triggerNr (int): integer number to send as trigger when slider first displayed
+
+        Returns:
+            Tuple[int, float, int]: rating, onset, rt (in milliseconds)
+        """
+        instruction = TextStim(
+            self.win,
+            text=prompt,
+            pos=(0.0, 5.0),
+            height=0.8,
+            units='deg',
+            name='promptVisibility instruction'
+        )
         record = dict()
         self.win.timeOnFlip(record, 'flipTime')
         self.win.callOnFlip(self.port.trigger, triggerNr)
-        self.win.flip()
-
-        # Show scale and instruction und confirmation of rating is done
-        while scale.noResponse:
-            scale.draw()
-            if self.exitRequested():
-                break
+        values = list(range(scale_length))
+        slider = Slider(
+            win=self.win,
+            name='promptVis',
+            size=(28.0, 0.6),
+            units='deg',
+            startValue=init,
+            pos=(0.0, -2.0),
+            labels=labels,
+            granularity=1,
+            ticks=values,
+            style=['rating'], # ['slider', 'rating', 'radio', 'scrollbar', 'choice']¶
+            lineColor='DarkGrey',
+            markerColor='DarkGrey',
+            labelWrapWidth=None,
+            font='Arial',
+        )
+        slider.setRating(init)
+        keyboard = Keyboard()
+        n_moves = 0
+        while True:
+            slider.draw()
+            instruction.draw()
             self.win.flip()
 
-        rating = scale.getRating()
-        if rating is None:
-            rating = -999
-        choice_index = int(rating) # index of response wrt scale
-        rt = round((scale.getRT() or -999)*1000) # return RT in milliseconds
-        return choice_index, record.get('flipTime', -99.99), rt
+            keys = keyboard.getKeys()
+            if len(keys):
+                if 'left' in keys:
+                    n_moves += 1
+                    slider.setRating(max(0, slider.getRating()-1)) ## todo
+                elif 'right' in keys:
+                    n_moves += 1
+                    slider.setRating(min(max(values), slider.getRating()+1))
+                elif ('space' in keys) and (n_moves > 0):
+                    break
+                elif 'escape' in keys:
+                    self._exitNow = True
+                    break
+            self.port.reset()
+
+        choice = slider.getRating()
+        onset = record.get('flipTime', -99.99)
+        rt = round((slider.getRT() or 9999)*1000)
+        return choice, onset, rt
     
     def exitRequested(self) -> bool:
         if self._exitNow:
             return True
-        new_keys = getKeys(keyList=['q', 'delete'])
-        if 'q' in new_keys and 'delete' in new_keys:
+        if getKeys(keyList=['escape']):
             self._exitNow = True
-            logging.warn('EXIT REQUESTED (Q and DEL pressed)')
+            logging.warn('EXIT REQUESTED (ESC pressed)')
             return True
         return False
     

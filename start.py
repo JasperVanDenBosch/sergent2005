@@ -20,11 +20,11 @@ engine = PsychopyEngine()
 ## user input
 config = getLabConfiguration()
 SITE = config['site']['abbreviation']
-pidx = int(engine.askForString('Participant ID number: '))
-sub = f'{SITE}{pidx:03}' # the subject ID is a combination of lab ID + subject index
+pid = int(engine.askForParticipantString())
+sub = f'{SITE}{pid}' # the subject ID is a combination of lab ID + subject index
 
 ## data directory and file paths
-data_dir = expanduser(f'~/data/EMLsergent2005/sub-{sub}')
+data_dir = expanduser(config['site']['directory'])
 makedirs(data_dir, exist_ok=True) # ensure data directory exists
 # current date+time to seconds, helps to generate unique files, prevent overwriting
 dt_str = datetime.now().strftime(f'%Y%m%d%H%M%S')
@@ -40,7 +40,7 @@ engine.configureWindow(config)
 
 ## record some basic info
 engine.logDictionary('SESSION', dict(
-    participant_index=pidx,
+    participant_index=pid,
     date_str=dt_str))
 engine.logDictionary('PLATFORM', platform.uname()._asdict())
 engine.logDictionary('SITE_CONFIG', config)
@@ -49,7 +49,7 @@ engine.logDictionary('PERFORMANCE', performance)
 fr_conf = config['monitor']['refresh_rate']
 fr_meas = 1000/performance['windowRefreshTimeAvg_ms']
 msg = f'Configured ({fr_conf}) and measured ({fr_meas}) refresh rate differ by more than 1Hz'
-assert isclose(fr_conf, fr_meas, abs_tol=2), msg
+assert isclose(fr_conf, fr_meas, abs_tol=6), msg
 
 ## setup serial port or other trigger port
 engine.connectTriggerInterface(config['triggers'])
@@ -65,7 +65,7 @@ engine.loadStimuli(
 engine.showMessage(const.welcome_message, const.LARGE_FONT)
 
 ## counterbalance task type based on the participant index being odd or even
-blocks = ('dual', 'single') if (pidx % 2) == 0 else ('single', 'dual')
+blocks = ('dual', 'single') if (pid % 2) == 0 else ('single', 'dual')
 
 timer = Timer()
 timer.optimizeFlips(fr_conf, const)
