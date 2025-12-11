@@ -44,13 +44,14 @@ CHANNELS = [
 
 templates = dict()
 for filename in ('eeg.json', 'events.json'):
-    with open(join('templates', filename)) as fhandle:
+    with open(join('analysis/templates', filename)) as fhandle:
         templates[filename] = Template(fhandle.read())
 
 
-data_dir = expanduser('~/data/phb')
+data_dir = expanduser('~/data/eegmanylabs/sergent2005')
+source_dirs = sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*')))
 s = 0
-for source_dir in sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*'))):
+for source_dir in source_dirs:
 
     s += 1
     sub = f'sub-{s:02}'
@@ -65,6 +66,8 @@ for source_dir in sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*'))):
     raw = read_raw_bdf(bdf_fpath)
     sfreq = raw.info['sfreq']
 
+
+    ## Generate channels file
     channels = []
     for name in raw.info['ch_names']:
         for channel in CHANNELS:
@@ -73,8 +76,17 @@ for source_dir in sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*'))):
                 break
         else:
             channels.append(dict(name=name, type='EEG', units='uV', description='n/a'))
+    fpath_chan = join(eeg_dir, f'{sub}_task-{TASK}_channels.tsv')
+    DataFrame(channels).to_csv(fpath_chan, sep='\t', index=False)
 
-    #evt = find_events(raw, consecutive=True, shortest_event=0)
+
+    evt = find_events(raw, shortest_event=0)
+
+    mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
+    evt = find_events(raw, mask=mask, mask_type='not_and')
+
+
+    raise ValueError
     last_evt_index = diff(evt[:,0]).argmax()
     evt_slices = dict(passive=slice(0, last_evt_index+1), animacy=slice(last_evt_index+1, None))
     key_times = dict(
@@ -102,7 +114,7 @@ for source_dir in sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*'))):
         )
 
     ## evts for this task
-    evt_task = find_events(raw, consecutive=True, shortest_event=0)
+    evt_task = find_events(raw)
 
     ## process event file
     csv_files = glob(join(source_dir, f'*_trials.csv'))
@@ -133,8 +145,6 @@ for source_dir in sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*'))):
             ).replace('\'', '"')
         )
 
-    ## create channels file
-    fpath_chan = join(eeg_dir, f'{sub}_task-{TASK}_channels.tsv')
-    DataFrame(channels).to_csv(fpath_chan, sep='\t', index=False)
+
 
 
