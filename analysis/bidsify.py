@@ -7,6 +7,8 @@ Looks for data in "sourcedata" folder
 - mark bad segments
 - bad channels
 """
+from __future__ import annotations
+from typing import Tuple, Any, Dict
 from os.path import expanduser, join
 from os import makedirs
 from glob import glob
@@ -15,20 +17,19 @@ from mne.io import read_raw_bdf
 from mne import find_events
 from numpy import diff
 from string import Template
-from pandas import read_csv, DataFrame
+from pandas import read_csv, DataFrame, Series
+from event import event_dict, EventType
+
+SFREQ = 2048
+
+
 
 BUFFER_SEC = 5
 TASK_DESC = {
     'blink': 'Attentional Blink paradigm',
 }
-COLS = {
-    'target': 'trial_type',
-    'TriggerNum': 'value',
-    'TrialKeyResp.rt': 'rt',
-    'imgfileP2': 'identity',
-    'Trial.started': 'onset'
-}
-TASK = 'blink'
+TASK = 'ab'
+
 
 CHANNELS = [
     dict(name='EXG1', type='REF', units='uV', description='left mastoid'),
@@ -58,8 +59,8 @@ for source_dir in source_dirs:
     sub_dir = join(data_dir, sub)
     eeg_dir = join(sub_dir, 'eeg')
     makedirs(eeg_dir, exist_ok=True)
-    beh_dir = join(sub_dir, 'beh')
-    makedirs(beh_dir, exist_ok=True)
+    # beh_dir = join(sub_dir, 'beh')
+    # makedirs(beh_dir, exist_ok=True)
 
 
     bdf_fpath = glob(join(source_dir, '*.bdf'))[0]
@@ -80,10 +81,51 @@ for source_dir in source_dirs:
     DataFrame(channels).to_csv(fpath_chan, sep='\t', index=False)
 
 
+    ## process event file
+    csv_files = glob(join(source_dir, f'*_trials.csv'))
+    assert len(csv_files) == 1
+    trials_df = read_csv(csv_files[0])
+
     evt = find_events(raw, shortest_event=0)
 
     mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
     evt = find_events(raw, mask=mask, mask_type='not_and')
+
+
+
+    """
+
+    At least in UOLM001, the trigger for the task (1,2,11,12) 
+    seems to often be missing.
+
+    """
+    e = 0
+    events = []
+    for t, trial in trials_df.iterrows():
+
+        te = 0
+        assert trial.t1_trigger == evt[e+te, 2]
+        events.append(event_dict(EventType.T1, trial, tuple(evt[e+te, :]), SFREQ))
+
+
+        te += 1
+        assert trial.t2_trigger == evt[e+te, 2]
+        events.append(event_dict(EventType.T2, trial, tuple(evt[e+te, :]), SFREQ))
+
+        te += 1
+        for _ in range(2):
+            if e+te < evt.shape[0]:
+                print(evt[e+te, 2])
+                if evt[e+te, 2] in (1, 2, 11, 12):
+                    events.append(event_dict(EventType.TASK, trial, tuple(evt[e+te, :]), SFREQ))
+                    te += 1
+        if te <= 2:
+            #print(f'No prompt trigger in trial {t}')
+            pass
+        
+        e += te
+
+    DataFrame(events).to_csv(join(eeg_dir, f'{sub}_task-{TASK}_events.tsv'), sep='\t', index=False)
 
 
     raise ValueError
