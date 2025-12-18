@@ -125,7 +125,7 @@ for source_dir in source_dirs:
         
         e += te
 
-    DataFrame(events).to_csv(join(eeg_dir, f'{sub}_task-{TASK}_events.tsv'), sep='\t', index=False)
+    DataFrame(events).to_csv(join(eeg_dir, f'{sub}_task-{TASK}_events.tsv'), sep='\t', index=False, float_format = '%.12g')
 
 
     raise ValueError

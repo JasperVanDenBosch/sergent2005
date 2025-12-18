@@ -15,7 +15,7 @@ def event_dict(kind: EventType, trial: Series, evt: Tuple[int, int, int], sfreq:
     onset = round(evt[0] / sfreq, 3)
     if kind == EventType.TASK:
         return dict(
-            onset = evt[0] / sfreq,
+            onset = onset,
             sample = evt[0],
             value = evt[2],
             trial_type='prompt_t1' if evt[2] in (1, 11) else 'prompt_t2',
@@ -30,7 +30,7 @@ def event_dict(kind: EventType, trial: Series, evt: Tuple[int, int, int], sfreq:
         else:
             correct = None
         return dict(
-            onset = evt[0] / sfreq,
+            onset = onset,
             sample = evt[0],
             value = evt[2],
             trial_type=kind.name.lower(),
