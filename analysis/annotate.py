@@ -20,10 +20,10 @@ def print_warn(msg: str):
 
 
 BASELINE = 0.250 ## duration of baseline
-fr_conf  = 114 ## TODO double check
+fr_conf  = 60 ## TODO double check
 TMAX = 0.715
 LATENCY = 0.016 ## based on latrec recording
-sub = 'sub-UOBC003'
+sub = 'sub-UOLM001'
 data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
 eeg_dir = join(data_dir, sub)
@@ -39,12 +39,12 @@ timer.optimizeFlips(fr_conf, Constants())
 raw = read_raw_bdf(raw_fpath)
 
 ## get rid of empty channels and mark channel types
-raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8', 'GSR1', 'GSR2', 'Erg1', 'Erg2', 'Resp', 'Plet', 'Temp']) # type: ignore
+raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
 eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
 raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
 ## bad channels
-bad_chans = ['A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
+bad_chans = [] #'D5', 'D8', 'D16', 'D17']
 raw.info['bads'].extend(bad_chans)
 
 ## remove the mastoids
@@ -53,7 +53,13 @@ raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
 
 #raise ValueError
 ## find triggers
-events = mne.find_events(raw, mask=2**17 -256, mask_type='not_and', consecutive=True, min_duration=0.1)
+mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
+events = mne.find_events(
+    raw,
+    verbose=False,
+    mask=mask,
+    mask_type='not_and'
+)
 
 ## triggers for T2 (experiment + training)
 t2_triggers = list(range(24, 31+1)) + list(range(40, 47+1))
