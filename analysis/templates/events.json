@@ -67,6 +67,23 @@
   },
   "stimulus": {
     "LongName": "Stimulus",
-    "Description": "Unique name of the stimulus; combines trial_type and identity."
+    "Description": "The stimulus character string. Empty for task events."
+  },
+  "vis_rating": {
+    "LongName": "Visibility Rating",
+    "Description": "The rating provided by the participant of the visibility of T2; values 0-20."
+  },
+  "vis_init": {
+    "LongName": "Visibility Initial Value",
+    "Description": "Initial Position of the Visibility Prompt Slider; values 0-20."
+  },
+  "correct": {
+    "LongName": "Accuracy of Identity Response",
+    "Description": "Whether the response to the T1 Identity Prompt was correct.",
+    "Levels": {
+        "TRUE": "Correct",
+        "FALSE": "Incorrect",
+        "": "Missing / Does not apply"
+    }
   }
 }

@@ -16,12 +16,21 @@ from mne import find_events
 from string import Template
 from pandas import read_csv, DataFrame
 from event import event_dict, EventType
+from experiment.constants import Constants
+from experiment.timer import Timer
+from experiment.triggers import Triggers
 
 TASK_DESC = {
     'ab': 'Attentional Blink paradigm',
 }
 TASK = 'ab'
+FRAMERATE = 60 ## from lab config file uolm.toml
 
+## Determine the duration of targets (for events sidecar)
+const = Constants()
+timer = Timer()
+timer.optimizeFlips(FRAMERATE, const)
+target_dur_s = timer.flipsToSecs(const.target_dur)
 
 CHANNELS = [
     dict(name='EXG1', type='REF', units='uV', description='left mastoid'),
@@ -92,34 +101,31 @@ for source_dir in source_dirs:
 
         te = 0
         assert trial.t1_trigger == evt[e+te, 2]
-        events.append(event_dict(EventType.T1, trial, tuple(evt[e+te, :]), sfreq))
+        events.append(event_dict(EventType.T1, trial, tuple(evt[e+te, :]), sfreq, target_dur_s))
 
 
         te += 1
         assert trial.t2_trigger == evt[e+te, 2]
-        events.append(event_dict(EventType.T2, trial, tuple(evt[e+te, :]), sfreq))
+        events.append(event_dict(EventType.T2, trial, tuple(evt[e+te, :]), sfreq, target_dur_s))
 
         te += 1
         for _ in range(2):
             if e+te < evt.shape[0]:
-                #print(evt[e+te, 2])
                 if evt[e+te, 2] in (1, 2, 11, 12):
-                    events.append(event_dict(EventType.TASK, trial, tuple(evt[e+te, :]), sfreq))
+                    events.append(event_dict(EventType.TASK, trial, tuple(evt[e+te, :]), sfreq, None))
                     te += 1
         if te <= 2:
-            #print(f'No prompt trigger in trial {t}')
+            # No prompt trigger in trial {t}
             pass
         
         e += te
     df_events = DataFrame(events)
     df_events.to_csv(join(eeg_dir, f'{sub}_task-{TASK}_events.tsv'), sep='\t', index=False, float_format = '%.12g')
 
+
     ## create events sidecar file
     triggers = set(df_events.value)
-    trigger_lookup = dict()
-    for trigger in triggers:
-        name = df_events[(df_events.value == trigger)].iloc[0].stimulus
-        trigger_lookup[str(trigger)] = name
+    trigger_lookup = {str(v): k for k, v in Triggers().asdict().items()}
     fpath_evt_json = join(eeg_dir, f'{sub}_task-{TASK}_events.json')
     with open(fpath_evt_json, 'w') as fhandle:
         fhandle.write(
@@ -140,8 +146,3 @@ for source_dir in source_dirs:
                 )
             )
         )
-
-    raise ValueError
-
-
-
