@@ -86,12 +86,8 @@ for source_dir in source_dirs:
 
 
     """
-
-    At least in UOLM001, the trigger for the task (1,2,11,12) 
-    seems to often be missing.
-
+    Some recordings are missing the first few training trials
     """
-    # missing 8
     if s == 3:
         trials_offset = 8
     elif s == 5:
@@ -118,6 +114,10 @@ for source_dir in source_dirs:
                 if evt[e+te, 2] in (1, 2, 11, 12):
                     events.append(event_dict(EventType.TASK, trial, tuple(evt[e+te, :]), sfreq, None))
                     te += 1
+        """
+        At least in UOLM1-5, the trigger for the task (1,2,11,12) 
+        seems to often be missing. This is likely due to the noise on the trigger channel.
+        """
         if te <= 2:
             # No prompt trigger in trial {t}
             pass
