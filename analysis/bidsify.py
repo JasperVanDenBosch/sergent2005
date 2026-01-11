@@ -2,31 +2,23 @@
 Restructure collected data into BIDS format.
 Looks for data in "sourcedata" folder
 
-
 - split up tasks?
 - mark bad segments
 - bad channels
 """
 from __future__ import annotations
-from typing import Tuple, Any, Dict
 from os.path import expanduser, join
 from os import makedirs
 from glob import glob
 from copy import copy
 from mne.io import read_raw_bdf
 from mne import find_events
-from numpy import diff
 from string import Template
-from pandas import read_csv, DataFrame, Series
+from pandas import read_csv, DataFrame
 from event import event_dict, EventType
 
-SFREQ = 2048
-
-
-
-BUFFER_SEC = 5
 TASK_DESC = {
-    'blink': 'Attentional Blink paradigm',
+    'ab': 'Attentional Blink paradigm',
 }
 TASK = 'ab'
 
@@ -59,13 +51,11 @@ for source_dir in source_dirs:
     sub_dir = join(data_dir, sub)
     eeg_dir = join(sub_dir, 'eeg')
     makedirs(eeg_dir, exist_ok=True)
-    # beh_dir = join(sub_dir, 'beh')
-    # makedirs(beh_dir, exist_ok=True)
 
 
     bdf_fpath = glob(join(source_dir, '*.bdf'))[0]
     raw = read_raw_bdf(bdf_fpath)
-    sfreq = raw.info['sfreq']
+    sfreq = round(raw.info['sfreq'])
 
 
     ## Generate channels file
@@ -86,11 +76,8 @@ for source_dir in source_dirs:
     assert len(csv_files) == 1
     trials_df = read_csv(csv_files[0])
 
-    evt = find_events(raw, shortest_event=0)
-
     mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
     evt = find_events(raw, mask=mask, mask_type='not_and')
-
 
 
     """
@@ -105,42 +92,41 @@ for source_dir in source_dirs:
 
         te = 0
         assert trial.t1_trigger == evt[e+te, 2]
-        events.append(event_dict(EventType.T1, trial, tuple(evt[e+te, :]), SFREQ))
+        events.append(event_dict(EventType.T1, trial, tuple(evt[e+te, :]), sfreq))
 
 
         te += 1
         assert trial.t2_trigger == evt[e+te, 2]
-        events.append(event_dict(EventType.T2, trial, tuple(evt[e+te, :]), SFREQ))
+        events.append(event_dict(EventType.T2, trial, tuple(evt[e+te, :]), sfreq))
 
         te += 1
         for _ in range(2):
             if e+te < evt.shape[0]:
-                print(evt[e+te, 2])
+                #print(evt[e+te, 2])
                 if evt[e+te, 2] in (1, 2, 11, 12):
-                    events.append(event_dict(EventType.TASK, trial, tuple(evt[e+te, :]), SFREQ))
+                    events.append(event_dict(EventType.TASK, trial, tuple(evt[e+te, :]), sfreq))
                     te += 1
         if te <= 2:
             #print(f'No prompt trigger in trial {t}')
             pass
         
         e += te
+    df_events = DataFrame(events)
+    df_events.to_csv(join(eeg_dir, f'{sub}_task-{TASK}_events.tsv'), sep='\t', index=False, float_format = '%.12g')
 
-    DataFrame(events).to_csv(join(eeg_dir, f'{sub}_task-{TASK}_events.tsv'), sep='\t', index=False, float_format = '%.12g')
-
-
-    raise ValueError
-    last_evt_index = diff(evt[:,0]).argmax()
-    evt_slices = dict(passive=slice(0, last_evt_index+1), animacy=slice(last_evt_index+1, None))
-    key_times = dict(
-        passive=(
-            evt[evt_slices['passive'], 0][0]/sfreq - BUFFER_SEC,
-            evt[evt_slices['passive'], 0][-1]/sfreq + BUFFER_SEC
-        ),
-        animacy=(
-            evt[evt_slices['animacy'], 0][0]/sfreq - BUFFER_SEC,
-            evt[evt_slices['animacy'], 0][-1]/sfreq + BUFFER_SEC
+    ## create events sidecar file
+    triggers = set(df_events.value)
+    trigger_lookup = dict()
+    for trigger in triggers:
+        name = df_events[(df_events.value == trigger)].iloc[0].stimulus
+        trigger_lookup[str(trigger)] = name
+    fpath_evt_json = join(eeg_dir, f'{sub}_task-{TASK}_events.json')
+    with open(fpath_evt_json, 'w') as fhandle:
+        fhandle.write(
+            templates['events.json'].substitute(
+                dict(trigger_lookup=trigger_lookup)
+            ).replace('\'', '"')
         )
-    )
 
     ## create eeg sidecar file
     fpath_eeg_json = join(eeg_dir, f'{sub}_task-ab_eeg.json')
@@ -155,38 +141,7 @@ for source_dir in source_dirs:
             )
         )
 
-    ## evts for this task
-    evt_task = find_events(raw)
-
-    ## process event file
-    csv_files = glob(join(source_dir, f'*_trials.csv'))
-    assert len(csv_files) == 1
-    df = read_csv(csv_files[0])
-    df = df[df.target.notna()] ## dropta empty rows
-    df = df[COLS.keys()] ## keep only relevant columns
-
-    df['sample'] = evt_task_filt[:, 0] - raw.first_samp ## add "sample" column
-    df = df.rename(columns=COLS) ## rename columns
-    df['identity'] = df['identity'].astype(int)
-    df['value'] = df['value'].astype(int)
-    df['onset'] = df['sample'] / sfreq
-    df['stimulus'] = df.trial_type + df.identity.astype(str) ## add column for full stimulus id
-    df.to_csv(join(eeg_dir, f'{sub}_task-{task}_events.tsv'), sep='\t', index=False)
-
-    ## create events sidecar file
-    triggers = set(df.value)
-    trigger_lookup = dict()
-    for trigger in triggers:
-        name= df[(df.value == trigger)].iloc[0].stimulus
-        trigger_lookup[str(trigger)] = name
-    fpath_evt_json = join(eeg_dir, f'{sub}_task-{TASK}_events.json')
-    with open(fpath_evt_json, 'w') as fhandle:
-        fhandle.write(
-            templates['events.json'].substitute(
-                dict(trigger_lookup=trigger_lookup)
-            ).replace('\'', '"')
-        )
-
+    raise ValueError
 
 
 
