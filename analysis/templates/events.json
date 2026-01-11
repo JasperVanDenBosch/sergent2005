@@ -83,7 +83,7 @@
     "Levels": {
         "TRUE": "Correct",
         "FALSE": "Incorrect",
-        "": "Missing / Does not apply"
+        "": "Missing / Does not apply (single task / no id)"
     }
   }
 }

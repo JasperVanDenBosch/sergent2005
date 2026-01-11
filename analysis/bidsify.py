@@ -1,10 +1,6 @@
 """
 Restructure collected data into BIDS format.
 Looks for data in "sourcedata" folder
-
-- split up tasks?
-- mark bad segments
-- bad channels
 """
 from __future__ import annotations
 from os.path import expanduser, join
@@ -95,9 +91,17 @@ for source_dir in source_dirs:
     seems to often be missing.
 
     """
+    # missing 8
+    if s == 3:
+        trials_offset = 8
+    elif s == 5:
+        trials_offset = 16
+    else:
+        trials_offset = 0
+
     e = 0
     events = []
-    for t, trial in trials_df.iterrows():
+    for _, trial in trials_df.iloc[trials_offset:].iterrows():
 
         te = 0
         assert trial.t1_trigger == evt[e+te, 2]
