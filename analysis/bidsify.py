@@ -7,6 +7,7 @@ from os.path import expanduser, join
 from os import makedirs
 from glob import glob
 from copy import copy
+from shutil import copyfile
 from mne.io import read_raw_bdf
 from mne import find_events
 from string import Template
@@ -47,6 +48,13 @@ for filename in ('eeg.json', 'events.json'):
 
 
 data_dir = expanduser(DATA_DIR)
+
+## Copy dataset-level files
+for filename in ('dataset_description.json', 'README.md'):
+    src = join('analysis/templates', filename)
+    dst = join(data_dir, filename)
+    copyfile(src, dst)
+
 source_dirs = sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*')))
 s = 0
 for source_dir in source_dirs:
@@ -150,4 +158,3 @@ for source_dir in source_dirs:
                 )
             )
         )
-
