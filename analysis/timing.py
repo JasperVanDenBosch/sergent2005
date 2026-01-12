@@ -4,7 +4,7 @@ from utils import read_events, print_warn, print_info
 from pandas import DataFrame
 from experiment.timer import Timer
 from experiment.constants import Constants
-from config import FRAME_RATE, DATA_DIR
+from config import FRAME_RATE, DATA_DIR, DERIV_NAME
 import matplotlib.pyplot as plt
 import seaborn
 
@@ -74,5 +74,5 @@ ax.axvline(x=long_target, color='orange', linestyle=':', linewidth=1, alpha=0.7)
 ax.text(long_target, ax.get_ylim()[1], 'long_target', va='bottom', ha='center', fontsize=9, color='orange', rotation=90)
 
 plt.tight_layout()
-plt.savefig('plots/timing_soa.png')
+plt.savefig(join(data_dir, 'derivatives', DERIV_NAME, 'timing_soa.png'))
 plt.close()

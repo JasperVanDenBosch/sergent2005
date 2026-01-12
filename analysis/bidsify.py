@@ -3,7 +3,7 @@ Restructure collected data into BIDS format.
 Looks for data in "sourcedata" folder
 """
 from __future__ import annotations
-from os.path import expanduser, join
+from os.path import expanduser, join, isdir
 from os import makedirs
 from glob import glob
 from copy import copy
@@ -16,7 +16,7 @@ from event import event_dict, EventType
 from experiment.constants import Constants
 from experiment.timer import Timer
 from experiment.triggers import Triggers
-from config import FRAME_RATE, DATA_DIR
+from config import FRAME_RATE, DATA_DIR, DERIV_NAME
 
 TASK_DESC = {
     'ab': 'Attentional Blink paradigm',
@@ -54,6 +54,11 @@ for filename in ('dataset_description.json', 'README.md'):
     src = join('analysis/templates', filename)
     dst = join(data_dir, filename)
     copyfile(src, dst)
+
+
+deriv_dir = join(data_dir, 'derivatives', DERIV_NAME)
+if not isdir(deriv_dir):
+    makedirs(deriv_dir)
 
 source_dirs = sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*')))
 s = 0
