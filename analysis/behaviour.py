@@ -10,17 +10,14 @@ in which subjective visibility was above 50%) were discarded from the ERP analys
 from __future__ import annotations
 from os.path import join, expanduser
 import os
-from colorama import init as colorama_init, Fore, Style
 import pandas, seaborn
 import matplotlib.pyplot as plt
 from experiment.timer import Timer
 from experiment.constants import Constants
-colorama_init()
-def print_info(msg: str):
-    print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
-def print_warn(msg: str):
-    print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
+from utils import read_events, print_info
+from config import FRAME_RATE
 
+print_info(f'## Visualize performance')
 
 BASELINE = 0.250 ## duration of baseline
 fr_conf  = 60 ## TODO double check
