@@ -1,16 +1,13 @@
 """Analyse behavioural data
 
-trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjfQn3yfuNDqvA0M7qz-dA0L19HOADiRs/edit#gid=0
-
-Trials with an incorrect response to T1 (11 ± 5%) were discarded from subsequent behavioral 
-and ERP analysis. ‘False positive trials’ (that is, ‘T2 absent’ trials 
-in which subjective visibility was above 50%) were discarded from the ERP analysis 
-(fewer than 2% of the ‘T2 absent’ trials in each condition).
+Trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjfQn3yfuNDqvA0M7qz-dA0L19HOADiRs/edit#gid=0
+(Useful for understanding number of trials acros the various conditions)
 """
 from __future__ import annotations
 from os.path import join, expanduser, basename
 import os
 from glob import glob
+from pandas import DataFrame
 import seaborn
 import matplotlib.pyplot as plt
 from experiment.timer import Timer
@@ -18,7 +15,7 @@ from experiment.constants import Constants
 from utils import read_events, print_info
 from config import DATA_DIR, DERIV_NAME, FRAME_RATE
 
-print_info(f'## Visualize performance')
+print_info(f'## Behaviour: Visualize blink')
 
 data_dir = expanduser(DATA_DIR)
 sub_dirs = sorted(glob(join(data_dir, 'sub-*')))
@@ -36,49 +33,59 @@ for sub_dir in sub_dirs:
     deriv_dir = join(data_dir, 'derivatives', DERIV_NAME, sub)
     os.makedirs(deriv_dir, exist_ok=True)
 
-    df = read_events(data_dir, sub)
+    events_df = read_events(data_dir, sub)
 
     ## get rid of training trials
-    df = df[df['phase'] == 'test']
+    events_df = events_df[events_df['phase'] == 'test']
 
-    ## lose columns that we dont need
-    df = df.drop(['id_trigger', 'vis_trigger', 'delay_index', 'delay', 't1_trigger', 
-                't2_trigger', 'iti', 't1_index', 't2_index', 'masks', 'id_onset', 'vis_onset', 'vis_init'], axis=1)
+    ## BIDS event file is by event, let's gather behavior by trial
+    for t in events_df.trial_index.unique():
+        trial_events = events_df[events_df.trial_index == t]
+        ## We just need a row with a target for all behavior columns
+        event = trial_events[trial_events.trial_type == 't1'].iloc[0]
+        ## Some derivations relevant for selection criteria
+        ## 1. visibility rating as a percentage
+        vis_perc=round(event.vis_rating / 0.2)
+        ## 2. visibility over 50% is considered "seen"
+        seen = vis_perc > 50
+        ## 3. T2 reported seen, when not actually presented
+        false_alarm = seen & ~event.t2presence
+        trials.append(
+            dict(
+                sub = sub,
+                vis_perc = vis_perc,
+                seen = seen,
+                false_alarm=false_alarm,
+                **event.to_dict()
+            )
+        )
+
+df = DataFrame(trials)
+
+## T2 present during the AB (Dual task, short SOA)
+plt.figure()
+ab_trials_mask = (df['dual_task'] == True) & (df['soa_long'] == False) & (df['t2presence'] == True)
+ax = seaborn.histplot(data=df[ab_trials_mask], x='vis_perc', stat='percent', bins=20)
+ax.set(
+    title='Fig 1B: T2 present during the AB',
+    xlabel='Subjective visibility',
+    ylabel='Percent of trials'
+)
+fig = ax.get_figure()
+assert fig is not None
+fig.savefig('plots/blink_visibility.png')
+plt.close()
 
 
-    ## pilot: -999 is 0 vis
-    df['vis_rating'] = df['vis_rating'].replace(-999, 0)
-    ## subjective visibility as a percentage 0-100%
-    df['vis_perc'] = (df['vis_rating'] / 0.20).astype(int)
-    """
-    Trials with an incorrect response to T1 (11 ± 5%) were discarded 
-    from subsequent behavioral and ERP analysis. 
-    ‘False positive trials’ (that is, ‘T2 absent’ trials in which 
-    subjective visibility was above 50%) were discarded 
-    from the ERP analysis (fewer than 2% of the ‘T2 absent’ trials in each condition).
-    """
+## TODO: report group level number of discarded trials:
+"""
+Trials with an incorrect response to T1 (11 ± 5%) were discarded 
+from subsequent behavioral and ERP analysis. 
 
-    ## turn float response into chosen target string 
-    df['id_choice'] = df['id_choice'].replace({0.0: 'XOOX', 1.0: 'OXXO'})
-    ## mark correctness of T1 responses (to discard incorrect trials)
-    df['correct'] = df['id_choice'] == df['target1']
-    incorrect_perc = (df.correct == False).mean()*100
-    print_info(f'Incorrect trials: {incorrect_perc:.1f}%')
-    ## visibility Z or o50%). 
-    df['seen'] = df['vis_perc'] > 50
-    ## mark false positives (to be discarded for EEG)
-    df['false_alarm'] = df['seen'] & (~df['t2presence'])
-
-
-
-    ## T2 present during the AB (Dual task, short SOA)
-    plt.figure()
-    ab_trials_mask = (df['task'] == 'dual') & (df['soa_long'] == False) & (df['t2presence'] == True)
-    ax = seaborn.histplot(data=df[ab_trials_mask], x='vis_perc', stat='percent', bins=20)
-    ax.set(
-        title='Fig 1B: T2 present during the AB',
-        xlabel='Subjective visibility',
-        ylabel='Percent of trials'
-    )
-    ax.get_figure().savefig('plots/blink_visibility.png')
-    plt.close()
+NOTE: unclear if this is in critical condition or overall.. seems low
+"""
+"""
+‘False positive trials’ (that is, ‘T2 absent’ trials in which 
+subjective visibility was above 50%) were discarded 
+from the ERP analysis (fewer than 2% of the ‘T2 absent’ trials in each condition).
+"""

@@ -31,12 +31,8 @@ for sub_dir in sub_dirs:
     df = read_events(data_dir, sub)
     for t in df.trial_index.unique():
         trial_events = df[df.trial_index == t]
-        try:
-            t1_event = trial_events[trial_events.trial_type == 't1'].iloc[0]
-            t2_event = trial_events[trial_events.trial_type == 't2'].iloc[0]
-        except IndexError:
-            print_warn(f'Trial missing target: {sub} [{t}]')
-            continue
+        t1_event = trial_events[trial_events.trial_type == 't1'].iloc[0]
+        t2_event = trial_events[trial_events.trial_type == 't2'].iloc[0]
         t1_onset = t1_event.onset
         t2_onset = t2_event.onset
         trials.append(

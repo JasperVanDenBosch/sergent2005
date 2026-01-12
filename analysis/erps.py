@@ -74,6 +74,13 @@ for mode, settings in modes.items():
     evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a blank screen 
     """
 
+    # FROM BEHAVIOUR
+    # ## subjective visibility as a percentage 0-100%
+    # df['vis_perc'] = (df['vis_rating'] / 0.20).astype(int)
+    # df['seen'] = df['vis_perc'] > 50
+    # ## mark false positives (to be discarded for EEG)
+    # df['false_alarm'] = df['seen'] & (~df['t2presence'])
+
     ## ERP for T2 absent trials
     erp_absent = epochs[~epo_df.t2presence].average()
 
