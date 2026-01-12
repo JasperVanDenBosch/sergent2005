@@ -50,7 +50,7 @@ for sub_dir in sub_dirs:
         ## 2. visibility over 50% is considered "seen"
         seen = vis_perc > 50
         ## 3. T2 reported seen, when not actually presented
-        false_alarm = seen & ~event.t2presence
+        false_alarm = seen and (not event.t2presence)
         trials.append(
             dict(
                 sub = sub,
@@ -93,7 +93,6 @@ for variant, kwargs in variants.items():
     plt.close()
 
 
-## TODO: report group level number of discarded trials:
 """
 Trials with an incorrect response to T1 (11 ± 5%) were discarded 
 from subsequent behavioral and ERP analysis. 
@@ -113,3 +112,9 @@ print_info(f'Trials with an incorrect response to T1: {avg:.2f} ±{ci_perc}% (st
 subjective visibility was above 50%) were discarded 
 from the ERP analysis (fewer than 2% of the ‘T2 absent’ trials in each condition).
 """
+t2_absent = df[df.t2presence == False]
+n_trials = t2_absent.size
+n_false_alarm = t2_absent[t2_absent.false_alarm == True].size
+fp_percent = (n_false_alarm / n_trials)*100
+print_info(f'False positive trials (overall): {fp_percent:.1f}%')
+## TODO: break down by "condition" (whatever that means)
