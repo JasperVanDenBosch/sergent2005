@@ -6,7 +6,7 @@ colorama_init()
 def read_events(data_dir: str, sub: str):
     return read_csv(
         join(data_dir, sub, 'eeg', f'{sub}_task-ab_events.tsv'),
-        index_col=0,
+        index_col=False,
         sep='\t',
     )
 
