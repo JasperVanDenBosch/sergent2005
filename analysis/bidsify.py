@@ -15,17 +15,17 @@ from event import event_dict, EventType
 from experiment.constants import Constants
 from experiment.timer import Timer
 from experiment.triggers import Triggers
+from config import FRAME_RATE, DATA_DIR
 
 TASK_DESC = {
     'ab': 'Attentional Blink paradigm',
 }
 TASK = 'ab'
-FRAMERATE = 60 ## from lab config file uolm.toml
 
 ## Determine the duration of targets (for events sidecar)
 const = Constants()
 timer = Timer()
-timer.optimizeFlips(FRAMERATE, const)
+timer.optimizeFlips(FRAME_RATE, const)
 target_dur_s = timer.flipsToSecs(const.target_dur)
 
 CHANNELS = [
@@ -46,7 +46,7 @@ for filename in ('eeg.json', 'events.json'):
         templates[filename] = Template(fhandle.read())
 
 
-data_dir = expanduser('~/data/eegmanylabs/sergent2005')
+data_dir = expanduser(DATA_DIR)
 source_dirs = sorted(glob(join(data_dir, 'sourcedata', 'sub-UOLM*')))
 s = 0
 for source_dir in source_dirs:
@@ -71,7 +71,7 @@ for source_dir in source_dirs:
                 channels.append(copy(channel))
                 break
         else:
-            channels.append(dict(name=name, type='EEG', units='uV', description='n/a'))
+            channels.append(dict(name=name, type='MISC', units='n/a', description='not used'))
     fpath_chan = join(eeg_dir, f'{sub}_task-{TASK}_channels.tsv')
     DataFrame(channels).to_csv(fpath_chan, sep='\t', index=False)
 
@@ -150,3 +150,4 @@ for source_dir in source_dirs:
                 )
             )
         )
+
