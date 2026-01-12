@@ -5,6 +5,7 @@ Trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjf
 """
 from __future__ import annotations
 from os.path import join, expanduser, basename
+from math import ceil
 import os
 from glob import glob
 from pandas import DataFrame
@@ -62,19 +63,34 @@ for sub_dir in sub_dirs:
 
 df = DataFrame(trials)
 
+
 ## T2 present during the AB (Dual task, short SOA)
-plt.figure()
-ab_trials_mask = (df['dual_task'] == True) & (df['soa_long'] == False) & (df['t2presence'] == True)
-ax = seaborn.histplot(data=df[ab_trials_mask], x='vis_perc', stat='percent', bins=20)
-ax.set(
-    title='Fig 1B: T2 present during the AB',
-    xlabel='Subjective visibility',
-    ylabel='Percent of trials'
+variants = dict(
+    plain=dict(),
+    stacked=dict(hue='sub')
 )
-fig = ax.get_figure()
-assert fig is not None
-fig.savefig('plots/blink_visibility.png')
-plt.close()
+for variant, kwargs in variants.items():
+    plt.figure()
+    ab_trials_mask = (df['dual_task'] == True) & (df['soa_long'] == False) & (df['t2presence'] == True)
+    ax = seaborn.histplot(
+        data=df[ab_trials_mask],
+        x='vis_perc',
+        stat='percent',
+        bins=20,
+        multiple='stack',
+        **kwargs
+    )
+    ax.set(
+        title='(Dual task, short SOA)',
+        xlabel='Subjective visibility',
+        ylabel='Percent of trials'
+    )
+    fig = ax.get_figure()
+    fig.suptitle('Fig 1B: T2 present during the AB')
+    assert fig is not None
+    fpath = join(data_dir, 'derivatives', DERIV_NAME, f'fig_1b_{variant}.png')
+    fig.savefig(fpath)
+    plt.close()
 
 
 ## TODO: report group level number of discarded trials:
@@ -84,6 +100,14 @@ from subsequent behavioral and ERP analysis.
 
 NOTE: unclear if this is in critical condition or overall.. seems low
 """
+incorrect = df[['sub', 'correct']][df.correct == False].value_counts()
+avg = incorrect.mean()
+std = incorrect.std()
+upper = incorrect.quantile(0.95)
+lower = incorrect.quantile(0.05)
+ci_perc = ceil(((max(abs(upper-avg), abs(lower-avg))/avg)*100))
+print_info(f'Trials with an incorrect response to T1: {avg:.2f} ±{ci_perc}% (std={std:.2f})')
+
 """
 ‘False positive trials’ (that is, ‘T2 absent’ trials in which 
 subjective visibility was above 50%) were discarded 
