@@ -1,6 +1,5 @@
 """Preprocessing in line with original manuscript
 
-
 Issue A baseline
 
 We can sample baseline before -SOA from T2. 
@@ -15,31 +14,23 @@ Solution:
 Sample same baseline wrt to T0 ie (-250 - 0)
 
 
-
 trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjfQn3yfuNDqvA0M7qz-dA0L19HOADiRs/edit#gid=0
-
 
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from os.path import join, expanduser, isfile
 import os
-from colorama import init as colorama_init, Fore, Style
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
-import mne, numpy
-import matplotlib.pyplot as plt
+import mne
 from experiment.triggers import Triggers
 from experiment.timer import Timer
 from experiment.constants import Constants
-from analyse_behavior import trials_df
+from utils import read_events, print_info
+from config import DATA_DIR, DERIV_NAME, FRAME_RATE
 if TYPE_CHECKING:
     from mne.io.edf.edf import RawEDF
-colorama_init()
-def print_info(msg: str):
-    print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
-def print_warn(msg: str):
-    print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
 
 
 BASELINE = 0.250 ## duration of baseline

@@ -75,6 +75,11 @@ for source_dir in source_dirs:
     raw = read_raw_bdf(bdf_fpath)
     sfreq = round(raw.info['sfreq'])
 
+    copyfile(
+        bdf_fpath,
+        join(eeg_dir, f'{sub}_task-{TASK}_eeg.bdf')
+    )
+
 
     ## Generate channels file
     channels = []
