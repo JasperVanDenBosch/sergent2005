@@ -10,7 +10,7 @@ from mne.io import read_raw_bdf
 import mne, numpy
 from experiment.timer import Timer
 from experiment.constants import Constants
-from utils import print_info, print_warn, read_channels
+from utils import print_info, read_channels 
 from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
                     BASELINE, TMAX, LATENCY)
 if TYPE_CHECKING:
@@ -70,9 +70,8 @@ for sub_dir in sub_dirs:
     ## index for full events array where event is T2
     events_mask =[e[2] in t2_triggers for e in events ]
 
-    # TODO: explain better
-    ## only keep the T2 events. This way there are as many events as trials
-    ## this helps with indexing later
+    ## The rejections are trial-wise. So we only need one epoch per trial
+    ## on which to apply the thresholds. Let's use the T2 events. 
     events_selected = events[events_mask]
 
     ## T2 epoching
@@ -112,7 +111,7 @@ for sub_dir in sub_dirs:
     counts = dict(trans=0, peak=0, eog=0)
     descriptions = []
     for e in range(n_epochs):
-        transients = numpy.abs(numpy.diff(eeg[e, :, :])) ## absolute
+        transients = numpy.abs(numpy.diff(eeg[e, :, :]))
         if numpy.any(transients > THRESH_TRANS):
             bad_epochs.append(e)
             descriptions.append('bad transient')
@@ -135,8 +134,9 @@ for sub_dir in sub_dirs:
             counts['eog'] += 1
             continue
 
-    ## TODO: short report here of trial count by type
-    #counts
+    print_info(f'Total trials {n_epochs}')
+    for reason, count in counts.items():
+        print_info(f'Rejected {count} trials as [{reason}]')
 
     ## comvert the above to annotations
     event_onsets = events_selected[bad_epochs, 0] / raw.info['sfreq']
@@ -146,4 +146,4 @@ for sub_dir in sub_dirs:
         onsets, durations, descriptions, orig_time=raw.info['meas_date']
     )
     annots.save(annots_fpath, overwrite=True)
-    print_warn(f'Stored annotations at {annots_fpath}')
+    print_info(f'Stored annotations at {annots_fpath}')
