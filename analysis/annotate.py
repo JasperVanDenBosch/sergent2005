@@ -43,7 +43,8 @@ for sub_dir in sub_dirs:
     chans_df = read_channels(data_dir, sub)
 
     ## mark channel types
-    raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
+    misc_channels = chans_df[chans_df.type == 'MISC']['name'].to_list()
+    raw: RawEDF = raw.drop_channels(misc_channels) # type: ignore
     eog_channels = chans_df[chans_df.description.str.contains('EOG')]['name'].to_list()
     raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
