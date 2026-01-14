@@ -10,7 +10,7 @@ from mne.io import read_raw_bdf
 import mne, numpy
 from experiment.timer import Timer
 from experiment.constants import Constants
-from utils import print_info, print_warn
+from utils import print_info, print_warn, read_channels
 from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
                     BASELINE, TMAX, LATENCY)
 if TYPE_CHECKING:
@@ -40,23 +40,21 @@ for sub_dir in sub_dirs:
     raw_fpath = join(eeg_dir, f'{sub}_task-ab_eeg.bdf')
     raw = read_raw_bdf(raw_fpath)
 
-    ## get rid of empty channels and mark channel types
-    ## TODO: use channels file
+    chans_df = read_channels(data_dir, sub)
+
+    ## mark channel types
     raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
-    eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
+    eog_channels = chans_df[chans_df.description.str.contains('EOG')]['name'].to_list()
     raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
-    ## bad channels
-    ## TODO: use channels file
-    bad_chans = [] #'D5', 'D8', 'D16', 'D17']
+    ## mark bad channels
+    bad_chans = chans_df[chans_df.status == 'bad']['name'].to_list()
     raw.info['bads'].extend(bad_chans)
 
     ## remove the mastoids
-    ## TODO: use channels file
-    raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
+    refs_chans = chans_df[chans_df.type == 'REF']['name'].to_list()
+    raw = raw.drop_channels(refs_chans) # type: ignore
 
-
-    #raise ValueError
     ## find triggers
     mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
     events = mne.find_events(
@@ -72,6 +70,7 @@ for sub_dir in sub_dirs:
     ## index for full events array where event is T2
     events_mask =[e[2] in t2_triggers for e in events ]
 
+    # TODO: explain better
     ## only keep the T2 events. This way there are as many events as trials
     ## this helps with indexing later
     events_selected = events[events_mask]
@@ -98,15 +97,7 @@ for sub_dir in sub_dirs:
     We rejected voltage exceeding ±200 uV,
     transients exceeding ±100 uV, 
     or electrooculogram activity exceeding ±70 mV.
-
-    EX3: bottom HEOG
-    EX4: top HEOG
-    EX5: left VEOG
-    EX6: right VEOG
     """
-    ## maybe do epoching twice
-    # 1. to get bads
-    # 2. to get data
     THRESH_TRANS = 100
     THRESH_PEAK = 200
     THRESH_EOG = 70
@@ -144,12 +135,15 @@ for sub_dir in sub_dirs:
             counts['eog'] += 1
             continue
 
+    ## TODO: short report here of trial count by type
+    #counts
+
     ## comvert the above to annotations
-    event_onsets = events_selected[bad_epochs, 0] / raw.info["sfreq"]
+    event_onsets = events_selected[bad_epochs, 0] / raw.info['sfreq']
     onsets = event_onsets + tmin # tmin is negative
     durations = [-tmin+TMAX] * len(event_onsets)
     annots = mne.Annotations(
-        onsets, durations, descriptions, orig_time=raw.info["meas_date"]
+        onsets, durations, descriptions, orig_time=raw.info['meas_date']
     )
     annots.save(annots_fpath, overwrite=True)
     print_warn(f'Stored annotations at {annots_fpath}')

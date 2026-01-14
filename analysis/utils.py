@@ -10,6 +10,13 @@ def read_events(data_dir: str, sub: str):
         sep='\t',
     )
 
+def read_channels(data_dir: str, sub: str):
+    return read_csv(
+        join(data_dir, sub, 'eeg', f'{sub}_task-ab_channels.tsv'),
+        index_col=False,
+        sep='\t',
+    )
+
 def print_info(msg: str):
     print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
 
