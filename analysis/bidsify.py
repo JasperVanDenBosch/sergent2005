@@ -17,6 +17,7 @@ from experiment.constants import Constants
 from experiment.timer import Timer
 from experiment.triggers import Triggers
 from config import FRAME_RATE, DATA_DIR, DERIV_NAME
+from utils import print_info
 
 TASK_DESC = {
     'ab': 'Attentional Blink paradigm',
@@ -80,6 +81,12 @@ for source_dir in source_dirs:
         join(eeg_dir, f'{sub}_task-{TASK}_eeg.bdf')
     )
 
+    ## the sourcedata contains simple text files with a 
+    # comma-separated list of channels reported bad during acquisition
+    with open(join(source_dir, 'bads.txt')) as fhandle:
+        contents = fhandle.read().strip()
+        bads = [c.strip() for c in contents.split(',') if c]
+    print_info(f'Marking {len(bads)} channels bad.')
 
     ## Generate channels file
     channels = []
@@ -90,8 +97,12 @@ for source_dir in source_dirs:
                 break
         else:
             channels.append(dict(name=name, type='MISC', units='n/a', description='not used'))
+        channels[-1]['status'] = 'bad' if name in bads else 'good'
     fpath_chan = join(eeg_dir, f'{sub}_task-{TASK}_channels.tsv')
-    DataFrame(channels).to_csv(fpath_chan, sep='\t', index=False)
+    chans_df = DataFrame(channels)
+    ## make sure the bad channel names matched
+    assert len(bads) == (chans_df.status == 'bad').sum()
+    chans_df.to_csv(fpath_chan, sep='\t', index=False)
 
 
     ## process event file
