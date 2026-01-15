@@ -42,9 +42,11 @@ for sub_dir in sub_dirs:
 
     chans_df = read_channels(data_dir, sub)
 
-    ## mark channel types
-    misc_channels = chans_df[chans_df.type == 'MISC']['name'].to_list()
-    raw: RawEDF = raw.drop_channels(misc_channels) # type: ignore
+    ## remove unused channels
+    misc_chans = chans_df[chans_df.type == 'MISC']['name'].to_list()
+    raw.drop_channels(misc_chans)
+
+    ## mark channel type for EOG
     eog_channels = chans_df[chans_df.description.str.contains('EOG')]['name'].to_list()
     raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
@@ -54,7 +56,7 @@ for sub_dir in sub_dirs:
 
     ## remove the mastoids
     refs_chans = chans_df[chans_df.type == 'REF']['name'].to_list()
-    raw = raw.drop_channels(refs_chans) # type: ignore
+    raw.drop_channels(refs_chans)
 
     ## find triggers
     mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
@@ -84,7 +86,7 @@ for sub_dir in sub_dirs:
     epochs = mne.Epochs(
         raw,
         events,
-        event_id=t2_triggers, ## selected triggers for epochs
+        event_id=t2_triggers,
         tmin=tmin,
         tmax=TMAX+LATENCY,
         baseline=(tmin, tmin+BASELINE),

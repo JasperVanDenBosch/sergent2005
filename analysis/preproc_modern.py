@@ -27,7 +27,7 @@ def print_warn(msg: str):
     print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
 
 
-MODE = 'modern'
+MODE_NAME = 'auto'
 BASELINE = 0.250 ## duration of baseline
 fr_conf  = 60 ## TODO double check
 TMAX = 0.715
@@ -146,7 +146,8 @@ epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 
 epochs_clean = epochs_ar.apply_baseline(baseline=(tmin, tmin+BASELINE))
 
-epochs_clean.save(join(deriv_dir, f'{sub}_clean_epo.fif'), overwrite=True)
+epochs_clean.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif'), overwrite=True)
+
 reject_log.save(join(deriv_dir, 'reject_log_post-ica.npz'), overwrite=True)
 
 fig = reject_log.plot('horizontal', show=False)

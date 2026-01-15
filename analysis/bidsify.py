@@ -37,9 +37,9 @@ CHANNELS = [
     dict(name='EXG4', type='HEOG', units='uV', description='left HEOG'),
     dict(name='EXG5', type='VEOG', units='uV', description='bottom VEOG'),
     dict(name='EXG6', type='VEOG', units='uV', description='top VEOG'),
+    dict(name='Status', type='TRIG', units='n/a', description='trigger channel'),
     dict(name='EXG7', type='MISC', units='n/a', description='not used'),
     dict(name='EXG8', type='MISC', units='n/a', description='not used'),
-    dict(name='Status', type='TRIG', units='n/a', description='trigger channel'),
     dict(name='GSR1', type='MISC', units='n/a', description='not used'),
     dict(name='GSR2', type='MISC', units='n/a', description='not used'),
     dict(name='Erg1', type='MISC', units='n/a', description='not used'),
@@ -108,7 +108,7 @@ for source_dir in source_dirs:
                     name=name,
                     type='EEG',
                     units='uV',
-                    description='scalp eeg'
+                    description='scalp EEG'
                 )
             )
         channels[-1]['status'] = 'bad' if name in bads else 'good'
