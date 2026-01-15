@@ -59,33 +59,39 @@ for sub_dir in sub_dirs:
 
     chans_df = read_channels(data_dir, sub)
 
-    ## get rid of empty channels and mark channel types
-    raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
-    eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
+    ## remove unused channels
+    misc_chans = chans_df[chans_df.type == 'MISC']['name'].to_list()
+    raw.drop_channels(misc_chans)
+
+    ## mark channel type for EOG
+    eog_channels = chans_df[chans_df.description.str.contains('EOG')]['name'].to_list()
     raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
+
+    ## mark bad channels
+    bad_chans = chans_df[chans_df.status == 'bad']['name'].to_list()
+    raw.info['bads'].extend(bad_chans)
+
+    ## remove the mastoids
+    refs_chans = chans_df[chans_df.type == 'REF']['name'].to_list()
+    raw.drop_channels(refs_chans)
 
     ## pick channels to be filtered
     filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
+    print_info('Loading data and filtering..')
     raw.load_data()
     raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
-    ## bad channels
-    bad_chans = [] #'A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
-    raw.info['bads'].extend(bad_chans)
-
+    ## read the artifact annotations
     annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
     assert isfile(annots_fpath), 'missing annotations file'
     annots = mne.read_annotations(annots_fpath)
     raw.set_annotations(annots)
 
     ## apply average reference
-    raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
     raw = raw.set_eeg_reference(ref_channels='average')
 
     ## determine electrode head locations
     montage = make_standard_montage('biosemi64', head_size='auto')
-    fig = montage.plot(show=False)
-    fig.savefig('plots/montage.png')
     raw.set_montage(montage, on_missing='warn')
 
     ## find triggers
@@ -103,8 +109,8 @@ for sub_dir in sub_dirs:
     ## index for full events array where event is T2
     events_mask =[e[2] in t2_triggers for e in events ]
 
-    ## only keep the T2 events. This way there are as many events as trials
-    ## this helps with indexing later
+    ## The rejections are trial-wise. So we only need one epoch per trial
+    ## on which to apply the thresholds. Let's use the T2 events. 
     events = events[events_mask]
 
     ## T2 epoching
@@ -125,11 +131,12 @@ for sub_dir in sub_dirs:
     epochs = mne.Epochs(
         raw,
         events,
-        event_id=event_ids, ## selected triggers for epochs
+        event_id=event_ids,
         tmin=tmin,
         tmax=TMAX+LATENCY,
         baseline=(tmin, tmin+BASELINE),
         on_missing='warn',
     )
+    print_info(f'Epoched {len(epochs)} trials')
     epo_name = f'T2-shortSOA'
     epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
