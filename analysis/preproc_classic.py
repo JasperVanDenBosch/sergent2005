@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 data_dir = expanduser(DATA_DIR)
 deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
-
+MODE_NAME = 'original'
 
 const = Constants()
 timer = Timer()
@@ -138,5 +138,4 @@ for sub_dir in sub_dirs:
         on_missing='warn',
     )
     print_info(f'Epoched {len(epochs)} trials')
-    epo_name = f'T2-shortSOA'
-    epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
+    epochs.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif'), overwrite=True)
