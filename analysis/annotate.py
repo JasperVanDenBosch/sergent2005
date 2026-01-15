@@ -42,8 +42,15 @@ for sub_dir in sub_dirs:
 
     chans_df = read_channels(data_dir, sub)
 
-    ## mark channel types
-    raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
+    ## remove unused channels
+    misc_chans = chans_df[chans_df.type == 'MISC']['name'].to_list()
+    raw.drop_channels(misc_chans)
+
+    ## remove the mastoids
+    refs_chans = chans_df[chans_df.type == 'REF']['name'].to_list()
+    raw.drop_channels(refs_chans)
+
+    ## mark channel type for EOG
     eog_channels = chans_df[chans_df.description.str.contains('EOG')]['name'].to_list()
     raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
@@ -51,9 +58,6 @@ for sub_dir in sub_dirs:
     bad_chans = chans_df[chans_df.status == 'bad']['name'].to_list()
     raw.info['bads'].extend(bad_chans)
 
-    ## remove the mastoids
-    refs_chans = chans_df[chans_df.type == 'REF']['name'].to_list()
-    raw = raw.drop_channels(refs_chans) # type: ignore
 
     ## find triggers
     mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])

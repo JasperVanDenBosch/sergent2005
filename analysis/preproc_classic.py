@@ -19,111 +19,117 @@ trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjf
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from os.path import join, expanduser, isfile
+from os.path import join, expanduser, isfile, basename
 import os
+from glob import glob
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
 import mne
 from experiment.triggers import Triggers
 from experiment.timer import Timer
 from experiment.constants import Constants
-from utils import read_events, print_info
-from config import DATA_DIR, DERIV_NAME, FRAME_RATE
+from utils import read_events, read_channels, print_info
+from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
+                    BASELINE, TMAX, LATENCY)
 if TYPE_CHECKING:
     from mne.io.edf.edf import RawEDF
 
 
-BASELINE = 0.250 ## duration of baseline
-fr_conf  = 60 ## TODO double check
-REJECT_CRIT = dict(eeg=200e-6, eog=70e-6) # 200 µV, 70 µV
-TMAX = 0.715
-LATENCY = 0.016
-sub = 'sub-UOLM001'
-data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
+data_dir = expanduser(DATA_DIR)
+deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
-eeg_dir = join(data_dir, sub)
-deriv_dir = join(data_dir, 'derivatives', 'mne', sub)
-raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
-os.makedirs(deriv_dir, exist_ok=True)
 
+
+const = Constants()
 timer = Timer()
-timer.optimizeFlips(fr_conf, Constants())
+timer.optimizeFlips(FRAME_RATE, const)
 
+sub_dirs = sorted(glob(join(data_dir, 'sub-*')))
+for sub_dir in sub_dirs:
+    sub = basename(sub_dir)
+    print_info(f'Reading EEG data for {sub}..')
 
-## load raw data 
-raw = read_raw_bdf(raw_fpath)
+    eeg_dir = join(data_dir, sub, 'eeg')
+    deriv_dir = join(deriv_dir_root, sub)
+    raw_fpath = join(eeg_dir, f'{sub}_task-ab_eeg.bdf')
+    os.makedirs(deriv_dir, exist_ok=True)
 
-## get rid of empty channels and mark channel types
-raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
-eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
-raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
+    ## load raw data 
+    raw = read_raw_bdf(raw_fpath)
 
-## pick channels to be filtered
-filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
-raw.load_data()
-raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
+    chans_df = read_channels(data_dir, sub)
 
-## bad channels
-bad_chans = [] #'A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
-raw.info['bads'].extend(bad_chans)
+    ## get rid of empty channels and mark channel types
+    raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8']) # type: ignore
+    eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
+    raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
-annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
-assert isfile(annots_fpath), 'missing annotations file'
-annots = mne.read_annotations(annots_fpath)
-raw.set_annotations(annots)
+    ## pick channels to be filtered
+    filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
+    raw.load_data()
+    raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
-## apply average reference
-raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
-raw = raw.set_eeg_reference(ref_channels='average')
+    ## bad channels
+    bad_chans = [] #'A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
+    raw.info['bads'].extend(bad_chans)
 
-## determine electrode head locations
-montage = make_standard_montage('biosemi64', head_size='auto')
-fig = montage.plot(show=False)
-fig.savefig('plots/montage.png')
-raw.set_montage(montage, on_missing='warn')
+    annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
+    assert isfile(annots_fpath), 'missing annotations file'
+    annots = mne.read_annotations(annots_fpath)
+    raw.set_annotations(annots)
 
-## find triggers
-mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
-events = mne.find_events(
-    raw,
-    verbose=False,
-    mask=mask,
-    mask_type='not_and'
-)
+    ## apply average reference
+    raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
+    raw = raw.set_eeg_reference(ref_channels='average')
 
-## triggers for T2
-t2_triggers = list(range(24, 31+1))
+    ## determine electrode head locations
+    montage = make_standard_montage('biosemi64', head_size='auto')
+    fig = montage.plot(show=False)
+    fig.savefig('plots/montage.png')
+    raw.set_montage(montage, on_missing='warn')
 
-## index for full events array where event is T2
-events_mask =[e[2] in t2_triggers for e in events ]
-
-## only keep the T2 events. This way there are as many events as trials
-## this helps with indexing later
-events = events[events_mask]
-
-## T2 epoching
-soa = timer.flipsToSecs(timer.short_SOA)
-buffer = timer.flipsToSecs(timer.target_dur)
-tmin = - (soa + BASELINE + buffer) + LATENCY
-
-event_ids = dict()
-for presenceName, presence in [('absent', False), ('present', True)]:
-    event_ids[f'{presenceName}'] = Triggers().get_number(
-        training=False,
-        forT2=True,
-        dualTask=True,
-        longSOA=False,
-        t2Present=presence,
+    ## find triggers
+    mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
+    events = mne.find_events(
+        raw,
+        verbose=False,
+        mask=mask,
+        mask_type='not_and'
     )
 
-epochs = mne.Epochs(
-    raw,
-    events,
-    event_id=event_ids, ## selected triggers for epochs
-    tmin=tmin,
-    tmax=TMAX+LATENCY,
-    baseline=(tmin, tmin+BASELINE),
-    on_missing='warn',
-)
-epo_name = f'T2-shortSOA'
-epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
+    ## triggers for T2
+    t2_triggers = list(range(24, 31+1))
+
+    ## index for full events array where event is T2
+    events_mask =[e[2] in t2_triggers for e in events ]
+
+    ## only keep the T2 events. This way there are as many events as trials
+    ## this helps with indexing later
+    events = events[events_mask]
+
+    ## T2 epoching
+    soa = timer.flipsToSecs(timer.short_SOA)
+    buffer = timer.flipsToSecs(timer.target_dur)
+    tmin = - (soa + BASELINE + buffer) + LATENCY
+
+    event_ids = dict()
+    for presenceName, presence in [('absent', False), ('present', True)]:
+        event_ids[f'{presenceName}'] = Triggers().get_number(
+            training=False,
+            forT2=True,
+            dualTask=True,
+            longSOA=False,
+            t2Present=presence,
+        )
+
+    epochs = mne.Epochs(
+        raw,
+        events,
+        event_id=event_ids, ## selected triggers for epochs
+        tmin=tmin,
+        tmax=TMAX+LATENCY,
+        baseline=(tmin, tmin+BASELINE),
+        on_missing='warn',
+    )
+    epo_name = f'T2-shortSOA'
+    epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)

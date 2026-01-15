@@ -37,9 +37,16 @@ CHANNELS = [
     dict(name='EXG4', type='HEOG', units='uV', description='left HEOG'),
     dict(name='EXG5', type='VEOG', units='uV', description='bottom VEOG'),
     dict(name='EXG6', type='VEOG', units='uV', description='top VEOG'),
+    dict(name='Status', type='TRIG', units='n/a', description='trigger channel'),
     dict(name='EXG7', type='MISC', units='n/a', description='not used'),
     dict(name='EXG8', type='MISC', units='n/a', description='not used'),
-    dict(name='Status', type='MISC', units='n/a', description='trigger channel'),
+    dict(name='GSR1', type='MISC', units='n/a', description='not used'),
+    dict(name='GSR2', type='MISC', units='n/a', description='not used'),
+    dict(name='Erg1', type='MISC', units='n/a', description='not used'),
+    dict(name='Erg2', type='MISC', units='n/a', description='not used'),
+    dict(name='Resp', type='MISC', units='n/a', description='not used'),
+    dict(name='Plet', type='MISC', units='n/a', description='not used'),
+    dict(name='Temp', type='MISC', units='n/a', description='not used'),
 ]
 
 templates = dict()
@@ -96,7 +103,14 @@ for source_dir in source_dirs:
                 channels.append(copy(channel))
                 break
         else:
-            channels.append(dict(name=name, type='MISC', units='n/a', description='not used'))
+            channels.append(
+                dict(
+                    name=name,
+                    type='EEG',
+                    units='uV',
+                    description='scalp EEG'
+                )
+            )
         channels[-1]['status'] = 'bad' if name in bads else 'good'
     fpath_chan = join(eeg_dir, f'{sub}_task-{TASK}_channels.tsv')
     chans_df = DataFrame(channels)
