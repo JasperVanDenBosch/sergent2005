@@ -96,9 +96,6 @@ for mode in MODES:
         print('\n\n')
 
 
-
-        ## See montage_marked.png
-
         for roi_name, roi_ch_names in ROIS.items():
             ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
