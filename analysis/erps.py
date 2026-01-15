@@ -6,12 +6,10 @@ from os.path import join, expanduser, basename
 from glob import glob
 import mne, numpy
 from mne.io import read_raw_bdf
-from mne.channels import make_standard_montage
 import matplotlib.pyplot as plt
 from utils import read_events, read_channels, print_info
 from config import (DATA_DIR, DERIV_NAME, ROIS, TIME_WINDOWS)
-if TYPE_CHECKING:
-    from mne.io.edf.edf import RawEDF
+
 
 MODES = ('original', 'auto')
 data_dir = expanduser(DATA_DIR)
@@ -32,7 +30,7 @@ for mode in MODES:
         ## for accessing channel indices
         raw_fpath = join(eeg_dir, f'{sub}_task-ab_eeg.bdf')
         raw = read_raw_bdf(raw_fpath)
-        montage = make_standard_montage('biosemi64', head_size='auto')
+
 
 
         epo_fname=f'{sub}_mode-{mode}_epo.fif' # TODO: add mode to fname
@@ -134,11 +132,3 @@ for mode in MODES:
             )
             figs[0].savefig(join(deriv_dir, f'mode-{mode}_roi-{roi_name}.png'))
             plt.close()
-
-
-            fig = montage.plot(
-                scale_factor=6,
-                show_names=roi_ch_names,
-                show=False
-            )
-            fig.savefig(join(deriv_dir, f'montage_roi-{roi_name}.png'))

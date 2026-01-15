@@ -2,6 +2,7 @@
 """
 import bidsify
 import timing
+import montage
 import behaviour
 import annotate
 #import preproc_classic
