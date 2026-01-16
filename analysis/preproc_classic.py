@@ -79,7 +79,7 @@ for sub_dir in sub_dirs:
     filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
     print_info('Loading data and filtering..')
     raw.load_data()
-    raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
+    raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
     ## read the artifact annotations
     annots_fpath = join(deriv_dir, f'{sub}_annotations.txt')
@@ -102,16 +102,6 @@ for sub_dir in sub_dirs:
         mask=mask,
         mask_type='not_and'
     )
-
-    ## triggers for T2
-    t2_triggers = list(range(24, 31+1))
-
-    ## index for full events array where event is T2
-    events_mask =[e[2] in t2_triggers for e in events ]
-
-    ## The rejections are trial-wise. So we only need one epoch per trial
-    ## on which to apply the thresholds. Let's use the T2 events. 
-    events = events[events_mask]
 
     ## T2 epoching
     soa = timer.flipsToSecs(timer.short_SOA)
@@ -136,6 +126,16 @@ for sub_dir in sub_dirs:
         tmax=TMAX+LATENCY,
         baseline=(tmin, tmin+BASELINE),
         on_missing='warn',
+        preload=True
     )
+
+    ## TODO: comment
+    events_df = read_events(data_dir, sub)
+    events_df = events_df.iloc[epochs.selection]
+    assert len(events_df) == len(epochs)
+    assert events_df.iloc[10].value == epochs.events[10, 2]
+    events_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_events.tsv')
+    events_df.to_csv(events_fpath, sep='\t', index=False, float_format = '%.12g')
+
     print_info(f'Epoched {len(epochs)} trials')
     epochs.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif'), overwrite=True)
