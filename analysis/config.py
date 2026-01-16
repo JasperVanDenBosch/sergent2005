@@ -20,8 +20,8 @@ see Figure 2 of the original manuscript) and Pz as the P3b component focus
 (see Figure 5 of original study). 
 """
 ROIS = dict(
-    Central = ['A4', 'A5', 'A3', 'A17', 'A19', 'A20', 'A21', 'A30', 'A31', 'A32'],
-    Occipital = ['A10', 'A14', 'A15', 'A16', 'A23', 'A24', 'A27', 'A28', 'A29', 'B7'],
+    Central = ['Pz', 'P1', 'P2', 'CPz'],
+    Occipital = ['O1', 'O2', 'Oz', 'POz'],
 )
 
 ## Time Windows for ERPs

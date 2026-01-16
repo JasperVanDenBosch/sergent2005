@@ -10,6 +10,13 @@ def read_events(data_dir: str, sub: str):
         sep='\t',
     )
 
+def read_selected_events(deriv_dir: str, sub: str, mode: str):
+    return read_csv(
+        join(deriv_dir, sub, f'{sub}_mode-{mode}_events.tsv'),
+        index_col=False,
+        sep='\t',
+    )
+
 def read_channels(data_dir: str, sub: str):
     return read_csv(
         join(data_dir, sub, 'eeg', f'{sub}_task-ab_channels.tsv'),

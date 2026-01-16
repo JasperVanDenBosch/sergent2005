@@ -18,7 +18,6 @@ trial numbers spreadsheet: https://docs.google.com/spreadsheets/d/14jrOEcPnLSVjf
 
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING
 from os.path import join, expanduser, isfile, basename
 import os
 from glob import glob
@@ -31,8 +30,6 @@ from experiment.constants import Constants
 from utils import read_events, read_channels, print_info
 from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
                     BASELINE, TMAX, LATENCY)
-if TYPE_CHECKING:
-    from mne.io.edf.edf import RawEDF
 
 
 data_dir = expanduser(DATA_DIR)
@@ -129,11 +126,18 @@ for sub_dir in sub_dirs:
         preload=True
     )
 
-    ## TODO: comment
+    ## Read the raw data events
     events_df = read_events(data_dir, sub)
+
+    ## Make subset of events based on selected triggers and 
+    ## non-rejected epochs (indices with regard to full MNE events array)
     events_df = events_df.iloc[epochs.selection]
+
+    ## Check that they match
     assert len(events_df) == len(epochs)
     assert events_df.iloc[10].value == epochs.events[10, 2]
+
+    ## Store alongside epochs
     events_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_events.tsv')
     events_df.to_csv(events_fpath, sep='\t', index=False, float_format = '%.12g')
 

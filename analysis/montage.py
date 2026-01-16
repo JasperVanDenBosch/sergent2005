@@ -9,7 +9,6 @@ montage = make_standard_montage('biosemi64', head_size='auto')
 for roi_name, roi_ch_names in ROIS.items():
 
     fig = montage.plot(
-        scale_factor=6,
         show_names=roi_ch_names,
         show=False
     )

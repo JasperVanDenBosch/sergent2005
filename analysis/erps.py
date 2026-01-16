@@ -1,13 +1,12 @@
 """Load epoched data and plot ERPs
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING
 from os.path import join, expanduser, basename
 from glob import glob
-import mne, numpy
+import mne
 from mne.io import read_raw_bdf
 import matplotlib.pyplot as plt
-from utils import read_events, read_channels, print_info
+from utils import read_selected_events, print_info
 from config import (DATA_DIR, DERIV_NAME, ROIS, TIME_WINDOWS)
 
 
@@ -32,32 +31,10 @@ for mode in MODES:
         raw = read_raw_bdf(raw_fpath)
 
 
-
-        epo_fname=f'{sub}_mode-{mode}_epo.fif' # TODO: add mode to fname
-
-
+        epo_fname=f'{sub}_mode-{mode}_epo.fif'
         epochs = mne.read_epochs(join(deriv_dir, epo_fname))
+        events_df = read_selected_events(deriv_dir_root, sub, mode)
 
-
-        ## create a column where we indicate for which trials we have data
-        ## since come may have been discarded as artifacts
-        data_mask = numpy.zeros(trials_df.shape[0], dtype=bool)
-        data_mask[epochs.selection] = True
-        trials_df['valid_data'] = data_mask
-
-        ## restrict the df to the epochs we currently have, short-SOA with valid data
-        if mode == 'original':
-            epo_df = trials_df[(trials_df.soa_long == False) & (trials_df.valid_data == True)]
-        else: 
-            epo_df = trials_df[(trials_df.valid_data == True)]
-            epochs = epochs[~epo_df.soa_long]
-            epo_df = epo_df[~epo_df.soa_long]
-        
-        
-        assert len(epo_df) == len(epochs)
-
-        ## they should now have the same number of entries
-        
 
         """
         In order to analyze the brain events underlying this bimodal distribu- tion, 
@@ -75,14 +52,14 @@ for mode in MODES:
         # df['false_alarm'] = df['seen'] & (~df['t2presence'])
 
         ## ERP for T2 absent trials
-        erp_absent = epochs[~epo_df.t2presence].average()
+        erp_absent = epochs[~events_df.t2presence].average()
 
         ## ERP for seen trials
-        erp_seen = epochs[(epo_df.t2presence) & (epo_df.seen)].average()
+        erp_seen = epochs[(events_df.t2presence) & (events_df.seen)].average()
         erp_seen_min_absent = mne.combine_evoked([erp_seen, erp_absent], [1, -1])
 
         ## ERP for unseen trials
-        erp_unseen = epochs[(epo_df.t2presence) & (~epo_df.seen)].average()
+        erp_unseen = epochs[(events_df.t2presence) & (~events_df.seen)].average()
         erp_unseen_min_absent = mne.combine_evoked([erp_unseen, erp_absent], [1, -1])
 
         erps = dict(
