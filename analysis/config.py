@@ -20,8 +20,8 @@ see Figure 2 of the original manuscript) and Pz as the P3b component focus
 (see Figure 5 of original study). 
 """
 ROIS = dict(
-    Central = ['Pz', 'P1', 'P2', 'CPz'],
-    Occipital = ['O1', 'O2', 'Oz', 'POz'],
+    N1 = ['Pz', 'P1', 'P2', 'CPz'],
+    P3b = ['O1', 'O2', 'Oz', 'POz'],
 )
 
 ## Time Windows for ERPs
@@ -30,6 +30,6 @@ ROIS = dict(
 160ms-200ms for P3b 
 """
 TIME_WINDOWS = dict(
-    Central = (0.160, 0.200),
-    Occipital = (0.528, 0.624),
+    N1 = (0.160, 0.200),
+    P3b = (0.528, 0.624),
 )

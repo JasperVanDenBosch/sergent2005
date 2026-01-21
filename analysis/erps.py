@@ -60,10 +60,9 @@ for mode in MODES:
         n_discard = events_df.discard.sum()
 
         ## Remove these from both sides
-        epochs[~events_df.discard]
+        epochs = epochs[~events_df.discard]
         events_df = events_df[~events_df.discard]
         print_info(f'Discarding {n_discard}/{n_before}; {n_false_alarm}× false alarm, {n_incorrect}× incorrect')
-        raise ValueError
 
         ## ERP for T2 absent trials
         erp_absent = epochs[~events_df.t2presence].average()
@@ -118,5 +117,5 @@ for mode in MODES:
                 color='gray',
                 alpha=0.2
             )
-            figs[0].savefig(join(deriv_dir, f'mode-{mode}_roi-{roi_name}.png'))
+            figs[0].savefig(join(deriv_dir, f'{sub}_mode-{mode}_{roi_name}.png'))
             plt.close()
