@@ -10,7 +10,7 @@ from utils import read_selected_events, print_info
 from config import (DATA_DIR, DERIV_NAME, ROIS, TIME_WINDOWS)
 
 
-MODES = ('original', 'auto')
+MODES = ('original',) #, 'auto'
 data_dir = expanduser(DATA_DIR)
 deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
@@ -44,12 +44,26 @@ for mode in MODES:
         evoked by T2 by subtracting the ERPs evoked when T2 was absent and replaced by a blank screen 
         """
 
-        # FROM BEHAVIOUR
-        # ## subjective visibility as a percentage 0-100%
-        # df['vis_perc'] = (df['vis_rating'] / 0.20).astype(int)
-        # df['seen'] = df['vis_perc'] > 50
-        # ## mark false positives (to be discarded for EEG)
-        # df['false_alarm'] = df['seen'] & (~df['t2presence'])
+        ## subjective visibility as a percentage 0-100%
+        events_df['vis_perc'] = (events_df['vis_rating'] / 0.20).astype(int)
+        events_df['seen'] = events_df['vis_perc'] > 50
+
+        ## mark false positives (to be discarded for EEG)
+        events_df['false_alarm'] = events_df['seen'] & (~events_df['t2presence'])
+
+
+        ### Mark incorrect and false alarm trials for discarding
+        events_df['discard'] = (events_df['correct'] == False) | (events_df['false_alarm'] == True)
+        n_before = len(epochs)
+        n_false_alarm = events_df['false_alarm'].sum()
+        n_incorrect = (events_df['correct'] == False).sum()
+        n_discard = events_df.discard.sum()
+
+        ## Remove these from both sides
+        epochs[~events_df.discard]
+        events_df = events_df[~events_df.discard]
+        print_info(f'Discarding {n_discard}/{n_before}; {n_false_alarm}× false alarm, {n_incorrect}× incorrect')
+        raise ValueError
 
         ## ERP for T2 absent trials
         erp_absent = epochs[~events_df.t2presence].average()

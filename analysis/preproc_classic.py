@@ -133,7 +133,7 @@ for sub_dir in sub_dirs:
     ## non-rejected epochs (indices with regard to full MNE events array)
     events_df = events_df.iloc[epochs.selection]
 
-    ## Check that they match
+    ## Check that they match (10 is an arbitrary index)
     assert len(events_df) == len(epochs)
     assert events_df.iloc[10].value == epochs.events[10, 2]
 
