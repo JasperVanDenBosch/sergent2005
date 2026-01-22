@@ -16,7 +16,7 @@ deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
 
 sub_dirs = sorted(glob(join(data_dir, 'sub-*')))
-
+group_erps = []
 for mode in MODES:
 
     for sub_dir in sub_dirs:
@@ -84,6 +84,7 @@ for mode in MODES:
         for name, evoked in erps.items():
             print_info(f'{name}: {evoked.nave}')
         print('\n\n')
+        group_erps.append(erps)
 
 
         for roi_name, roi_ch_names in ROIS.items():
@@ -119,3 +120,46 @@ for mode in MODES:
             )
             figs[0].savefig(join(deriv_dir, f'{sub}_mode-{mode}_{roi_name}.png'))
             plt.close()
+
+
+    erps = dict()
+    names = list(group_erps[0].keys())
+    for name in names:
+        indiv_erps = [erps[name] for erps in group_erps]
+        erps[name] = mne.combine_evoked(indiv_erps, 'equal')
+        ## these dont contain "min-absent"
+
+
+    for roi_name, roi_ch_names in ROIS.items():
+        ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
+
+        erp_seen_min_absent_roi = mne.channels.combine_channels(
+            erp_seen_min_absent,
+            dict(roi=ch_idx),
+            method='mean'
+        )
+
+        erp_unseen_min_absent_roi = mne.channels.combine_channels(
+            erp_unseen_min_absent,
+            dict(roi=ch_idx),
+            method='mean'
+        )
+
+        figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
+            dict(
+                seen=erp_seen_min_absent_roi,
+                unseen=erp_unseen_min_absent_roi
+            ),
+            colors=('#1b9e77', '#7570b3'),
+            linestyles=('solid', 'dotted'),
+            ylim=dict(eeg=[-5, 5]),
+            show=False
+        )
+        plt.axvspan(
+            xmin=TIME_WINDOWS[roi_name][0],
+            xmax=TIME_WINDOWS[roi_name][1],
+            color='gray',
+            alpha=0.2
+        )
+        figs[0].savefig(join(deriv_dir_root, f'grandavg_mode-{mode}_{roi_name}.png'))
+        plt.close()
