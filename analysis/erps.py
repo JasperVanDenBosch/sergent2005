@@ -79,6 +79,8 @@ for mode in MODES:
             absent=erp_absent,
             seen=erp_seen,
             unseen=erp_unseen,
+            seen_min_absent=erp_seen_min_absent,
+            unseen_min_absent=erp_unseen_min_absent,
         )
         print_info('\n\nNumber of epochs:')
         for name, evoked in erps.items():
@@ -127,20 +129,19 @@ for mode in MODES:
     for name in names:
         indiv_erps = [erps[name] for erps in group_erps]
         erps[name] = mne.combine_evoked(indiv_erps, 'equal')
-        ## these dont contain "min-absent"
 
 
     for roi_name, roi_ch_names in ROIS.items():
         ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
         erp_seen_min_absent_roi = mne.channels.combine_channels(
-            erp_seen_min_absent,
+            erps['seen_min_absent'],
             dict(roi=ch_idx),
             method='mean'
         )
 
         erp_unseen_min_absent_roi = mne.channels.combine_channels(
-            erp_unseen_min_absent,
+            erps['unseen_min_absent'],
             dict(roi=ch_idx),
             method='mean'
         )
