@@ -34,12 +34,12 @@ modes = dict(
         deriv_name='dirty',
         epo_fname=f'{sub}_dirty_epo.fif',
     ),
-    classic=dict(
-        deriv_name='classic',
+    original=dict(
+        deriv_name='original',
         epo_fname=f'{sub}_T2-shortSOA_epo.fif',
     ),
     automated=dict(
-        deriv_name='modern',
+        deriv_name='auto',
         epo_fname=f'{sub}_clean_epo.fif',
     ),
 )
@@ -57,7 +57,7 @@ for mode, settings in modes.items():
     trials_df['valid_data'] = data_mask
 
     ## restrict the df to the epochs we currently have, short-SOA with valid data
-    if mode == 'classic':
+    if mode == 'original':
         epo_df = trials_df[(trials_df.soa_long == False) & (trials_df.valid_data == True)]
     elif mode == 'dirty':
         epo_df = trials_df[(trials_df.valid_data == True)]
