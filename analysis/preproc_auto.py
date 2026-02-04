@@ -18,7 +18,8 @@ from experiment.timer import Timer
 from experiment.constants import Constants
 from utils import read_events, read_channels, print_info, log_to
 from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
-                    BASELINE, TMAX, LATENCY, N_JOBS, N_INTERPOLATE)
+                    BASELINE, TMAX, LATENCY, N_JOBS, N_INTERPOLATE,
+                    KEEP_IC_LABELS)
 
 
 data_dir = expanduser(DATA_DIR)
@@ -139,7 +140,7 @@ for sub_dir in sub_dirs:
         ## Use the IClabel library to identify artifact components
         ic_labels = label_components(raw, ica, method='iclabel')
 
-        artifact_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label not in ('brain', 'other')]
+        artifact_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label not in KEEP_IC_LABELS]
 
         ## plot artifact ICs
         if len(artifact_ic_idx):
@@ -177,6 +178,7 @@ for sub_dir in sub_dirs:
 
         ## Read the raw data events
         events_df = read_events(data_dir, sub)
+        raise ValueError
 
         ## Make subset of events based on selected triggers and 
         ## non-rejected epochs (indices with regard to full MNE events array)

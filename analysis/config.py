@@ -36,3 +36,4 @@ TIME_WINDOWS = dict(
 
 N_JOBS = 6
 N_INTERPOLATE = [1, 2, 3, 4, 5, 6]
+KEEP_IC_LABELS = ('brain')
