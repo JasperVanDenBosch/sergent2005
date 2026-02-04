@@ -1,155 +1,182 @@
-"""Use contemporary tools to pre-process 
-
-bad_chans = ['A32','C12', 'C14', 'B23', 'B29', 'D24'] #'D5', 'D8', 'D16', 'D17']
+"""Automated artifect rejection pre-process 
 
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from os.path import join, expanduser
+from os.path import join, expanduser, isfile, basename
 import os
-from colorama import init as colorama_init, Fore, Style
+from glob import glob
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
-import matplotlib.pyplot as plt
+import mne
+from mne.preprocessing import ICA
+from autoreject import AutoReject
+from mne_icalabel import label_components
 from experiment.triggers import Triggers
 from experiment.timer import Timer
 from experiment.constants import Constants
-from mne.preprocessing import ICA
-import mne
-from autoreject import AutoReject
-from mne_icalabel import label_components
-if TYPE_CHECKING:
-    from mne.io.edf.edf import RawEDF
-colorama_init()
-def print_info(msg: str):
-    print(f'{Fore.CYAN}{msg}{Style.RESET_ALL}')
-def print_warn(msg: str):
-    print(f'{Fore.MAGENTA}{msg}{Style.RESET_ALL}')
+from utils import read_events, read_channels, print_info
+from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
+                    BASELINE, TMAX, LATENCY, N_JOBS, N_INTERPOLATE)
 
+
+data_dir = expanduser(DATA_DIR)
+deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
 MODE_NAME = 'auto'
-BASELINE = 0.250 ## duration of baseline
-fr_conf  = 60 ## TODO double check
-TMAX = 0.715
-LATENCY = 0.016
-N_INTERPOLATE = [4, 6, 8, 10, 12]
-N_JOBS = 6
-sub = 'sub-UOLM001'
-data_dir = expanduser('~/data/eegmanylabs/Sergent2005/')
 
-eeg_dir = join(data_dir, sub)
-deriv_dir = join(data_dir, 'derivatives', 'stag1', sub)
-raw_fpath = join(eeg_dir, f'{sub}_eeg.bdf')
-os.makedirs(deriv_dir, exist_ok=True)
-
+const = Constants()
 timer = Timer()
-timer.optimizeFlips(fr_conf, Constants())
+timer.optimizeFlips(FRAME_RATE, const)
 
-## load raw data 
-raw = read_raw_bdf(raw_fpath)
+sub_dirs = sorted(glob(join(data_dir, 'sub-*')))
+for sub_dir in sub_dirs:
+    sub = basename(sub_dir)
+    print_info(f'Reading EEG data for {sub}..')
 
-## get rid of empty channels and mark channel types
-raw: RawEDF = raw.drop_channels(['EXG7', 'EXG8', 'GSR1', 'GSR2', 'Erg1', 'Erg2', 'Resp', 'Plet', 'Temp']) # type: ignore
-eog_channels = ['EXG3', 'EXG4', 'EXG5', 'EXG6']
-raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
+    eeg_dir = join(data_dir, sub, 'eeg')
+    deriv_dir = join(deriv_dir_root, sub)
+    raw_fpath = join(eeg_dir, f'{sub}_task-ab_eeg.bdf')
+    os.makedirs(deriv_dir, exist_ok=True)
 
-## pick channels to be filtered
-filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
-raw.load_data()
-raw = raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
+    ## load raw data 
+    raw = read_raw_bdf(raw_fpath)
 
-## apply average reference
-raw = raw.drop_channels(['EXG1', 'EXG2']) # type: ignore
-raw = raw.set_eeg_reference(ref_channels='average')
+    chans_df = read_channels(data_dir, sub)
 
-## determine electrode head locations
-montage = make_standard_montage('biosemi64', head_size='auto')
-raw.set_montage(montage, on_missing='warn')
+    ## remove unused channels
+    misc_chans = chans_df[chans_df.type == 'MISC']['name'].to_list()
+    raw.drop_channels(misc_chans)
 
-## find triggers
-mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
-events = mne.find_events(
-    raw,
-    verbose=False,
-    mask=mask,
-    mask_type='not_and'
-)
+    ## mark channel type for EOG
+    eog_channels = chans_df[chans_df.description.str.contains('EOG')]['name'].to_list()
+    raw.set_channel_types(mapping=dict([(c, 'eog') for c in eog_channels]))
 
-## triggers for T2
-t2_triggers = list(range(24, 31+1))
+    ## mark bad channels
+    bad_chans = chans_df[chans_df.status == 'bad']['name'].to_list()
+    raw.info['bads'].extend(bad_chans)
 
-## index for full events array where event is T2
-events_mask =[e[2] in t2_triggers for e in events ]
+    ## remove the mastoids
+    refs_chans = chans_df[chans_df.type == 'REF']['name'].to_list()
+    raw.drop_channels(refs_chans)
 
-## only keep the T2 events. This way there are as many events as trials
-## this helps with indexing later
-events = events[events_mask]
+    ## pick channels to be filtered
+    filter_picks = mne.pick_types(raw.info, eeg=True, eog=True, stim=False)
+    print_info('Loading data and filtering..')
+    raw.load_data()
+    raw.filter(l_freq=0.5, h_freq=20, picks=filter_picks)
 
-## T2 epoching
-soa = timer.flipsToSecs(timer.short_SOA)
-buffer = timer.flipsToSecs(timer.target_dur)
-tmin = - (soa + BASELINE + buffer) + LATENCY
-epochs = mne.Epochs(
-    raw,
-    events,
-    tmin=tmin,
-    tmax=TMAX+LATENCY,
-    ## ICA advises not to do baseline beforehand
-    baseline=None, #baseline=(tmin, tmin+BASELINE),
-    on_missing='warn',
-    preload=True
-)
-#epochs.save(join(deriv_dir, f'{sub}_{epo_name}_epo.fif'), overwrite=True)
+    ## apply average reference
+    raw = raw.set_eeg_reference(ref_channels='average')
 
-## step 1 find bad epochs to exclude from ICA
-ar = AutoReject(n_interpolate=N_INTERPOLATE, n_jobs=N_JOBS, verbose=True)
-ar.fit(epochs)
-_, reject_log = ar.transform(epochs, return_log=True)
-reject_log.save(join(deriv_dir, 'reject_log_pre-ica.npz'), overwrite=True)
+    ## determine electrode head locations
+    montage = make_standard_montage('biosemi64', head_size='auto')
+    raw.set_montage(montage, on_missing='warn')
 
-fig = reject_log.plot('horizontal', show=False)
-fig.savefig('plots/reject_log_pre-ica.png')
-plt.close()
-## plot initial fit
-#epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
+    ## find triggers
+    mask = sum([2**i for i in (8,9,10,11,12,13,14,15,16)])
+    events = mne.find_events(
+        raw,
+        verbose=False,
+        mask=mask,
+        mask_type='not_and'
+    )
+
+    ## T2 epoching
+    soa = timer.flipsToSecs(timer.short_SOA)
+    buffer = timer.flipsToSecs(timer.target_dur)
+    tmin = - (soa + BASELINE + buffer) + LATENCY
+
+    event_ids = dict()
+    for presenceName, presence in [('absent', False), ('present', True)]:
+        event_ids[f'{presenceName}'] = Triggers().get_number(
+            training=False,
+            forT2=True,
+            dualTask=True,
+            longSOA=False,
+            t2Present=presence,
+        )
+
+    epochs = mne.Epochs(
+        raw,
+        events,
+        event_id=event_ids,
+        tmin=tmin,
+        tmax=TMAX+LATENCY,
+        baseline=None,
+        on_missing='warn',
+        preload=True
+    )
 
 
-## step 2 ICA without bad epochs
-ica = ICA(20) # n_components can leave away for 0.99 variance
-ica.fit(epochs[~reject_log.bad_epochs])
+    n_channels = len(epochs.copy().pick(['eeg'], exclude='bads').ch_names)
+    n_ics = n_channels - 1
+    ## Pre-ICA AutoReject
+    ar = AutoReject(n_jobs=N_JOBS, n_interpolate=N_INTERPOLATE, verbose=False)
+    ar.fit(epochs)
+    _, reject_log = ar.transform(epochs.copy(), return_log=True)
+    ica_epoch_selection = ~reject_log.bad_epochs
 
-
-#ica.plot_components() # ica.plot_components(exclude)
-
-
-ic_labels = label_components(raw, ica, method='iclabel')
-
-blink_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label == 'eye blink']
-ica.exclude = blink_ic_idx
-figs = ica.plot_properties(raw, picks=blink_ic_idx, show=False)
-for f, fig in enumerate(figs):
-    fig.savefig(f'plots/ic_props_{f}.png')
+    ## Display overview of rejected and/or interpolated channels/segments
+    fig = reject_log.plot('horizontal', show=False)
+    fig.suptitle('Reject Log before ICA')
+    report.savefig(fig)
     plt.close()
 
-# plot with and without eyeblink component
-fig = ica.plot_overlay(epochs.average(), exclude=blink_ic_idx, show=False) ## todo save this plot
-fig.savefig('plots/ica_overlay.png')
-plt.close()
+    ## step 2 ICA without bad epochs
+    ica = ICA(n_ics, method='infomax', fit_params=dict(extended=True)) 
+    ica.fit(epochs[ica_epoch_selection])
 
-ica.apply(epochs, exclude=ica.exclude)
+    ## Use the IClabel library to identify artifact components
+    ic_labels = label_components(raw, ica, method='iclabel')
+
+    artifact_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label not in ('brain', 'other')]
+
+    ## plot artifact ICs
+    if len(artifact_ic_idx):
+        figs = ica.plot_properties(raw, picks=artifact_ic_idx, show=False)
+        for f, fig in enumerate(figs):
+            label = ic_labels['labels'][artifact_ic_idx[f]]
+            fig.suptitle(f'Properties of IC {f}: ({label})')
+            report.savefig(fig)
+            plt.close()
+
+    ## demix artifacts
+    meta['n_bad_ics'] = len(artifact_ic_idx)
+    ica.exclude = artifact_ic_idx
+    ica.apply(epochs, exclude=ica.exclude)
+
+    ## step 3 apply autoreject
+    ar = AutoReject(n_jobs=N_JOBS, n_interpolate=N_INTERPOLATE, verbose=False)
+    ar.fit(epochs)
+    epochs, reject_log = ar.transform(epochs, return_log=True)
+
+    meta['n_bad_epochs'] = (reject_log.labels == 1).sum().item()
+    meta['n_interp_epochs'] = (reject_log.labels == 2).sum().item()
+    
+    ## Display overview of rejected and/or interpolated channels/segments
+    fig = reject_log.plot('horizontal', show=False)
+    fig.suptitle(f'Reject log after ICA')
+    report.savefig(fig)
+    plt.close()
+
+    ## apply baseline
+    epochs.apply_baseline()
 
 
-## step 3 apply autoreject
-ar = AutoReject(n_interpolate=N_INTERPOLATE, n_jobs=N_JOBS, verbose=True)
-ar.fit(epochs)
-epochs_ar, reject_log = ar.transform(epochs, return_log=True)
+    ## Read the raw data events
+    events_df = read_events(data_dir, sub)
 
-epochs_clean = epochs_ar.apply_baseline(baseline=(tmin, tmin+BASELINE))
+    ## Make subset of events based on selected triggers and 
+    ## non-rejected epochs (indices with regard to full MNE events array)
+    events_df = events_df.iloc[epochs.selection]
 
-epochs_clean.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif'), overwrite=True)
+    ## Check that they match (10 is an arbitrary index)
+    assert len(events_df) == len(epochs)
+    assert events_df.iloc[10].value == epochs.events[10, 2]
 
-reject_log.save(join(deriv_dir, 'reject_log_post-ica.npz'), overwrite=True)
+    ## Store alongside epochs
+    events_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_events.tsv')
+    events_df.to_csv(events_fpath, sep='\t', index=False, float_format = '%.12g')
 
-fig = reject_log.plot('horizontal', show=False)
-fig.savefig('plots/reject_log_post-ica.png')
-plt.close()
+    print_info(f'Epoched {len(epochs)} trials')
+    epochs.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif'), overwrite=True)

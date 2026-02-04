@@ -33,3 +33,6 @@ TIME_WINDOWS = dict(
     N1 = (0.160, 0.200),
     P3b = (0.528, 0.624),
 )
+
+N_JOBS = 6
+N_INTERPOLATE = [1, 2, 3, 4, 5, 6]
