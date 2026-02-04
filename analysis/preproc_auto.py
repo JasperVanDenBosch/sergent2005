@@ -2,9 +2,11 @@
 
 """
 from __future__ import annotations
-from os.path import join, expanduser, isfile, basename
+from os.path import join, expanduser, basename
 import os
 from glob import glob
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 from mne.io import read_raw_bdf
 from mne.channels import make_standard_montage
 import mne
@@ -14,7 +16,7 @@ from mne_icalabel import label_components
 from experiment.triggers import Triggers
 from experiment.timer import Timer
 from experiment.constants import Constants
-from utils import read_events, read_channels, print_info
+from utils import read_events, read_channels, print_info, log_to
 from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
                     BASELINE, TMAX, LATENCY, N_JOBS, N_INTERPOLATE)
 
@@ -37,6 +39,12 @@ for sub_dir in sub_dirs:
     deriv_dir = join(deriv_dir_root, sub)
     raw_fpath = join(eeg_dir, f'{sub}_task-ab_eeg.bdf')
     os.makedirs(deriv_dir, exist_ok=True)
+
+
+    epo_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif')
+    report_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.pdf')
+
+    meta = dict()
 
     ## load raw data 
     raw = read_raw_bdf(raw_fpath)
@@ -107,76 +115,80 @@ for sub_dir in sub_dirs:
         preload=True
     )
 
+    with PdfPages(report_fpath) as report:
 
-    n_channels = len(epochs.copy().pick(['eeg'], exclude='bads').ch_names)
-    n_ics = n_channels - 1
-    ## Pre-ICA AutoReject
-    ar = AutoReject(n_jobs=N_JOBS, n_interpolate=N_INTERPOLATE, verbose=False)
-    ar.fit(epochs)
-    _, reject_log = ar.transform(epochs.copy(), return_log=True)
-    ica_epoch_selection = ~reject_log.bad_epochs
+        n_channels = len(epochs.copy().pick(['eeg'], exclude='bads').ch_names)
+        n_ics = n_channels - 1
 
-    ## Display overview of rejected and/or interpolated channels/segments
-    fig = reject_log.plot('horizontal', show=False)
-    fig.suptitle('Reject Log before ICA')
-    report.savefig(fig)
-    plt.close()
+        ## Pre-ICA AutoReject
+        ar = AutoReject(n_jobs=N_JOBS, n_interpolate=N_INTERPOLATE, verbose=False)
+        ar.fit(epochs)
+        _, reject_log = ar.transform(epochs.copy(), return_log=True)
+        ica_epoch_selection = ~reject_log.bad_epochs
 
-    ## step 2 ICA without bad epochs
-    ica = ICA(n_ics, method='infomax', fit_params=dict(extended=True)) 
-    ica.fit(epochs[ica_epoch_selection])
+        ## Display overview of rejected and/or interpolated channels/segments
+        fig = reject_log.plot('horizontal', show=False)
+        fig.suptitle('Reject Log before ICA')
+        report.savefig(fig)
+        plt.close()
 
-    ## Use the IClabel library to identify artifact components
-    ic_labels = label_components(raw, ica, method='iclabel')
+        ## step 2 ICA without bad epochs
+        ica = ICA(n_ics, method='infomax', fit_params=dict(extended=True)) 
+        ica.fit(epochs[ica_epoch_selection])
 
-    artifact_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label not in ('brain', 'other')]
+        ## Use the IClabel library to identify artifact components
+        ic_labels = label_components(raw, ica, method='iclabel')
 
-    ## plot artifact ICs
-    if len(artifact_ic_idx):
-        figs = ica.plot_properties(raw, picks=artifact_ic_idx, show=False)
-        for f, fig in enumerate(figs):
-            label = ic_labels['labels'][artifact_ic_idx[f]]
-            fig.suptitle(f'Properties of IC {f}: ({label})')
-            report.savefig(fig)
-            plt.close()
+        artifact_ic_idx = [i for i, label in enumerate(ic_labels['labels']) if label not in ('brain', 'other')]
 
-    ## demix artifacts
-    meta['n_bad_ics'] = len(artifact_ic_idx)
-    ica.exclude = artifact_ic_idx
-    ica.apply(epochs, exclude=ica.exclude)
+        ## plot artifact ICs
+        if len(artifact_ic_idx):
+            figs = ica.plot_properties(raw, picks=artifact_ic_idx, show=False)
+            for f, fig in enumerate(figs):
+                label = ic_labels['labels'][artifact_ic_idx[f]]
+                fig.suptitle(f'Properties of IC {f}: ({label})')
+                report.savefig(fig)
+                plt.close()
 
-    ## step 3 apply autoreject
-    ar = AutoReject(n_jobs=N_JOBS, n_interpolate=N_INTERPOLATE, verbose=False)
-    ar.fit(epochs)
-    epochs, reject_log = ar.transform(epochs, return_log=True)
+        ## demix artifacts
+        meta['n_bad_ics'] = len(artifact_ic_idx)
+        log_to(report, f"n_bad_ics: {meta['n_bad_ics']}")
+        ica.exclude = artifact_ic_idx
+        ica.apply(epochs, exclude=ica.exclude)
 
-    meta['n_bad_epochs'] = (reject_log.labels == 1).sum().item()
-    meta['n_interp_epochs'] = (reject_log.labels == 2).sum().item()
-    
-    ## Display overview of rejected and/or interpolated channels/segments
-    fig = reject_log.plot('horizontal', show=False)
-    fig.suptitle(f'Reject log after ICA')
-    report.savefig(fig)
-    plt.close()
+        ## step 3 apply autoreject
+        ar = AutoReject(n_jobs=N_JOBS, n_interpolate=N_INTERPOLATE, verbose=False)
+        ar.fit(epochs)
+        epochs, reject_log = ar.transform(epochs, return_log=True)
 
-    ## apply baseline
-    epochs.apply_baseline()
+        meta['n_bad_epochs'] = (reject_log.labels == 1).sum().item()
+        log_to(report, f"n_bad_epochs: {meta['n_bad_epochs']}")
+        meta['n_interp_epochs'] = (reject_log.labels == 2).sum().item()
+        log_to(report, f"n_interp_epochs: {meta['n_interp_epochs']}")
+        
+        ## Display overview of rejected and/or interpolated channels/segments
+        fig = reject_log.plot('horizontal', show=False)
+        fig.suptitle(f'Reject log after ICA')
+        report.savefig(fig)
+        plt.close()
 
+        ## apply baseline
+        epochs.apply_baseline()
 
-    ## Read the raw data events
-    events_df = read_events(data_dir, sub)
+        ## Read the raw data events
+        events_df = read_events(data_dir, sub)
 
-    ## Make subset of events based on selected triggers and 
-    ## non-rejected epochs (indices with regard to full MNE events array)
-    events_df = events_df.iloc[epochs.selection]
+        ## Make subset of events based on selected triggers and 
+        ## non-rejected epochs (indices with regard to full MNE events array)
+        events_df = events_df.iloc[epochs.selection]
 
-    ## Check that they match (10 is an arbitrary index)
-    assert len(events_df) == len(epochs)
-    assert events_df.iloc[10].value == epochs.events[10, 2]
+        ## Check that they match (10 is an arbitrary index)
+        assert len(events_df) == len(epochs)
+        assert events_df.iloc[10].value == epochs.events[10, 2]
 
-    ## Store alongside epochs
-    events_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_events.tsv')
-    events_df.to_csv(events_fpath, sep='\t', index=False, float_format = '%.12g')
+        ## Store alongside epochs
+        events_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_events.tsv')
+        events_df.to_csv(events_fpath, sep='\t', index=False, float_format = '%.12g')
 
-    print_info(f'Epoched {len(epochs)} trials')
-    epochs.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif'), overwrite=True)
+        print_info(f'Epoched {len(epochs)} trials')
+        epochs.save(epo_fpath, overwrite=True)

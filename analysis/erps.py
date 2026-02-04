@@ -10,7 +10,7 @@ from utils import read_selected_events, print_info
 from config import (DATA_DIR, DERIV_NAME, ROIS, TIME_WINDOWS)
 
 
-MODES = ('original',) #, 'auto'
+MODES = ('original', 'auto')
 data_dir = expanduser(DATA_DIR)
 deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
