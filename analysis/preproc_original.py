@@ -29,13 +29,14 @@ from experiment.timer import Timer
 from experiment.constants import Constants
 from utils import read_events, read_channels, print_info
 from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
-                    BASELINE, TMAX, LATENCY)
+                    BASELINE, TMAX, LATENCY, SELECTED_EVENTS)
 
 
 data_dir = expanduser(DATA_DIR)
 deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
 MODE_NAME = 'original'
+n_conds = len(SELECTED_EVENTS)
 
 const = Constants()
 timer = Timer()
@@ -106,14 +107,8 @@ for sub_dir in sub_dirs:
     tmin = - (soa + BASELINE + buffer) + LATENCY
 
     event_ids = dict()
-    for presenceName, presence in [('absent', False), ('present', True)]:
-        event_ids[f'{presenceName}'] = Triggers().get_number(
-            training=False,
-            forT2=True,
-            dualTask=True,
-            longSOA=False,
-            t2Present=presence,
-        )
+    for name, cond_dict in SELECTED_EVENTS:
+        event_ids[name] = Triggers().get_number(**cond_dict)
 
     epochs = mne.Epochs(
         raw,
@@ -142,4 +137,4 @@ for sub_dir in sub_dirs:
     events_df.to_csv(events_fpath, sep='\t', index=False, float_format = '%.12g')
 
     print_info(f'Epoched {len(epochs)} trials')
-    epochs.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif'), overwrite=True)
+    epochs.save(join(deriv_dir, f'{sub}_mode-{MODE_NAME}_conds-{n_conds}_epo.fif'), overwrite=True)

@@ -7,10 +7,11 @@ import mne
 from mne.io import read_raw_bdf
 import matplotlib.pyplot as plt
 from utils import read_selected_events, print_info
-from config import (DATA_DIR, DERIV_NAME, ROIS, TIME_WINDOWS)
+from config import (DATA_DIR, DERIV_NAME, ROIS, TIME_WINDOWS, SELECTED_EVENTS)
 
 
 MODES = ('original', 'auto')
+n_conds = len(SELECTED_EVENTS)
 data_dir = expanduser(DATA_DIR)
 deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
@@ -31,7 +32,7 @@ for mode in MODES:
         raw = read_raw_bdf(raw_fpath)
 
 
-        epo_fname=f'{sub}_mode-{mode}_epo.fif'
+        epo_fname=f'{sub}_mode-{mode}_conds-{n_conds}_epo.fif'
         epochs = mne.read_epochs(join(deriv_dir, epo_fname))
         events_df = read_selected_events(deriv_dir_root, sub, mode)
 

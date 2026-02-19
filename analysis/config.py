@@ -11,6 +11,23 @@ BASELINE = 0.250 ## duration of baseline
 TMAX = 0.715
 LATENCY = 0.016 ## based on latrec recording
 
+SELECTED_EVENTS = [
+    ('dual/short/present', dict(training=False, forT2=True, dualTask=True,  longSOA=False, t2Present=True)),
+    ('dual/short/absent',  dict(training=False, forT2=True, dualTask=True,  longSOA=False, t2Present=False)),
+    ('dual/long/present',  dict(training=False, forT2=True, dualTask=True,  longSOA=True,  t2Present=True)),
+    ('dual/long/absent',   dict(training=False, forT2=True, dualTask=True,  longSOA=True,  t2Present=False)),
+    ('single/short/present', dict(training=False, forT2=True, dualTask=False, longSOA=False, t2Present=True)),
+    ('single/short/absent',  dict(training=False, forT2=True, dualTask=False, longSOA=False, t2Present=False)),
+    ('single/long/present',  dict(training=False, forT2=True, dualTask=False, longSOA=True,  t2Present=True)),
+    ('single/long/absent',   dict(training=False, forT2=True, dualTask=False, longSOA=True,  t2Present=False)),
+]
+""" EXPERIMENTAL
+            training=False,
+            forT2=True,
+            dualTask=True,
+            longSOA=False,
+            t2Present=presence,
+"""
 
 ## Regions of Interest
 """ 

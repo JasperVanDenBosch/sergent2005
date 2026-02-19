@@ -19,13 +19,14 @@ from experiment.constants import Constants
 from utils import read_events, read_channels, print_info, log_to
 from config import (DATA_DIR, DERIV_NAME, FRAME_RATE,
                     BASELINE, TMAX, LATENCY, N_JOBS, N_INTERPOLATE,
-                    KEEP_IC_LABELS)
+                    KEEP_IC_LABELS, SELECTED_EVENTS)
 
 
 data_dir = expanduser(DATA_DIR)
 deriv_dir_root = join(data_dir, 'derivatives', DERIV_NAME)
 
 MODE_NAME = 'auto'
+n_conds = len(SELECTED_EVENTS)
 
 const = Constants()
 timer = Timer()
@@ -42,8 +43,8 @@ for sub_dir in sub_dirs:
     os.makedirs(deriv_dir, exist_ok=True)
 
 
-    epo_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.fif')
-    report_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_epo.pdf')
+    epo_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_conds-{n_conds}_epo.fif')
+    report_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_conds-{n_conds}_epo.pdf')
 
     meta = dict()
 
@@ -96,14 +97,8 @@ for sub_dir in sub_dirs:
     tmin = - (soa + BASELINE + buffer) + LATENCY
 
     event_ids = dict()
-    for presenceName, presence in [('absent', False), ('present', True)]:
-        event_ids[f'{presenceName}'] = Triggers().get_number(
-            training=False,
-            forT2=True,
-            dualTask=True,
-            longSOA=False,
-            t2Present=presence,
-        )
+    for name, cond_dict in SELECTED_EVENTS:
+        event_ids[name] = Triggers().get_number(**cond_dict)
 
     epochs = mne.Epochs(
         raw,
