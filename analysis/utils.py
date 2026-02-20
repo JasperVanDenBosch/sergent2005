@@ -11,9 +11,9 @@ def read_events(data_dir: str, sub: str):
         sep='\t',
     )
 
-def read_selected_events(deriv_dir: str, sub: str, mode: str):
+def read_selected_events(deriv_dir: str, sub: str, mode: str, n_conds: int):
     return read_csv(
-        join(deriv_dir, sub, f'{sub}_mode-{mode}_events.tsv'),
+        join(deriv_dir, sub, f'{sub}_mode-{mode}_conds-{n_conds}_events.tsv'),
         index_col=False,
         sep='\t',
     )

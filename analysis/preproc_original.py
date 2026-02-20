@@ -133,7 +133,7 @@ for sub_dir in sub_dirs:
     assert events_df.iloc[10].value == epochs.events[10, 2]
 
     ## Store alongside epochs
-    events_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_events.tsv')
+    events_fpath = join(deriv_dir, f'{sub}_mode-{MODE_NAME}_conds-{n_conds}_events.tsv')
     events_df.to_csv(events_fpath, sep='\t', index=False, float_format = '%.12g')
 
     print_info(f'Epoched {len(epochs)} trials')

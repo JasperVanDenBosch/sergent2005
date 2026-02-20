@@ -41,6 +41,14 @@ ROIS = dict(
     P3b = ['O1', 'O2', 'Oz', 'POz'],
 )
 
+## Simple channels for diagnostic ERPs (diag.py)
+ROIS_DIAG = dict(
+    CPz = ['CPz'],
+    Pz = ['Pz'],
+    POz = ['POz'],
+    Oz = ['Oz'],
+)
+
 ## Time Windows for ERPs
 """Our temporal ROI bounds are 
 528ms-624ms for N1
