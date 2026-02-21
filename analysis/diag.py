@@ -36,64 +36,27 @@ for mode in MODES:
         epochs = mne.read_epochs(join(deriv_dir, epo_fname))
         events_df = read_selected_events(deriv_dir_root, sub, mode, n_conds)
 
-        ## ERP for seen trials
-
-        ## TODO select epochs
-        # For T2:
-        # - present short
-        # - present long
-        # Use mne-style indexing instead? 'a/b/c'
-
-        erp_present = epochs[(events_df.t2presence) & (events_df.) )].average()
-
 
         erps = dict(
-            absent=erp_absent,
-            seen=erp_seen,
-            unseen=erp_unseen,
-            seen_min_absent=erp_seen_min_absent,
-            unseen_min_absent=erp_unseen_min_absent,
+            T2_short=epochs['short/present'].average(),
+            T2_long=epochs['long/present'].average(),
+            # unseen=erp_unseen,
+            # seen_min_absent=erp_seen_min_absent,
+            # unseen_min_absent=erp_unseen_min_absent,
         )
-        print_info('\n\nNumber of epochs:')
-        for name, evoked in erps.items():
-            print_info(f'{name}: {evoked.nave}')
-        print('\n\n')
         group_erps.append(erps)
 
+        for cond_name, evoked in erps.items():
+            for roi_name, roi_ch_names in ROIS_DIAG.items():
+                ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
-        for roi_name, roi_ch_names in ROIS_DIAG.items():
-            ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
-
-            erp_seen_min_absent_roi = mne.channels.combine_channels(
-                erp_seen_min_absent,
-                dict(roi=ch_idx),
-                method='mean'
-            )
-
-            erp_unseen_min_absent_roi = mne.channels.combine_channels(
-                erp_unseen_min_absent,
-                dict(roi=ch_idx),
-                method='mean'
-            )
-
-            figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
-                dict(
-                    seen=erp_seen_min_absent_roi,
-                    unseen=erp_unseen_min_absent_roi
-                ),
-                colors=('#1b9e77', '#7570b3'),
-                linestyles=('solid', 'dotted'),
-                ylim=dict(eeg=[-5, 5]),
-                show=False
-            )
-            plt.axvspan(
-                xmin=TIME_WINDOWS[roi_name][0],
-                xmax=TIME_WINDOWS[roi_name][1],
-                color='gray',
-                alpha=0.2
-            )
-            figs[0].savefig(join(deriv_dir, f'{sub}_mode-{mode}_{roi_name}.png'))
-            plt.close()
+                fig = evoked.copy().pick(roi_ch_names).plot(
+                    ylim=dict(eeg=[-7, 7]),
+                    show=False
+                )
+                plt.title(f'{cond_name} {roi_name}')
+                fig.savefig(join(deriv_dir, f'{sub}_mode-{mode}_cond-{cond_name}_roi-{roi_name}.png'))
+                plt.close()
 
     ## Group level
     erps = dict()
@@ -103,36 +66,14 @@ for mode in MODES:
         erps[name] = mne.combine_evoked(indiv_erps, 'equal')
 
 
-    for roi_name, roi_ch_names in ROIS.items():
-        ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
+        for cond_name, evoked in erps.items():
+            for roi_name, roi_ch_names in ROIS_DIAG.items():
+                ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
 
-        erp_seen_min_absent_roi = mne.channels.combine_channels(
-            erps['seen_min_absent'],
-            dict(roi=ch_idx),
-            method='mean'
-        )
-
-        erp_unseen_min_absent_roi = mne.channels.combine_channels(
-            erps['unseen_min_absent'],
-            dict(roi=ch_idx),
-            method='mean'
-        )
-
-        figs = mne.viz.plot_compare_evokeds( ## or another fn that allows showing two with highlight
-            dict(
-                seen=erp_seen_min_absent_roi,
-                unseen=erp_unseen_min_absent_roi
-            ),
-            colors=('#1b9e77', '#7570b3'),
-            linestyles=('solid', 'dotted'),
-            ylim=dict(eeg=[-5, 5]),
-            show=False
-        )
-        plt.axvspan(
-            xmin=TIME_WINDOWS[roi_name][0],
-            xmax=TIME_WINDOWS[roi_name][1],
-            color='gray',
-            alpha=0.2
-        )
-        figs[0].savefig(join(deriv_dir_root, f'grandavg_mode-{mode}_{roi_name}.png'))
-        plt.close()
+                fig = evoked.copy().pick(roi_ch_names).plot(
+                    ylim=dict(eeg=[-7, 7]),
+                    show=False
+                )
+                plt.title(f'{cond_name} {roi_name}')
+                fig.savefig(join(deriv_dir_root, f'grandavg__mode-{mode}_cond-{cond_name}_roi-{roi_name}.png'))
+                plt.close()
