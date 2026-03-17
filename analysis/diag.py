@@ -7,7 +7,7 @@ import mne
 from mne.io import read_raw_bdf
 import matplotlib.pyplot as plt
 from utils import read_selected_events, print_info
-from config import (DATA_DIR, DERIV_NAME, ROIS_DIAG, TIME_WINDOWS, SELECTED_EVENTS)
+from config import (DATA_DIR, DERIV_NAME, ROIS_DIAG, TOPO_TIMES, SELECTED_EVENTS)
 
 
 MODES = ('original', 'auto')
@@ -48,14 +48,20 @@ for mode in MODES:
 
         for cond_name, evoked in erps.items():
             for roi_name, roi_ch_names in ROIS_DIAG.items():
-                ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
+                print(f'{sub}_mode-{mode}_cond-{cond_name}_roi-{roi_name}')
 
                 fig = evoked.copy().pick(roi_ch_names).plot(
                     ylim=dict(eeg=[-7, 7]),
+                    selectable=False,
                     show=False
                 )
                 plt.title(f'{cond_name} {roi_name}')
                 fig.savefig(join(deriv_dir, f'{sub}_mode-{mode}_cond-{cond_name}_roi-{roi_name}.png'))
+                plt.close()
+
+                fig = evoked.plot_topomap(TOPO_TIMES, show=False)
+                plt.title(f'{cond_name} {roi_name}')
+                fig.savefig(join(deriv_dir, f'{sub}_mode-{mode}_cond-{cond_name}_roi-{roi_name}_topo.png'))
                 plt.close()
 
     ## Group level
@@ -68,12 +74,19 @@ for mode in MODES:
 
         for cond_name, evoked in erps.items():
             for roi_name, roi_ch_names in ROIS_DIAG.items():
-                ch_idx = mne.pick_channels(raw.info['ch_names'], roi_ch_names)
+
+                print(f'grandavg__mode-{mode}_cond-{cond_name}_roi-{roi_name}')
 
                 fig = evoked.copy().pick(roi_ch_names).plot(
                     ylim=dict(eeg=[-7, 7]),
+                    selectable=False,
                     show=False
                 )
                 plt.title(f'{cond_name} {roi_name}')
                 fig.savefig(join(deriv_dir_root, f'grandavg__mode-{mode}_cond-{cond_name}_roi-{roi_name}.png'))
+                plt.close()
+
+                fig = evoked.plot_topomap(TOPO_TIMES, show=False)
+                plt.title(f'{cond_name} {roi_name}')
+                fig.savefig(join(deriv_dir_root, f'grandavg__mode-{mode}_cond-{cond_name}_roi-{roi_name}_topo.png'))
                 plt.close()
