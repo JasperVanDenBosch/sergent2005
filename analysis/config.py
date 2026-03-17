@@ -36,9 +36,10 @@ We use both O1 and O2 as the foci for the bilaterally-distributed N1 component
 see Figure 2 of the original manuscript) and Pz as the P3b component focus 
 (see Figure 5 of original study). 
 """
+# 
 ROIS = dict(
-    N1 = ['Pz', 'P1', 'P2', 'CPz'],
-    P3b = ['O1', 'O2', 'Oz', 'POz'],
+    P3b = ['Pz', 'P1', 'P2', 'CPz'],
+    N1 = ['O1', 'O2', 'Oz', 'POz'],
 )
 
 ## Simple channels for diagnostic ERPs (diag.py)

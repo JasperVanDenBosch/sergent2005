@@ -94,7 +94,7 @@ for variant, kwargs in variants.items():
 
 
 """
-Trials with an incorrect response to T1 (11 ± 5%) were discarded 
+Trials with an incorrect response to T1 (11% ± 5%) were discarded 
 from subsequent behavioral and ERP analysis. 
 
 NOTE: unclear if this is in critical condition or overall.. seems low
