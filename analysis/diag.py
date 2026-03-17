@@ -59,10 +59,10 @@ for mode in MODES:
                 fig.savefig(join(deriv_dir, f'{sub}_mode-{mode}_cond-{cond_name}_roi-{roi_name}.png'))
                 plt.close()
 
-                fig = evoked.plot_topomap(TOPO_TIMES, show=False)
-                plt.title(f'{cond_name} {roi_name}')
-                fig.savefig(join(deriv_dir, f'{sub}_mode-{mode}_cond-{cond_name}_roi-{roi_name}_topo.png'))
-                plt.close()
+            fig = evoked.plot_topomap(TOPO_TIMES, show=False)
+            plt.title(f'{cond_name} {roi_name}')
+            fig.savefig(join(deriv_dir, f'{sub}_mode-{mode}_cond-{cond_name}_topo.png'))
+            plt.close()
 
     ## Group level
     erps = dict()
@@ -86,7 +86,7 @@ for mode in MODES:
                 fig.savefig(join(deriv_dir_root, f'grandavg__mode-{mode}_cond-{cond_name}_roi-{roi_name}.png'))
                 plt.close()
 
-                fig = evoked.plot_topomap(TOPO_TIMES, show=False)
-                plt.title(f'{cond_name} {roi_name}')
-                fig.savefig(join(deriv_dir_root, f'grandavg__mode-{mode}_cond-{cond_name}_roi-{roi_name}_topo.png'))
-                plt.close()
+            fig = evoked.plot_topomap(TOPO_TIMES, show=False)
+            plt.title(f'{cond_name} {roi_name}')
+            fig.savefig(join(deriv_dir_root, f'grandavg__mode-{mode}_cond-{cond_name}_topo.png'))
+            plt.close()
