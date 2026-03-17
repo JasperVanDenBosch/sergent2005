@@ -1,8 +1,9 @@
+
 {
   "onset": {
     "LongName": "Event onset",
     "Description": "Onset (in seconds) of the event measured from the beginning of the acquisition of the first volume in the corresponding task imaging data file.",
-    "Units": "Sampling Points"
+    "Units": "second"
   },
   "duration": {
     "LongName": "Event duration",
@@ -11,28 +12,78 @@
   },
   "sample": {
     "LongName": "Sample",
-    "Description": "Onset of the event according to the sampling scheme of the recorded modality (i.e., referring to the raw data file that the events.tsv file accompanies)."
-  },
-  "trial_type": {
-    "LongName": "Event categorization",
-    "Description": "Stimulus category."
+    "Description": "Onset of the event in samples."
   },
   "value": {
     "LongName": "Event marker",
     "Description": "Marker value associated with the event.",
     "Levels": $trigger_lookup
   },
-  "identity": {
-    "LongName": "Identity",
-    "Description": "Number of the stimulus in its category"
+  "trial_type": {
+    "LongName": "Event categorization",
+    "Description": "Stimulus category.",
+    "Levels": {
+        "t1": "T1 Stimulus",
+        "t2": "T2 Stimulus",
+        "prompt_t1": "Task to identify T1",
+        "prompt_t2": "Task to report visibility of T2"
+    }
+  },
+  "trial_index": {
+    "LongName": "Trial Index",
+    "Description": "Number of the trial in which this event occurred."
+  },
+  "phase": {
+    "LongName": "Experiment Phase",
+    "Description": "Training vs Experimental trials.",
+    "Levels": {
+        "train": "Training Phase",
+        "test": "Test Phase"
+    }
+  },
+  "dual_task": {
+    "LongName": "Dual Task",
+    "Description": "Whether this was a single task or dual task trial.",
+    "Levels": {
+        "TRUE": "Dual Task",
+        "FALSE": "Single Task"
+    }
+  },
+  "t2presence": {
+    "LongName": "T2 Present",
+    "Description": "Whether this trial contained a T2 stimulus.",
+    "Levels": {
+        "TRUE": "T2 Present",
+        "FALSE": "T2 Absent"
+    }
+  },
+  "soa_long": {
+    "LongName": "Long SOA",
+    "Description": "Whether this trial has a long or short stimulus onset asynchrony.",
+    "Levels": {
+        "TRUE": "Long SOA",
+        "FALSE": "Short SOA"
+    }
   },
   "stimulus": {
     "LongName": "Stimulus",
-    "Description": "Unique name of the stimulus; combines trial_type and identity."
+    "Description": "The stimulus character string. Empty for task events."
   },
-  "rt": {
-    "LongName": "RT",
-    "Description": "Response time after Target.",
-    "Unit": "second"
+  "vis_rating": {
+    "LongName": "Visibility Rating",
+    "Description": "The rating provided by the participant of the visibility of T2; values 0-20."
+  },
+  "vis_init": {
+    "LongName": "Visibility Initial Value",
+    "Description": "Initial Position of the Visibility Prompt Slider; values 0-20."
+  },
+  "correct": {
+    "LongName": "Accuracy of Identity Response",
+    "Description": "Whether the response to the T1 Identity Prompt was correct.",
+    "Levels": {
+        "TRUE": "Correct",
+        "FALSE": "Incorrect",
+        "": "Missing / Does not apply (single task / no id)"
+    }
   }
 }

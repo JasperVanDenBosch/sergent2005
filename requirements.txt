@@ -5,3 +5,4 @@ mne~=1.8
 autoreject~=0.4
 mne-icalabel~=0.7
 torch~=2.5.1
+seaborn~=0.13

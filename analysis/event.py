@@ -9,13 +9,14 @@ class EventType(Enum):
      T2 = 2
 
 
-def event_dict(kind: EventType, trial: Series, evt: Tuple[int, int, int], sfreq: int) -> Dict[str, Any]:
+def event_dict(kind: EventType, trial: Series, evt: Tuple[int, int, int], sfreq: int, dur_s: Optional[float]) -> Dict[str, Any]:
     """Make a BIDS events row from the trial row and the MNE event
     """
     onset = round(evt[0] / sfreq, 3)
     if kind == EventType.TASK:
         return dict(
             onset = onset,
+            duration = dur_s,
             sample = evt[0],
             value = evt[2],
             trial_type='prompt_t1' if evt[2] in (1, 11) else 'prompt_t2',
@@ -31,6 +32,7 @@ def event_dict(kind: EventType, trial: Series, evt: Tuple[int, int, int], sfreq:
             correct = None
         return dict(
             onset = onset,
+            duration = dur_s,
             sample = evt[0],
             value = evt[2],
             trial_type=kind.name.lower(),
