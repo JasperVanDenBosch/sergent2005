@@ -111,12 +111,12 @@ class PsychopyEngine(object):
         return RunTimeInfo(win=self.win)
 
     def loadStimuli(self, squareSize: float, squareOffset: int, fixSize: float):
-        self.target1 = TextStim(self.win, height=1, units='deg', name='target1')
+        self.target1 = TextStim(self.win, height=1, units='deg', name='target1', font='Arial')
         self.target1.autoLog = True
-        self.target2 = TextStim(self.win, height=1, units='deg', name='target2')
+        self.target2 = TextStim(self.win, height=1, units='deg', name='target2', font='Arial')
         self.target2.autoLog = True
         self.target2_dummy = DummyStim()
-        self.mask = TextStim(self.win, height=1, units='deg', name='mask')
+        self.mask = TextStim(self.win, height=1, units='deg', name='mask', font='Arial')
         self.mask.autoLog = True
         o = squareOffset
         positions = [(-o, -o), (o, -o), (-o, o), (o, o)]
